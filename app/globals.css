@@ -319,70 +319,23 @@ body {
 .blog-card {
   position: relative;
   background: var(--color-surface);
-  border: 1px solid var(--color-border);
-  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.4s ease;
-}
-/* Animated gradient border */
-.blog-card::before {
-  content: "";
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  padding: 1px;
-  background: conic-gradient(from var(--card-angle, 0deg), transparent 60%, var(--color-accent) 75%, var(--color-accent-2) 85%, transparent 100%);
-  mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  mask-composite: exclude;
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  opacity: 0;
-  transition: opacity 0.5s ease;
-  pointer-events: none;
-  z-index: 1;
-}
-.blog-card:hover::before {
-  opacity: 1;
-  animation: card-border-spin 3s linear infinite;
-}
-@keyframes card-border-spin {
-  to { --card-angle: 360deg; }
-}
-@property --card-angle {
-  syntax: "<angle>";
-  initial-value: 0deg;
-  inherits: false;
+  box-shadow: 0 0 0 1px var(--color-border);
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.5s cubic-bezier(0.22, 1, 0.36, 1);
 }
 .blog-card:hover {
   transform: translateY(-6px) scale(1.01);
-  border-color: rgba(45, 212, 191, 0.3);
   box-shadow:
+    0 0 0 1px rgba(45, 212, 191, 0.4),
     0 20px 60px rgba(45, 212, 191, 0.12),
     0 8px 20px rgba(0, 0, 0, 0.15),
     0 0 40px rgba(45, 212, 191, 0.06);
 }
 [data-theme="light"] .blog-card:hover {
-  border-color: rgba(13, 148, 136, 0.3);
   box-shadow:
+    0 0 0 1px rgba(13, 148, 136, 0.3),
     0 20px 60px rgba(13, 148, 136, 0.12),
     0 8px 20px rgba(0, 0, 0, 0.08),
     0 0 40px rgba(13, 148, 136, 0.04);
-}
-
-/* Featured card — extra dramatic */
-.blog-card-featured {
-  overflow: hidden;
-}
-.blog-card-featured::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, transparent 30%, rgba(45, 212, 191, 0.04) 50%, transparent 70%);
-  background-size: 400% 400%;
-  transition: background-position 0.8s ease;
-  pointer-events: none;
-  z-index: 2;
-}
-.blog-card-featured:hover::after {
-  background-position: 100% 100%;
 }
 
 /* Shine sweep across images on hover */

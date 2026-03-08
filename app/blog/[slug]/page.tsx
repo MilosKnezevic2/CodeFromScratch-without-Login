@@ -130,10 +130,7 @@ export default async function PostPage({ params }: PageProps) {
               postTitle={post.title}
             />
 
-            <div className="article-card rounded-2xl border border-border bg-surface">
-              {/* Gradient accent top bar */}
-              <div className="h-1 bg-gradient-to-r from-accent to-accent-2" />
-
+            <div className="article-card overflow-hidden rounded-2xl border border-border bg-surface">
               {/* Featured image */}
               {post.featuredImage?.asset && (
                 <div className="relative h-64 w-full overflow-hidden sm:h-80 lg:h-96">
@@ -148,6 +145,8 @@ export default async function PostPage({ params }: PageProps) {
                   <div className="absolute inset-0 bg-gradient-to-t from-surface via-transparent to-transparent" />
                 </div>
               )}
+              {/* Gradient accent bar below image */}
+              <div className="h-px bg-gradient-to-r from-accent/30 via-accent-2/20 to-transparent" />
 
               <div className="p-6 sm:p-10">
                 {/* Header with staggered animations */}

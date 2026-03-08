@@ -220,7 +220,8 @@ export default async function BlogPage({
               <FadeUp delay={0.2}>
                 <Link
                   href={`/blog/${featured.slug.current}`}
-                  className="blog-card blog-card-featured group mt-10 block overflow-hidden rounded-3xl"
+                  className="blog-card group mt-10 block rounded-3xl"
+                  style={{ borderRadius: "1.5rem", overflow: "hidden" }}
                 >
                   <div className="relative min-h-[360px] sm:min-h-[440px] lg:min-h-[500px]">
                     {/* Full bleed image with zoom on hover */}
@@ -327,10 +328,11 @@ export default async function BlogPage({
                   <FadeUp key={post._id} delay={0.08 * i} className="stagger-enter" style={{ animationDelay: `${0.1 * i}s` }}>
                     <Link
                       href={`/blog/${post.slug.current}`}
-                      className="blog-card card-inner-glow group flex h-full flex-col overflow-hidden rounded-2xl"
+                      className="blog-card group flex h-full flex-col rounded-2xl"
+                      style={{ borderRadius: "1rem", overflow: "hidden" }}
                     >
                       {/* Image section */}
-                      <div className="img-shine relative aspect-[16/10] w-full overflow-hidden">
+                      <div className="img-shine relative aspect-[16/10] w-full overflow-hidden rounded-t-2xl" style={{ borderTopLeftRadius: "1rem", borderTopRightRadius: "1rem" }}>
                         {post.featuredImage?.asset ? (
                           <Image
                             src={urlFor(post.featuredImage).width(800).height(500).quality(80).url()}
