@@ -6,6 +6,7 @@ import { useState, useEffect } from "react";
 import UserMenu from "./auth/UserMenu";
 import ThemeToggle from "./ThemeToggle";
 import SearchModal from "./blog/SearchModal";
+import Logo from "./Logo";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -42,12 +43,7 @@ export default function Navbar() {
       }`}
     >
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link
-          href="/"
-          className="text-lg font-bold text-foreground transition-colors hover:text-accent"
-        >
-          Code<span className="gradient-text">FromScratch</span>
-        </Link>
+        <Logo />
 
         {/* Desktop nav */}
         <div className="hidden items-center gap-6 md:flex">

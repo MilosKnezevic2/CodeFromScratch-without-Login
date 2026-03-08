@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SubscribeForm from "./newsletter/SubscribeForm";
+import Logo from "./Logo";
 
 export default function Footer() {
   const year = new Date().getFullYear();
@@ -11,9 +12,7 @@ export default function Footer() {
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-12">
           {/* Brand column */}
           <div className="lg:col-span-4">
-            <Link href="/" className="inline-block text-xl font-bold text-foreground">
-              Code<span className="gradient-text">FromScratch</span>
-            </Link>
+            <Logo />
             <p className="mt-4 max-w-xs text-sm leading-relaxed text-muted">
               Hands-on tutorials, in-depth guides, and premium resources to help
               you master modern web development.
