@@ -102,27 +102,25 @@ export default function CollectionsPage() {
           {collections.map((col) => (
             <div
               key={col.id}
-              className="group relative rounded-2xl border border-border bg-surface p-5 transition hover:border-accent/20"
+              className="group flex items-center gap-3 rounded-2xl border border-border bg-surface p-5 transition hover:border-accent/20"
             >
-              <Link href={`/dashboard/collections/${col.id}`} className="block">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-cyan-500/10">
-                    <svg className="h-4 w-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
-                    </svg>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-semibold text-foreground transition group-hover:text-accent truncate">{col.name}</p>
-                    <p className="text-xs text-muted-foreground">{col._count.savedPosts} {col._count.savedPosts === 1 ? "post" : "posts"}</p>
-                  </div>
-                  <svg className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+              <Link href={`/dashboard/collections/${col.id}`} className="flex flex-1 items-center gap-3 min-w-0">
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-cyan-500/10">
+                  <svg className="h-4 w-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v12a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9a2.25 2.25 0 00-2.25-2.25h-5.379a1.5 1.5 0 01-1.06-.44z" />
                   </svg>
                 </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground transition group-hover:text-accent truncate">{col.name}</p>
+                  <p className="text-xs text-muted-foreground">{col._count.savedPosts} {col._count.savedPosts === 1 ? "post" : "posts"}</p>
+                </div>
+                <svg className="h-4 w-4 shrink-0 text-muted-foreground transition group-hover:translate-x-0.5 group-hover:text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                </svg>
               </Link>
               <button
                 onClick={() => handleDelete(col.id)}
-                className="absolute right-3 top-3 rounded-lg p-1.5 text-muted-foreground opacity-0 transition hover:bg-red-500/10 hover:text-red-400 group-hover:opacity-100"
+                className="shrink-0 rounded-lg p-2 text-muted-foreground transition hover:bg-red-500/10 hover:text-red-400"
                 aria-label="Delete collection"
               >
                 <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
