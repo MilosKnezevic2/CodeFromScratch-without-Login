@@ -1,11 +1,19 @@
 "use client";
 
 import { signIn, getProviders } from "next-auth/react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="rounded-xl border border-border bg-surface p-8 shadow-xl animate-pulse"><div className="h-8 w-32 bg-surface-2 rounded mb-6" /><div className="space-y-4"><div className="h-10 bg-surface-2 rounded" /><div className="h-10 bg-surface-2 rounded" /><div className="h-10 bg-surface-2 rounded" /></div></div>}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl") ?? "/dashboard";

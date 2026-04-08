@@ -23,8 +23,7 @@ export default function AdminLoginPage() {
       });
 
       if (res.ok) {
-        router.push("/portal-cfs-admin");
-        router.refresh();
+        window.location.href = "/portal-cfs-admin";
       } else {
         const data = await res.json().catch(() => null);
         setError(data?.error || "Invalid credentials");

@@ -30,6 +30,31 @@ export default function TextSelectionShare({ slug }: { slug: string }) {
     return () => document.removeEventListener("mouseup", handleMouseUp);
   }, [handleMouseUp]);
 
+  // Watermark: append source URL when copying text from article
+  useEffect(() => {
+    function handleCopy(e: ClipboardEvent) {
+      const articleEl = document.getElementById("article-content");
+      if (!articleEl) return;
+      const sel = window.getSelection();
+      if (!sel || !sel.rangeCount) return;
+      // Only watermark if selection is inside the article
+      if (!articleEl.contains(sel.anchorNode)) return;
+      const text = sel.toString();
+      if (!text || text.length < 20) return;
+      // Don't watermark code blocks
+      const container = sel.getRangeAt(0).commonAncestorContainer;
+      const parentEl = container instanceof HTMLElement ? container : container.parentElement;
+      if (parentEl?.closest("pre, code")) return;
+
+      const pageUrl = `${window.location.origin}/blog/${slug}`;
+      const watermarked = `${text}\n\n— Source: CodeFromScratch.org\n${pageUrl}`;
+      e.clipboardData?.setData("text/plain", watermarked);
+      e.preventDefault();
+    }
+    document.addEventListener("copy", handleCopy);
+    return () => document.removeEventListener("copy", handleCopy);
+  }, [slug]);
+
   useEffect(() => {
     function handleClick() {
       setTimeout(() => {
@@ -76,7 +101,8 @@ export default function TextSelectionShare({ slug }: { slug: string }) {
         </a>
         <button
           onClick={() => {
-            navigator.clipboard.writeText(selection.text);
+            const pageUrl = `${window.location.origin}/blog/${slug}`;
+            navigator.clipboard.writeText(`${selection.text}\n\n— Source: CodeFromScratch.org\n${pageUrl}`);
             setSelection(null);
           }}
           className="flex h-7 w-7 items-center justify-center rounded text-muted transition hover:bg-surface-2 hover:text-accent"

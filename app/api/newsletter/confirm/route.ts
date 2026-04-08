@@ -1,18 +1,21 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const token = searchParams.get("token");
+  const rawToken = searchParams.get("token");
 
-  if (!token) {
+  if (!rawToken) {
     return NextResponse.redirect(
       `${process.env.NEXT_PUBLIC_SITE_URL}/newsletter/confirm?status=error`
     );
   }
 
-  const subscriber = await prisma.newsletterSubscriber.findUnique({
-    where: { confirmToken: token },
+  const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+  const subscriber = await prisma.newsletterSubscriber.findFirst({
+    where: { confirmToken: hashedToken },
   });
 
   if (!subscriber) {

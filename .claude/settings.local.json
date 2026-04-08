@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>console.log\\(JSON.stringify\\(JSON.parse\\(d\\),null,2\\)\\)\\)\")",
+      "Bash(node -e 'console.log\\(encodeURIComponent\\('\\\\''*[_type == \"post\"] | order\\(publishedAt desc\\) { _id, title, slug, status, excerpt, \"hasImage\": defined\\(featuredImage\\), \"categories\": categories[]->title, \"tags\": tags[]->title, publishedAt }'\\\\''\\)\\)')",
+      "Bash(curl -s 'https://jkgmggst.api.sanity.io/v2024-01-01/data/query/production?query=__TRACKED_VAR__' -H 'Authorization: Bearer sksbbA87J0DQ9FBsAHjuTA91lwcDuVhOl7hzO0mD0xCEWN3kzGrZnaMZruGjlIwbh8XK7YJDFj4g3XeWKCG69get2OLvPXOWx1DGCfPaVdGav9LhyZijwf92seoXTixwdgRAVL1gQhEYsigoymsK04uXeImJs5jHOfRQC79V3kbaTFoabhfb')",
+      "Bash(node -e 'console.log\\(encodeURIComponent\\('\\\\''*[_type == \"tag\"] { _id, title, slug, \"category\": category->title } | order\\(title asc\\)'\\\\''\\)\\)')",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\);process.stdin.on\\('end',\\(\\)=>console.log\\(JSON.stringify\\(JSON.parse\\(d\\).result,null,2\\)\\)\\)\")",
+      "Bash(node -e 'console.log\\(encodeURIComponent\\('\\\\''*[_type == \"category\"] { _id, title, slug } | order\\(title asc\\)'\\\\''\\)\\)')",
+      "Bash(node -e 'console.log\\(encodeURIComponent\\('\\\\''*[_type == \"post\" && _id == \"hBCThv4cD85OyEoase9Hyy\"] { featuredImage }'\\\\''\\)\\)')",
+      "Bash(node -e 'console.log\\(encodeURIComponent\\('\\\\''*[_type == \"post\" && _id == \"hBCThv4cD85OyEoasZlM2U\"] { title, excerpt, content, featuredImage, categories, tags }'\\\\''\\)\\)')",
+      "Bash(node -e 'console.log\\(encodeURIComponent\\('\\\\''*[_type == \"post\" && _id in [\"8fcb9be0-257a-4c42-bdbd-b595a302cd56\", \"a728b19d-6f07-48d6-95d0-b7799e47726d\"]] { _id, title, excerpt, content, featuredImage, categories, tags }'\\\\''\\)\\)')",
+      "Bash(node -e 'console.log\\(encodeURIComponent\\('\\\\''*[_type == \"post\" && _id == \"a728b19d-6f07-48d6-95d0-b7799e47726d\"] { _id, title, content[0...5] }'\\\\''\\)\\)')",
+      "Bash(curl -sL \"https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=1400&h=933&fit=crop\" -o /tmp/nextjs-thumb.jpg)",
+      "Bash(curl -s -X POST https://jkgmggst.api.sanity.io/v2024-01-01/assets/images/production -H 'Authorization: Bearer sksbbA87J0DQ9FBsAHjuTA91lwcDuVhOl7hzO0mD0xCEWN3kzGrZnaMZruGjlIwbh8XK7YJDFj4g3XeWKCG69get2OLvPXOWx1DGCfPaVdGav9LhyZijwf92seoXTixwdgRAVL1gQhEYsigoymsK04uXeImJs5jHOfRQC79V3kbaTFoabhfb' -H 'Content-Type: image/jpeg' --data-binary @/tmp/nextjs-thumb.jpg)",
+      "Bash(curl -sL \"https://images.unsplash.com/photo-1621839673705-6617adf9e890?w=1400&h=933&fit=crop\" -o /tmp/htmlcss-thumb.jpg)",
+      "Bash(curl -s -X POST https://jkgmggst.api.sanity.io/v2024-01-01/assets/images/production -H 'Authorization: Bearer sksbbA87J0DQ9FBsAHjuTA91lwcDuVhOl7hzO0mD0xCEWN3kzGrZnaMZruGjlIwbh8XK7YJDFj4g3XeWKCG69get2OLvPXOWx1DGCfPaVdGav9LhyZijwf92seoXTixwdgRAVL1gQhEYsigoymsK04uXeImJs5jHOfRQC79V3kbaTFoabhfb' -H 'Content-Type: image/jpeg' --data-binary @/tmp/htmlcss-thumb.jpg)",
+      "Bash(node fix-posts.mjs)",
+      "Bash(npx tsc:*)",
+      "Bash(curl -s \"http://localhost:3000/api/posts/getting-started-with-nextjs/suggested\")",
+      "Bash(curl -s \"http://localhost:3000/api/posts/css-grid-layout-the-complete-visual-guide/suggested\")",
+      "Bash(curl -s \"http://localhost:3000/api/posts/what-is-web-development-beginners-guide/suggested\")",
+      "Bash(curl -s \"http://localhost:3000/api/posts/typescript-generics-explained-with-real-world-examples/suggested\")",
+      "Bash(curl -s \"http://localhost:3000/api/posts/html-css-beginners-build-first-web-page/suggested\")",
+      "Bash(xargs grep:*)"
+    ]
+  }
+}

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { randomUUID } from "crypto";
 import { prisma } from "@/lib/prisma";
+import { resend, EMAIL_FROM } from "@/lib/resend";
 
 export async function POST(request: NextRequest) {
   try {
@@ -41,6 +42,18 @@ export async function POST(request: NextRequest) {
           preferences: { interests: [source] },
         },
       });
+    }
+
+    // Notify admin
+    try {
+      await resend.emails.send({
+        from: EMAIL_FROM,
+        to: "office@codefromscratch.org",
+        subject: `New ebook interest: ${source}`,
+        text: `Someone signed up for ebook notifications.\n\nEmail: ${email}\nSource: ${source}`,
+      });
+    } catch {
+      // Don't fail if email fails
     }
 
     return NextResponse.json({ success: true });

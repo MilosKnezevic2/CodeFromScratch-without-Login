@@ -29,6 +29,7 @@ export default function ReadingProgress() {
       style={{
         scaleX,
         background: "linear-gradient(90deg, var(--color-accent), var(--color-accent-2))",
+        boxShadow: "0 0 12px rgba(45, 212, 191, 0.5), 0 0 4px rgba(45, 212, 191, 0.3)",
       }}
     />
   );

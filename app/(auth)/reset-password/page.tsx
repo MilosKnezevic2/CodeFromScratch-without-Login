@@ -1,10 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 export default function ResetPasswordPage() {
+  return (
+    <Suspense fallback={<div className="rounded-xl border border-border bg-surface p-8 shadow-sm animate-pulse"><div className="h-8 w-48 bg-surface-2 rounded mb-6" /><div className="space-y-4"><div className="h-10 bg-surface-2 rounded" /><div className="h-10 bg-surface-2 rounded" /></div></div>}>
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}
+
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const token = searchParams.get("token");

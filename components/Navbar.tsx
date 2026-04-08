@@ -57,9 +57,9 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`rounded-lg px-3 py-1.5 text-sm transition ${
+                  className={`nav-link rounded-lg px-3 py-1.5 text-sm transition ${
                     isActive
-                      ? "bg-accent/10 text-accent font-medium"
+                      ? "active bg-accent/10 text-accent font-medium"
                       : "text-muted hover:text-foreground hover:bg-surface/50"
                   }`}
                 >

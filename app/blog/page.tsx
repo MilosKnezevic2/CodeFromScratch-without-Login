@@ -50,13 +50,14 @@ function getPageWindow(current: number, total: number): (number | "...")[] {
 export default async function BlogPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; category?: string; tag?: string; q?: string }>;
+  searchParams: Promise<{ page?: string; category?: string; tag?: string; q?: string; sort?: string }>;
 }) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
   const activeCategory = params.category || "";
   const activeTag = params.tag || "";
   const searchQuery = params.q || "";
+  const activeSort = (params.sort === "oldest" ? "oldest" : "newest") as "newest" | "oldest";
   const LIMIT = 12;
 
   const [result, categories, allTags] = await Promise.all([
@@ -66,7 +67,7 @@ export default async function BlogPage({
         ? getPostsByTag(activeTag, page, LIMIT)
         : activeCategory
           ? getPostsByCategory(activeCategory, page, LIMIT)
-          : getPosts(page, LIMIT),
+          : getPosts(page, LIMIT, activeSort),
     getCategoriesWithCounts(),
     getTagsWithCategory(),
   ]);
@@ -100,7 +101,16 @@ export default async function BlogPage({
     if (searchQuery) parts.push(`q=${encodeURIComponent(searchQuery)}`);
     if (activeCategory) parts.push(`category=${activeCategory}`);
     if (activeTag) parts.push(`tag=${activeTag}`);
+    if (activeSort !== "newest") parts.push(`sort=${activeSort}`);
     return `/blog?${parts.join("&")}`;
+  }
+
+  function sortHref(sort: string) {
+    const parts: string[] = [];
+    if (activeCategory) parts.push(`category=${activeCategory}`);
+    if (activeTag) parts.push(`tag=${activeTag}`);
+    if (sort !== "newest") parts.push(`sort=${sort}`);
+    return `/blog${parts.length > 0 ? "?" + parts.join("&") : ""}`;
   }
 
   return (
@@ -159,6 +169,26 @@ export default async function BlogPage({
               />
             </Suspense>
           </FadeUp>
+        )}
+
+        {/* Sort options */}
+        {!searchQuery && (
+          <div className="mt-4 flex items-center gap-2 text-xs">
+            <span className="text-muted-foreground">Sort:</span>
+            {(["newest", "oldest"] as const).map((s) => (
+              <Link
+                key={s}
+                href={sortHref(s)}
+                className={`rounded-full px-3 py-1 font-medium transition ${
+                  activeSort === s
+                    ? "bg-accent/10 text-accent"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {s === "newest" ? "Newest" : "Oldest"}
+              </Link>
+            ))}
+          </div>
         )}
 
         {/* Active filter heading */}
@@ -223,7 +253,7 @@ export default async function BlogPage({
                   className="blog-card group mt-10 block rounded-3xl"
                   style={{ borderRadius: "1.5rem", overflow: "hidden" }}
                 >
-                  <div className="relative min-h-[360px] sm:min-h-[440px] lg:min-h-[500px]">
+                  <div className="relative min-h-[280px] sm:min-h-[380px] lg:min-h-[480px]">
                     {/* Full bleed image with zoom on hover */}
                     {featured.featuredImage?.asset ? (
                       <Image
@@ -306,7 +336,7 @@ export default async function BlogPage({
                           {new Date(featured.publishedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" })}
                         </span>
                         {/* Read arrow */}
-                        <span className="ml-auto hidden items-center gap-2 rounded-full border border-white/20 px-4 py-2 text-sm font-medium text-white transition group-hover:border-accent group-hover:bg-accent group-hover:text-[#0f172a] sm:flex">
+                        <span className="ml-auto flex items-center gap-2 rounded-full border border-white/20 px-3 py-1.5 text-xs font-medium text-white transition group-hover:border-accent group-hover:bg-accent group-hover:text-[#0f172a] sm:px-4 sm:py-2 sm:text-sm">
                           Read Article
                           <svg className="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
@@ -325,7 +355,7 @@ export default async function BlogPage({
             {showcasePosts.length > 0 && (
               <div className="mt-12 grid gap-6 sm:grid-cols-2">
                 {showcasePosts.map((post, i) => (
-                  <FadeUp key={post._id} delay={0.08 * i} className="stagger-enter" style={{ animationDelay: `${0.1 * i}s` }}>
+                  <FadeUp key={post._id} delay={0.08 * i} className="stagger-enter">
                     <Link
                       href={`/blog/${post.slug.current}`}
                       className="blog-card group flex h-full flex-col rounded-2xl"
@@ -339,7 +369,7 @@ export default async function BlogPage({
                             alt={post.featuredImage.alt || post.title}
                             fill
                             sizes="(max-width: 640px) 100vw, 50vw"
-                            className="object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                            className="object-cover transition-transform duration-700 ease-out group-hover:scale-105"
                           />
                         ) : (
                           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-accent/10 via-surface to-accent-2/10">
@@ -487,7 +517,7 @@ export default async function BlogPage({
                             {post.title}
                           </h3>
                           {post.excerpt && (
-                            <p className="hidden text-xs text-muted line-clamp-1 sm:block">{post.excerpt}</p>
+                            <p className="text-xs text-muted line-clamp-1">{post.excerpt}</p>
                           )}
                         </div>
 
@@ -506,7 +536,7 @@ export default async function BlogPage({
                           )}
                         </div>
 
-                        {/* Arrow */}
+                        {/* Arrow — desktop only */}
                         <div className="hidden h-9 w-9 shrink-0 items-center justify-center rounded-full border border-border transition-all group-hover:border-accent group-hover:bg-accent/10 sm:flex">
                           <svg className="h-4 w-4 text-muted-foreground transition-all group-hover:translate-x-0.5 group-hover:text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
                             <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />

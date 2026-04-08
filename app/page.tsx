@@ -1,7 +1,28 @@
 import Link from "next/link";
+import Image from "next/image";
 import NewsletterCTA from "@/components/newsletter/NewsletterCTA";
+import { getPosts } from "@/lib/sanity/queries";
+import { urlFor } from "@/lib/sanity/image";
+import { prisma } from "@/lib/prisma";
 
-export default function HomePage() {
+async function getStats() {
+  try {
+    const [userCount, subscriberCount] = await Promise.all([
+      prisma.user.count(),
+      prisma.newsletterSubscriber.count({ where: { confirmed: true } }),
+    ]);
+    return { userCount, subscriberCount };
+  } catch {
+    return { userCount: 0, subscriberCount: 0 };
+  }
+}
+
+export default async function HomePage() {
+  const [{ posts }, stats] = await Promise.all([
+    getPosts(1, 4),
+    getStats(),
+  ]);
+
   return (
     <div>
       {/* Hero Section */}
@@ -37,6 +58,24 @@ export default function HomePage() {
               Browse Courses
             </Link>
           </div>
+        </div>
+      </section>
+
+      {/* Social Proof Stats */}
+      <section className="border-y border-border bg-surface/50">
+        <div className="mx-auto grid max-w-4xl grid-cols-3 divide-x divide-border px-4 py-10">
+          {[
+            { value: `${posts.length > 0 ? posts.length + "+" : "10+"}`, label: "Articles" },
+            { value: `${stats.userCount || "50"}+`, label: "Readers" },
+            { value: "100%", label: "Free to Start" },
+          ].map((stat) => (
+            <div key={stat.label} className="px-4 text-center">
+              <p className="gradient-text text-2xl font-extrabold sm:text-3xl">{stat.value}</p>
+              <p className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
+                {stat.label}
+              </p>
+            </div>
+          ))}
         </div>
       </section>
 
@@ -97,6 +136,72 @@ export default function HomePage() {
           ))}
         </div>
       </section>
+
+      {/* Latest Posts Section */}
+      {posts.length > 0 && (
+        <section className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">
+          <div className="flex items-end justify-between">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">
+                Latest <span className="gradient-text">Articles</span>
+              </h2>
+              <p className="mt-1 text-sm text-muted">Fresh tutorials and guides.</p>
+            </div>
+            <Link
+              href="/blog"
+              className="hidden text-sm font-medium text-accent transition hover:text-accent-2 sm:block"
+            >
+              View all articles &rarr;
+            </Link>
+          </div>
+
+          <div className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            {posts.slice(0, 4).map((post) => (
+              <Link
+                key={post._id}
+                href={`/blog/${post.slug.current}`}
+                className="group overflow-hidden rounded-xl border border-border bg-surface transition hover:border-accent/30 hover:shadow-lg"
+              >
+                {post.featuredImage?.asset && (
+                  <div className="aspect-[16/9] overflow-hidden">
+                    <Image
+                      src={urlFor(post.featuredImage).width(400).height(225).quality(80).url()}
+                      alt={post.featuredImage.alt || post.title}
+                      width={400}
+                      height={225}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                )}
+                <div className="p-4">
+                  {post.categories?.[0] && (
+                    <span className="text-xs font-medium text-accent">
+                      {post.categories[0].title}
+                    </span>
+                  )}
+                  <h3 className="mt-1 line-clamp-2 text-sm font-semibold text-foreground group-hover:text-accent transition">
+                    {post.title}
+                  </h3>
+                  {post.readingTime && (
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      {post.readingTime} min read
+                    </p>
+                  )}
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          <div className="mt-6 text-center sm:hidden">
+            <Link
+              href="/blog"
+              className="text-sm font-medium text-accent transition hover:text-accent-2"
+            >
+              View all articles &rarr;
+            </Link>
+          </div>
+        </section>
+      )}
 
       {/* Newsletter CTA */}
       <div className="mx-auto max-w-6xl px-4 pb-20 sm:px-6 lg:px-8">

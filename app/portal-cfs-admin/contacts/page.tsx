@@ -1,9 +1,6 @@
-import { requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminContactsPage() {
-  await requireAdmin();
-
   const submissions = await prisma.contactSubmission.findMany({
     orderBy: { createdAt: "desc" },
     take: 50,

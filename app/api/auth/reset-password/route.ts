@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import bcrypt from "bcryptjs";
+import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 
 export async function POST(request: Request) {
@@ -20,8 +21,10 @@ export async function POST(request: Request) {
       );
     }
 
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
     const verificationToken = await prisma.verificationToken.findFirst({
-      where: { identifier: email, token },
+      where: { identifier: email, token: hashedToken },
     });
 
     if (!verificationToken || verificationToken.expires < new Date()) {
@@ -40,7 +43,7 @@ export async function POST(request: Request) {
 
     await prisma.verificationToken.delete({
       where: {
-        identifier_token: { identifier: email, token },
+        identifier_token: { identifier: email, token: hashedToken },
       },
     });
 

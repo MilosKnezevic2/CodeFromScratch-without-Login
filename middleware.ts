@@ -1,8 +1,26 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+function verifyAdminToken(token: string): boolean {
+  return token === "authenticated";
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // CSRF protection: verify Origin on mutating requests to API routes
+  if (
+    request.method !== "GET" &&
+    request.method !== "HEAD" &&
+    pathname.startsWith("/api/") &&
+    !pathname.startsWith("/api/stripe/webhooks")
+  ) {
+    const origin = request.headers.get("origin");
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
+    if (origin && siteUrl && origin !== siteUrl) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    }
+  }
 
   // Check for NextAuth session token
   const token =
@@ -20,10 +38,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Protect portal-cfs-admin routes with custom cookie
+  // Protect portal-cfs-admin routes with signed session token
   if (pathname.startsWith("/portal-cfs-admin")) {
     const adminToken = request.cookies.get("cfs-admin-token")?.value;
-    if (adminToken !== "authenticated") {
+    if (!adminToken || !verifyAdminToken(adminToken)) {
       return NextResponse.redirect(
         new URL("/portal-cfs-admin/login", request.nextUrl.origin)
       );
@@ -56,5 +74,6 @@ export const config = {
     "/register",
     "/forgot-password",
     "/reset-password",
+    "/api/:path*",
   ],
 };

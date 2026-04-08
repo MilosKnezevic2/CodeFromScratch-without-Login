@@ -8,6 +8,8 @@ const links = [
   { href: "/dashboard/saved", label: "Saved Posts", icon: "M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" },
   { href: "/dashboard/collections", label: "Collections", icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" },
   { href: "/dashboard/ebooks", label: "My Ebooks", icon: "M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" },
+  { href: "/dashboard/history", label: "Reading History", icon: "M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" },
+  { href: "/dashboard/stats", label: "Reading Stats", icon: "M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" },
 ];
 
 const accountLinks = [
@@ -51,7 +53,7 @@ function NavGroup({ title, items }: { title: string; items: typeof links }) {
               </svg>
               {link.label}
               {isActive && (
-                <div className="ml-auto h-3 w-3 rounded-full border border-accent bg-transparent shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]" />
+                <div className="ml-auto h-3 w-3 rounded-full border border-accent bg-transparent shadow-[inset_0_2px_4px_rgba(0,0,0,0.25)] dark:shadow-[inset_0_2px_4px_rgba(0,0,0,0.6)]" />
               )}
             </Link>
           );

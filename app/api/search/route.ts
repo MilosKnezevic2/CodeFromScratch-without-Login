@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { client } from "@/lib/sanity/client";
+import { rateLimit } from "@/lib/rate-limit";
 
 interface SearchResult {
   _id: string;
@@ -10,6 +11,12 @@ interface SearchResult {
 }
 
 export async function GET(req: NextRequest) {
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
+  const { success } = rateLimit(`search:${ip}`, 30, 60 * 1000);
+  if (!success) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 });
+  }
+
   const q = req.nextUrl.searchParams.get("q") || "";
 
   if (q.length < 2) {

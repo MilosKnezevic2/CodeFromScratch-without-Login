@@ -40,18 +40,21 @@ const components: PortableTextComponents = {
       const text = getChildText(children);
       const id = slugify(text);
       return (
-        <h2 id={id} className="group mb-4 mt-10 scroll-mt-24 flex items-center gap-3 text-2xl font-bold text-foreground">
-          <span className="inline-block h-6 w-1 rounded-full bg-gradient-to-b from-accent to-accent-2" />
-          {children}
-          <HeadingAnchor id={id} />
-        </h2>
+        <div className="mt-16 mb-5">
+          <div className="mb-6 h-px bg-gradient-to-r from-transparent via-muted-foreground/40 to-transparent" />
+          <h2 id={id} className="group scroll-mt-24 flex items-center gap-3 text-2xl font-bold text-foreground">
+            <span className="inline-block h-6 w-1 rounded-full bg-gradient-to-b from-accent to-accent-2" />
+            {children}
+            <HeadingAnchor id={id} />
+          </h2>
+        </div>
       );
     },
     h3: ({ children }) => {
       const text = getChildText(children);
       const id = slugify(text);
       return (
-        <h3 id={id} className="group mb-3 mt-8 scroll-mt-24 flex items-center text-xl font-semibold text-foreground">
+        <h3 id={id} className="group mb-4 mt-12 scroll-mt-24 flex items-center text-xl font-semibold text-foreground">
           {children}
           <HeadingAnchor id={id} />
         </h3>

@@ -1,66 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import FadeUp from "@/components/animations/FadeUp";
+import PricingToggle from "@/components/stripe/PricingToggle";
 
 export const metadata: Metadata = {
   title: "Pricing | CodeFromScratch",
   description: "Choose the plan that fits your learning journey.",
 };
-
-const plans = [
-  {
-    name: "Free",
-    description: "Start learning with free articles and community access.",
-    price: "$0",
-    period: "forever",
-    features: [
-      "Access to all free articles",
-      "Save posts to collections",
-      "Newsletter subscription",
-      "Community access",
-      "Purchase ebooks & courses individually",
-    ],
-    highlighted: false,
-    comingSoon: false,
-    cta: "Get Started",
-    ctaHref: "/register",
-  },
-  {
-    name: "Pro",
-    description: "Unlock every premium article and early access content.",
-    price: null,
-    period: "/month",
-    features: [
-      "Everything in Free",
-      "Access to all premium articles",
-      "Early access to new content",
-      "Ad-free reading experience",
-      "Priority support",
-      "Purchase ebooks & courses individually",
-    ],
-    highlighted: true,
-    comingSoon: true,
-    cta: "Coming Soon",
-    ctaHref: null,
-  },
-  {
-    name: "Pro+",
-    description: "The full experience — premium content, every ebook & course included.",
-    price: null,
-    period: "/month",
-    features: [
-      "Everything in Pro",
-      "All ebooks included for free",
-      "All courses included for free",
-      "Exclusive code repos & starter kits",
-      "Members-only content drops",
-    ],
-    highlighted: false,
-    comingSoon: true,
-    cta: "Coming Soon",
-    ctaHref: null,
-  },
-];
 
 const faqs = [
   {
@@ -77,11 +23,15 @@ const faqs = [
   },
   {
     q: "Is there a student discount?",
-    a: "Yes! We will offer a 50% discount for students with a valid .edu email address when paid plans launch.",
+    a: "Yes! We offer a 50% discount for students with a valid .edu email address. Contact us to claim your discount.",
+  },
+  {
+    q: "Is there a money-back guarantee?",
+    a: "Absolutely. If you're not satisfied within the first 30 days, we'll refund your payment. No questions asked.",
   },
   {
     q: "Can I switch plans later?",
-    a: "Absolutely. You can upgrade or downgrade your plan at any time. Changes take effect on your next billing cycle.",
+    a: "Yes. You can upgrade or downgrade your plan at any time. Changes take effect on your next billing cycle.",
   },
 ];
 
@@ -111,117 +61,32 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Pricing Cards */}
+      {/* Pricing Cards with Toggle */}
       <section className="mx-auto -mt-8 max-w-6xl px-4 sm:px-6 lg:px-8">
-        <div className="grid items-start gap-6 md:grid-cols-3">
-          {plans.map((plan, i) => (
-            <FadeUp key={plan.name} delay={0.05 * i}>
-              <div
-                className={`relative flex flex-col rounded-2xl border p-8 transition ${
-                  plan.highlighted
-                    ? "scale-[1.02] border-accent bg-surface shadow-2xl shadow-accent/10 ring-1 ring-accent md:scale-105"
-                    : "border-border bg-surface shadow-lg"
-                }`}
-              >
-                {/* Badge */}
-                {plan.highlighted && (
-                  <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <span className="rounded-full bg-accent px-4 py-1 text-xs font-bold text-[#0f172a] shadow-md">
-                      Most Popular
-                    </span>
-                  </div>
-                )}
-
-                {/* Header */}
-                <div className="mb-6">
-                  <h3 className="text-xl font-bold text-foreground">{plan.name}</h3>
-                  <p className="mt-1 text-sm text-muted">{plan.description}</p>
-                </div>
-
-                {/* Price */}
-                <div className="mb-6 flex items-baseline gap-1">
-                  {plan.comingSoon ? (
-                    <span className="rounded-lg bg-accent/10 px-3 py-1.5 text-sm font-semibold text-accent">
-                      Coming Soon
-                    </span>
-                  ) : (
-                    <>
-                      <span className="text-4xl font-extrabold tracking-tight text-foreground">
-                        {plan.price}
-                      </span>
-                      <span className="text-sm text-muted-foreground">
-                        {plan.period}
-                      </span>
-                    </>
-                  )}
-                </div>
-
-                {/* Divider */}
-                <div className="mb-6 h-px bg-border" />
-
-                {/* Features */}
-                <ul className="mb-8 flex-1 space-y-3">
-                  {plan.features.map((feature) => (
-                    <li key={feature} className="flex items-start gap-2.5 text-sm">
-                      <svg
-                        className={`mt-0.5 h-4 w-4 shrink-0 ${
-                          plan.highlighted ? "text-accent" : "text-green-500"
-                        }`}
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                        strokeWidth={2.5}
-                      >
-                        <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                      </svg>
-                      <span className="text-muted">{feature}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                {/* CTA */}
-                {plan.comingSoon ? (
-                  <button
-                    disabled
-                    className="w-full rounded-xl border border-border px-5 py-3 text-sm font-semibold text-muted-foreground opacity-60 cursor-not-allowed"
-                  >
-                    Coming Soon
-                  </button>
-                ) : plan.ctaHref ? (
-                  <Link
-                    href={plan.ctaHref}
-                    className={`block w-full rounded-xl px-5 py-3 text-center text-sm font-semibold transition ${
-                      plan.highlighted
-                        ? "cta-glow"
-                        : "border border-border text-foreground hover:border-accent/50 hover:text-accent"
-                    }`}
-                  >
-                    {plan.cta}
-                  </Link>
-                ) : null}
-              </div>
-            </FadeUp>
-          ))}
-        </div>
+        <PricingToggle />
       </section>
 
-      {/* Social Proof */}
-      <FadeUp delay={0.2}>
-        <section className="mx-auto mt-20 max-w-3xl px-4 text-center sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-center gap-8 text-muted-foreground">
-            <div className="flex flex-col items-center">
-              <span className="text-3xl font-extrabold text-foreground">10+</span>
-              <span className="mt-1 text-xs uppercase tracking-wider">Articles</span>
+      {/* Trust Badges */}
+      <FadeUp delay={0.15}>
+        <section className="mx-auto mt-12 max-w-3xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-wrap items-center justify-center gap-6 text-xs text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <svg className="h-4 w-4 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              </svg>
+              30-day money-back guarantee
             </div>
-            <div className="h-8 w-px bg-border" />
-            <div className="flex flex-col items-center">
-              <span className="text-3xl font-extrabold text-foreground">5+</span>
-              <span className="mt-1 text-xs uppercase tracking-wider">Categories</span>
+            <div className="flex items-center gap-1.5">
+              <svg className="h-4 w-4 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 10-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 002.25-2.25v-6.75a2.25 2.25 0 00-2.25-2.25H6.75a2.25 2.25 0 00-2.25 2.25v6.75a2.25 2.25 0 002.25 2.25z" />
+              </svg>
+              Secure checkout via Stripe
             </div>
-            <div className="h-8 w-px bg-border" />
-            <div className="flex flex-col items-center">
-              <span className="text-3xl font-extrabold text-foreground">100%</span>
-              <span className="mt-1 text-xs uppercase tracking-wider">Free to Start</span>
+            <div className="flex items-center gap-1.5">
+              <svg className="h-4 w-4 text-cyan-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              Cancel anytime, no lock-in
             </div>
           </div>
         </section>

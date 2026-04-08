@@ -1,9 +1,6 @@
-import { requireAdmin } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 
 export default async function AdminEbooksPage() {
-  await requireAdmin();
-
   const ebooks = await prisma.ebook.findMany({
     include: { _count: { select: { purchases: true } } },
     orderBy: { createdAt: "desc" },

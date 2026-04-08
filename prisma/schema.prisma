@@ -15,6 +15,7 @@ enum Role {
 enum Plan {
   FREE
   PRO
+  PRO_PLUS
 }
 
 enum SubscriptionStatus {
@@ -37,6 +38,8 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  interests     Json      @default("[]")
+
   accounts      Account[]
   sessions      Session[]
   subscription  Subscription?
@@ -45,6 +48,8 @@ model User {
   ebookPurchases EbookPurchase[]
   newsletterSubscriber NewsletterSubscriber?
   contactSubmissions   ContactSubmission[]
+  readingHistory ReadingHistory[]
+  reactions      PostReaction[]
 }
 
 model Account {
@@ -193,6 +198,7 @@ model ContactSubmission {
   id        String   @id @default(cuid())
   name      String
   email     String
+  subject   String?
   message   String   @db.Text
   read      Boolean  @default(false)
   userId    String?
@@ -208,4 +214,47 @@ model PostView {
   updatedAt DateTime @updatedAt
 
   @@unique([postSlug])
+}
+
+model ReadingHistory {
+  id            String    @id @default(cuid())
+  userId        String
+  postSlug      String
+  readAt        DateTime  @default(now())
+  completedAt   DateTime?
+  scrollPercent Int       @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postSlug])
+  @@index([userId, readAt])
+}
+
+model PostReaction {
+  id        String   @id @default(cuid())
+  userId    String?
+  ipHash    String?
+  postSlug  String
+  type      String
+  createdAt DateTime @default(now())
+
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, postSlug, type])
+  @@unique([ipHash, postSlug, type])
+  @@index([postSlug])
+}
+
+model EmailSequenceStatus {
+  id            String   @id @default(cuid())
+  subscriberId  String
+  sequenceName  String
+  lastStepSent  Int      @default(0)
+  nextSendAt    DateTime
+  completed     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([subscriberId, sequenceName])
+  @@index([nextSendAt, completed])
 }

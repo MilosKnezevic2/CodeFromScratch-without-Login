@@ -1,83 +1,103 @@
-"use client";
+import type { Metadata } from "next";
+import { prisma } from "@/lib/prisma";
+import Link from "next/link";
+import EbookNotifyForm from "@/components/ebooks/EbookNotifyForm";
 
-import { useState } from "react";
+export const metadata: Metadata = {
+  title: "Ebooks | CodeFromScratch",
+  description: "Premium web development ebooks with practical examples and real-world projects.",
+};
 
-export default function EbooksPage() {
-  const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+export default async function EbooksPage() {
+  const ebooks = await prisma.ebook.findMany({
+    where: { published: true },
+    orderBy: { createdAt: "desc" },
+  });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    setStatus("loading");
-
-    try {
-      const res = await fetch("/api/interest", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, source: "ebook" }),
-      });
-
-      if (res.ok) {
-        setStatus("success");
-        setEmail("");
-      } else {
-        setStatus("error");
-      }
-    } catch {
-      setStatus("error");
-    }
-  }
+  const hasEbooks = ebooks.length > 0;
 
   return (
-    <section className="flex min-h-[70vh] items-center justify-center px-4">
-      <div className="animate-fade-up mx-auto max-w-lg text-center">
-        <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
-          <svg className="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
-          </svg>
-        </div>
-
-        <h1 className="text-3xl font-bold text-foreground">
-          Ebooks <span className="gradient-text">Coming Soon</span>
-        </h1>
-        <p className="mt-4 text-muted">
-          We&apos;re crafting comprehensive web development ebooks packed with
-          practical examples and real-world projects. Be the first to know when
-          they launch.
-        </p>
-
-        <div className="mt-4 text-sm text-muted-foreground">
-          Goal: <span className="text-accent font-medium">1,000 readers</span> on launch day
-        </div>
-
-        {status === "success" ? (
-          <p className="animate-fade-in mt-6 text-sm text-emerald-400">
-            You&apos;re on the list! We&apos;ll notify you when our ebooks are ready.
+    <div>
+      {/* Hero */}
+      <section className="relative px-4 pb-12 pt-20 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-4xl text-center">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
+            <svg className="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+            </svg>
+          </div>
+          <p className="mb-3 text-sm font-medium uppercase tracking-widest text-accent">
+            Ebooks
           </p>
-        ) : (
-          <form onSubmit={handleSubmit} className="mt-8 flex gap-2">
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="your@email.com"
-              required
-              className="flex-1 rounded-lg border border-border bg-surface-2 px-4 py-2.5 text-sm text-foreground placeholder-muted-foreground focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
-            />
-            <button
-              type="submit"
-              disabled={status === "loading"}
-              className="rounded-lg gradient-btn px-6 py-2.5 text-sm font-semibold transition disabled:opacity-50"
-            >
-              {status === "loading" ? "..." : "Notify Me"}
-            </button>
-          </form>
-        )}
+          <h1 className="text-4xl font-extrabold leading-tight tracking-tight text-foreground sm:text-5xl">
+            Deep-Dive <span className="gradient-text">Resources</span>
+          </h1>
+          <p className="mx-auto mt-4 max-w-2xl text-lg text-muted">
+            Comprehensive guides packed with practical examples, real-world projects, and everything you need to level up.
+          </p>
+        </div>
+      </section>
 
-        {status === "error" && (
-          <p className="mt-2 text-xs text-red-400">Something went wrong. Please try again.</p>
-        )}
-      </div>
-    </section>
+      {hasEbooks ? (
+        <section className="mx-auto max-w-6xl px-4 py-16 sm:px-6 lg:px-8">
+          <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            {ebooks.map((ebook) => (
+              <Link
+                key={ebook.id}
+                href={`/ebooks/${ebook.slug}`}
+                className="group overflow-hidden rounded-2xl border border-border bg-surface transition hover:border-accent/30 hover:shadow-lg"
+              >
+                {ebook.coverImageUrl && (
+                  <div className="aspect-[3/4] max-h-64 overflow-hidden bg-surface-2">
+                    <img
+                      src={ebook.coverImageUrl}
+                      alt={ebook.title}
+                      className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                    />
+                  </div>
+                )}
+                {!ebook.coverImageUrl && (
+                  <div className="flex aspect-[3/4] max-h-64 items-center justify-center bg-gradient-to-br from-accent/10 to-accent-2/10">
+                    <svg className="h-16 w-16 text-accent/30" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+                    </svg>
+                  </div>
+                )}
+                <div className="p-5">
+                  <h3 className="text-lg font-bold text-foreground group-hover:text-accent transition">
+                    {ebook.title}
+                  </h3>
+                  <p className="mt-1.5 line-clamp-2 text-sm text-muted">
+                    {ebook.description}
+                  </p>
+                  <div className="mt-4 flex items-center gap-2">
+                    <span className="text-xl font-extrabold text-foreground">
+                      ${(ebook.price / 100).toFixed(2)}
+                    </span>
+                    {ebook.freeWithPro && (
+                      <span className="rounded-full bg-accent/10 px-2.5 py-0.5 text-[10px] font-bold uppercase text-accent">
+                        Free with Pro+
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : (
+        /* Fallback: Coming Soon with notify form */
+        <section className="flex min-h-[40vh] items-center justify-center px-4 py-16">
+          <div className="mx-auto max-w-lg text-center">
+            <p className="text-muted">
+              We&apos;re crafting comprehensive web development ebooks. Be the first to know when they launch.
+            </p>
+            <div className="mt-8">
+              <EbookNotifyForm />
+            </div>
+          </div>
+        </section>
+      )}
+    </div>
   );
 }
