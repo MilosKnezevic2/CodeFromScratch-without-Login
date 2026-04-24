@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "postinstall": "prisma generate",
+    "prepare": "husky",
     "db:push": "prisma db push",
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
@@ -61,7 +62,14 @@
     "baseline-browser-mapping": "^2.9.8",
     "eslint": "^9",
     "eslint-config-next": "16.0.5",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,mjs,js,jsx}": [
+      "eslint --max-warnings=0 --no-warn-ignored"
+    ]
   }
 }
