@@ -16,6 +16,8 @@ import AuthorCard from "@/components/blog/AuthorCard";
 import PostReactions from "@/components/blog/PostReactions";
 import Breadcrumbs from "@/components/blog/Breadcrumbs";
 import ArticleJsonLd from "@/components/blog/ArticleJsonLd";
+import JsonLd from "@/components/seo/JsonLd";
+import { breadcrumbJsonLd } from "@/lib/seo";
 import ViewCounter from "@/components/blog/ViewCounter";
 import FontSizeToggle from "@/components/blog/FontSizeToggle";
 import Comments from "@/components/blog/Comments";
@@ -120,6 +122,22 @@ export default async function PostPage({ params }: PageProps) {
         publishedAt={post.publishedAt}
         authorName={post.author?.name}
         imageUrl={featuredImageUrl}
+      />
+
+      <JsonLd
+        data={breadcrumbJsonLd([
+          { name: "Home", url: SITE_URL },
+          { name: "Blog", url: `${SITE_URL}/blog` },
+          ...(post.categories?.[0]
+            ? [
+                {
+                  name: post.categories[0].title,
+                  url: `${SITE_URL}/blog?category=${post.categories[0].slug.current}`,
+                },
+              ]
+            : []),
+          { name: post.title, url: `${SITE_URL}/blog/${slug}` },
+        ])}
       />
 
       {/* ══ MAIN LAYOUT ══ */}

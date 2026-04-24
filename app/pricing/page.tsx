@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import FadeUp from "@/components/animations/FadeUp";
 import PricingToggle from "@/components/stripe/PricingToggle";
+import JsonLd from "@/components/seo/JsonLd";
+import { faqJsonLd } from "@/lib/seo";
 
 export const metadata: Metadata = {
   title: "Pricing | CodeFromScratch",
@@ -38,6 +40,7 @@ const faqs = [
 export default function PricingPage() {
   return (
     <div>
+      <JsonLd data={faqJsonLd(faqs)} />
       {/* Hero */}
       <section className="gradient-hero relative overflow-hidden px-4 pb-16 pt-20 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-4xl text-center">

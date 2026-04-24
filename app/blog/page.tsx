@@ -14,6 +14,10 @@ import { urlFor } from "@/lib/sanity/image";
 import FadeUp from "@/components/animations/FadeUp";
 import CategoryFilter from "@/components/blog/CategoryFilter";
 import SavePostButton from "@/components/blog/SavePostButton";
+import JsonLd from "@/components/seo/JsonLd";
+import { itemListJsonLd } from "@/lib/seo";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
 
 export const metadata: Metadata = {
   title: "Blog | CodeFromScratch",
@@ -113,8 +117,14 @@ export default async function BlogPage({
     return `/blog${parts.length > 0 ? "?" + parts.join("&") : ""}`;
   }
 
+  const listItems = posts.map((p) => ({
+    name: p.title,
+    url: `${SITE_URL}/blog/${p.slug.current}`,
+  }));
+
   return (
     <div>
+      {listItems.length > 0 && <JsonLd data={itemListJsonLd(listItems)} />}
       {/* ── Hero with animated mesh background ── */}
       <section className="blog-hero-mesh relative overflow-hidden bg-background px-4 pb-16 pt-24 sm:px-6 lg:px-8">
         {/* Floating particles */}
