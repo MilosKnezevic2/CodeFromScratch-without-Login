@@ -3,25 +3,9 @@ import Image from "next/image";
 import NewsletterCTA from "@/components/newsletter/NewsletterCTA";
 import { getPosts } from "@/lib/sanity/queries";
 import { urlFor } from "@/lib/sanity/image";
-import { prisma } from "@/lib/prisma";
-
-async function getStats() {
-  try {
-    const [userCount, subscriberCount] = await Promise.all([
-      prisma.user.count(),
-      prisma.newsletterSubscriber.count({ where: { confirmed: true } }),
-    ]);
-    return { userCount, subscriberCount };
-  } catch {
-    return { userCount: 0, subscriberCount: 0 };
-  }
-}
 
 export default async function HomePage() {
-  const [{ posts }, stats] = await Promise.all([
-    getPosts(1, 4),
-    getStats(),
-  ]);
+  const { posts } = await getPosts(1, 4);
 
   return (
     <div>
@@ -52,28 +36,26 @@ export default async function HomePage() {
               Start Reading
             </Link>
             <Link
-              href="/courses"
+              href="/newsletter"
               className="rounded-lg border border-border px-8 py-3 text-sm font-medium text-muted transition hover:border-accent/50 hover:text-foreground"
             >
-              Browse Courses
+              Join the Newsletter
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Social Proof Stats */}
+      {/* Value Propositions */}
       <section className="border-y border-border bg-surface/50">
-        <div className="mx-auto grid max-w-4xl grid-cols-3 divide-x divide-border px-4 py-10">
+        <div className="mx-auto grid max-w-4xl grid-cols-1 gap-6 px-4 py-10 sm:grid-cols-3 sm:gap-0 sm:divide-x sm:divide-border">
           {[
-            { value: `${posts.length > 0 ? posts.length + "+" : "10+"}`, label: "Articles" },
-            { value: `${stats.userCount || "50"}+`, label: "Readers" },
-            { value: "100%", label: "Free to Start" },
-          ].map((stat) => (
-            <div key={stat.label} className="px-4 text-center">
-              <p className="gradient-text text-2xl font-extrabold sm:text-3xl">{stat.value}</p>
-              <p className="mt-1 text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                {stat.label}
-              </p>
+            { title: "No ads, no trackers", desc: "Just writing and code, respectfully." },
+            { title: "Production-grade by default", desc: "Every article ships code you can read in your own repo." },
+            { title: "Free to start, always", desc: "Core tutorials stay free. Premium goes deeper." },
+          ].map((item) => (
+            <div key={item.title} className="px-4 text-center sm:px-6">
+              <p className="text-sm font-semibold text-foreground">{item.title}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{item.desc}</p>
             </div>
           ))}
         </div>
@@ -107,8 +89,8 @@ export default async function HomePage() {
               href: "/ebooks",
             },
             {
-              title: "Video Courses",
-              desc: "Coming soon — structured learning paths for every skill level.",
+              title: "Structured Courses",
+              desc: "Planned. Sign up for early access when the first course ships.",
               icon: "M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z",
               delay: "delay-300",
               href: "/courses",

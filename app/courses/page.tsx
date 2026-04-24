@@ -38,16 +38,13 @@ export default function CoursesPage() {
         </div>
 
         <h1 className="text-3xl font-bold text-foreground">
-          Courses <span className="gradient-text">Coming Soon</span>
+          Courses <span className="gradient-text">Planned — Not Yet Available</span>
         </h1>
         <p className="mt-4 text-muted">
-          Structured video courses covering everything from HTML &amp; CSS fundamentals
-          to advanced full-stack development. Sign up to get early access.
+          Structured courses are on the roadmap — from fundamentals to advanced full-stack
+          development. They don&apos;t exist yet. Leave your email and you&apos;ll be the first
+          to hear when the first course ships. No other emails, no spam.
         </p>
-
-        <div className="mt-4 text-sm text-muted-foreground">
-          Goal: <span className="text-accent font-medium">1,000 students</span> on launch day
-        </div>
 
         {status === "success" ? (
           <p className="animate-fade-in mt-6 text-sm text-emerald-400">
