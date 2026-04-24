@@ -13,7 +13,10 @@ export default function FontSizeToggle() {
 
   useEffect(() => {
     const saved = localStorage.getItem("blog-font-size");
-    if (saved) setActive(saved);
+    if (saved) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: hydrate UI state from localStorage after mount; default on server is "medium", client rehydrates saved preference.
+      setActive(saved);
+    }
   }, []);
 
   useEffect(() => {

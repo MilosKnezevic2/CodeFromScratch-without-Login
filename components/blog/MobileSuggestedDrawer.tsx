@@ -11,9 +11,6 @@ interface SuggestedGroup {
 
 export default function MobileSuggestedDrawer({ groups }: { groups: SuggestedGroup[] }) {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => setMounted(true), []);
 
   useEffect(() => {
     if (open) document.body.style.overflow = "hidden";
@@ -24,7 +21,7 @@ export default function MobileSuggestedDrawer({ groups }: { groups: SuggestedGro
   const totalPosts = groups.reduce((acc, g) => acc + g.posts.length, 0);
   if (totalPosts === 0) return null;
 
-  const drawer = open && mounted ? createPortal(
+  const drawer = open && typeof window !== "undefined" ? createPortal(
     <>
       <div
         className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm"

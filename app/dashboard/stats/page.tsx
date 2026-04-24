@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { requireAuth } from "@/lib/auth-helpers";
 import { prisma } from "@/lib/prisma";
 
@@ -95,12 +96,12 @@ export default async function ReadingStatsPage() {
           <p className="mt-2 text-sm text-muted-foreground">
             Read articles to build your streak and track your progress.
           </p>
-          <a
+          <Link
             href="/blog"
             className="mt-4 inline-block rounded-lg bg-accent/10 px-5 py-2 text-sm font-medium text-accent transition hover:bg-accent/20"
           >
             Browse Articles
-          </a>
+          </Link>
         </div>
       )}
     </div>

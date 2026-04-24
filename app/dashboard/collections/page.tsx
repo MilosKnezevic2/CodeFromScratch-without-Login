@@ -14,16 +14,17 @@ export default function CollectionsPage() {
   const [newName, setNewName] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchCollections();
-  }, []);
-
   async function fetchCollections() {
     const res = await fetch("/api/user/collections");
     const data = await res.json();
     setCollections(data);
     setLoading(false);
   }
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: one-time fetch on mount; setCollections + setLoading are downstream of the network call, not synchronous set during render.
+    fetchCollections();
+  }, []);
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();

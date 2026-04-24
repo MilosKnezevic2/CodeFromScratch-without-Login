@@ -31,6 +31,7 @@ export default function Navbar() {
   }, []);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: close the mobile menu on client-side navigation (pathname change is the external signal the menu must react to).
     setMobileOpen(false);
   }, [pathname]);
 

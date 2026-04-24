@@ -72,7 +72,10 @@ export default function AdminSidebar() {
 
   useEffect(() => {
     const saved = localStorage.getItem("admin-sidebar-collapsed");
-    if (saved === "true") setCollapsed(true);
+    if (saved === "true") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- intentional: hydrate UI state from localStorage after mount; default on server is "expanded", client rehydrates saved preference.
+      setCollapsed(true);
+    }
   }, []);
 
   function toggle() {

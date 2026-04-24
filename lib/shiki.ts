@@ -1,7 +1,5 @@
 import { codeToHtml } from "shiki";
 
-let highlighterReady = true;
-
 export async function highlightCode(code: string, lang: string): Promise<string> {
   try {
     const html = await codeToHtml(code, {

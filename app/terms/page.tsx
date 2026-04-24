@@ -15,7 +15,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-bold text-foreground">1. Acceptance of Terms</h2>
           <p className="mt-2">
-            By accessing or using CodeFromScratch ("the Service"), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.
+            By accessing or using CodeFromScratch (&quot;the Service&quot;), you agree to be bound by these Terms of Service. If you do not agree, do not use the Service.
           </p>
         </section>
 
@@ -36,7 +36,7 @@ export default function TermsPage() {
             <li>Paid plans (Pro, Pro+) are billed monthly or annually through Stripe.</li>
             <li>You can cancel your subscription at any time. Access continues until the end of the billing period.</li>
             <li>We offer a 30-day money-back guarantee. Contact us within 30 days for a full refund.</li>
-            <li>Prices may change with 30 days' notice. Existing subscribers keep their current price until renewal.</li>
+            <li>Prices may change with 30 days&apos; notice. Existing subscribers keep their current price until renewal.</li>
             <li>Ebooks are one-time purchases. Digital products are non-refundable after download.</li>
           </ul>
         </section>
@@ -66,7 +66,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-bold text-foreground">6. Limitation of Liability</h2>
           <p className="mt-2">
-            The Service is provided "as is" without warranties of any kind. CodeFromScratch is not liable for any indirect, incidental, or consequential damages arising from your use of the Service. Our total liability is limited to the amount you paid us in the 12 months before the claim.
+            The Service is provided &quot;as is&quot; without warranties of any kind. CodeFromScratch is not liable for any indirect, incidental, or consequential damages arising from your use of the Service. Our total liability is limited to the amount you paid us in the 12 months before the claim.
           </p>
         </section>
 
