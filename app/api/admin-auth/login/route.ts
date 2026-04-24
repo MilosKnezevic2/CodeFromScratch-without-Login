@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
     username === adminUsername &&
     password === adminPassword
   ) {
-    const token = createAdminSession();
+    const token = await createAdminSession();
     const response = NextResponse.json({ success: true });
     response.cookies.set("cfs-admin-token", token, {
       httpOnly: true,

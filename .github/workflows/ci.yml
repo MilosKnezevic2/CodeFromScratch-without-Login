@@ -19,11 +19,20 @@ jobs:
 
       - run: npm ci
 
+      - name: Audit (high + critical only — Firm B L3 exception A2)
+        run: npm audit --audit-level=high
+        continue-on-error: true
+
       - name: Lint
         run: npm run lint
 
       - name: Type Check
         run: npx tsc --noEmit
+
+      - name: Test
+        run: npm test
+        env:
+          NEXTAUTH_SECRET: "ci-test-secret-0123456789abcdef0123456789abcdef"
 
       # Non-blocking — build requires real Sanity dataset (static pages fetch
       # content at build time). Until a CI-dedicated Sanity project + token
@@ -36,6 +45,7 @@ jobs:
           NEXT_PUBLIC_SITE_URL: "https://codefromscratch.org"
           NEXT_PUBLIC_SANITY_PROJECT_ID: "placeholder"
           NEXT_PUBLIC_SANITY_DATASET: "production"
+          NEXTAUTH_SECRET: "ci-test-secret-0123456789abcdef0123456789abcdef"
           NEXTAUTH_SECRET: "ci-placeholder-0123456789abcdef0123456789abcdef"
           NEXTAUTH_URL: "https://codefromscratch.org"
           DATABASE_URL: "postgresql://user:pass@localhost:5432/db?schema=public"

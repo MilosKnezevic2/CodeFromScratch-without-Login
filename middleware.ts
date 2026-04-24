@@ -1,11 +1,8 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { verifyAdminSession } from "@/lib/admin-session";
 
-function verifyAdminToken(token: string): boolean {
-  return token === "authenticated";
-}
-
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // CSRF protection: verify Origin on mutating requests to API routes
@@ -38,10 +35,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Protect portal-cfs-admin routes with signed session token
+  // Protect portal-cfs-admin routes with a cryptographically signed session token.
   if (pathname.startsWith("/portal-cfs-admin")) {
     const adminToken = request.cookies.get("cfs-admin-token")?.value;
-    if (!adminToken || !verifyAdminToken(adminToken)) {
+    if (!(await verifyAdminSession(adminToken))) {
       return NextResponse.redirect(
         new URL("/portal-cfs-admin/login", request.nextUrl.origin)
       );
