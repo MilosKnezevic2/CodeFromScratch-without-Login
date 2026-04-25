@@ -9,25 +9,34 @@ export default function ViewCounter({ slug }: { slug: string }) {
     const key = `viewed:${slug}`;
     const alreadyViewed = sessionStorage.getItem(key);
 
+    const applyCount = (data: unknown) => {
+      if (
+        data &&
+        typeof data === "object" &&
+        "count" in data &&
+        typeof (data as { count: unknown }).count === "number"
+      ) {
+        setCount((data as { count: number }).count);
+      }
+    };
+
     if (alreadyViewed) {
-      // Already counted this session — just fetch the current count
       fetch(`/api/posts/${slug}/view`)
         .then((r) => r.json())
-        .then((data) => setCount(data.count))
+        .then(applyCount)
         .catch(() => {});
     } else {
-      // First visit this session — increment and display
       fetch(`/api/posts/${slug}/view`, { method: "POST" })
         .then((r) => r.json())
         .then((data) => {
-          setCount(data.count);
+          applyCount(data);
           sessionStorage.setItem(key, "1");
         })
         .catch(() => {});
     }
   }, [slug]);
 
-  if (count === null) return null;
+  if (typeof count !== "number") return null;
 
   return (
     <span className="flex items-center gap-1">
