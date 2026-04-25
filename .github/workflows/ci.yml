@@ -45,7 +45,6 @@ jobs:
           NEXT_PUBLIC_SITE_URL: "https://codefromscratch.org"
           NEXT_PUBLIC_SANITY_PROJECT_ID: "placeholder"
           NEXT_PUBLIC_SANITY_DATASET: "production"
-          NEXTAUTH_SECRET: "ci-test-secret-0123456789abcdef0123456789abcdef"
           NEXTAUTH_SECRET: "ci-placeholder-0123456789abcdef0123456789abcdef"
           NEXTAUTH_URL: "https://codefromscratch.org"
           DATABASE_URL: "postgresql://user:pass@localhost:5432/db?schema=public"
