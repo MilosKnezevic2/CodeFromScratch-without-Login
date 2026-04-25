@@ -49,6 +49,7 @@ export default async function EbooksPage() {
               >
                 {ebook.coverImageUrl && (
                   <div className="aspect-[3/4] max-h-64 overflow-hidden bg-surface-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- `coverImageUrl` is an admin-uploaded URL that may point to any host; next/image requires every host to be whitelisted in next.config.ts. A host strategy for ebook covers is a Phase 5 architecture decision. */}
                     <img
                       src={ebook.coverImageUrl}
                       alt={ebook.title}
@@ -87,7 +88,7 @@ export default async function EbooksPage() {
         </section>
       ) : (
         /* Fallback: Coming Soon with notify form */
-        <section className="flex min-h-[40vh] items-center justify-center px-4 py-16">
+        <section className="flex min-h-[40dvh] items-center justify-center px-4 py-16">
           <div className="mx-auto max-w-lg text-center">
             <p className="text-muted">
               We&apos;re crafting comprehensive web development ebooks. Be the first to know when they launch.

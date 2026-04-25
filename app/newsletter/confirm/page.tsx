@@ -9,7 +9,7 @@ export default async function NewsletterConfirmPage({
   const success = params.status === "success";
 
   return (
-    <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
+    <div className="flex min-h-[40dvh] flex-col items-center justify-center text-center">
       {success ? (
         <>
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">

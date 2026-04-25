@@ -10,7 +10,7 @@ export default async function HomePage() {
   return (
     <div>
       {/* Hero Section */}
-      <section className="gradient-hero relative flex min-h-[90vh] items-center justify-center px-4">
+      <section className="gradient-hero relative flex min-h-[90dvh] items-center justify-center px-4">
         <div className="mx-auto max-w-4xl text-center">
           <p className="animate-fade-up mb-4 text-sm font-medium uppercase tracking-widest text-accent">
             Welcome to CodeFromScratch

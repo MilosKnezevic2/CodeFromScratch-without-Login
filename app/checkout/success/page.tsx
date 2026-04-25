@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function CheckoutSuccessPage() {
   return (
-    <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
+    <div className="flex min-h-[40dvh] flex-col items-center justify-center text-center">
       <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
         <svg className="h-8 w-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

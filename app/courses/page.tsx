@@ -29,7 +29,7 @@ export default function CoursesPage() {
   }
 
   return (
-    <section className="flex min-h-[70vh] items-center justify-center px-4">
+    <section className="flex min-h-[70dvh] items-center justify-center px-4">
       <div className="animate-fade-up mx-auto max-w-lg text-center">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
           <svg className="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>

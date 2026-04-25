@@ -9,7 +9,7 @@ export default async function NewsletterUnsubscribePage({
   const success = params.status === "success";
 
   return (
-    <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
+    <div className="flex min-h-[40dvh] flex-col items-center justify-center text-center">
       {success ? (
         <>
           <h1 className="text-2xl font-bold text-foreground">Unsubscribed</h1>

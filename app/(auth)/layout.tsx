@@ -6,7 +6,7 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-[80vh]">
+    <div className="flex min-h-[80dvh]">
       {/* Brand panel — hidden on mobile */}
       <div className="hidden w-1/2 items-center justify-center bg-gradient-to-br from-accent/5 via-background to-accent-2/5 lg:flex">
         <div className="max-w-sm px-8 text-center">

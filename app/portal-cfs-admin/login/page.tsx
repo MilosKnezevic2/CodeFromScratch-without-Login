@@ -1,10 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function AdminLoginPage() {
-  const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -36,7 +34,7 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center px-4">
+    <div className="flex min-h-[80dvh] items-center justify-center px-4">
       <div className="w-full max-w-sm rounded-xl border border-border bg-surface p-8 shadow-xl">
         <h1 className="mb-2 text-2xl font-bold text-foreground text-center">
           Admin Access

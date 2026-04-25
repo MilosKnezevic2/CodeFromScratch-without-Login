@@ -70,7 +70,7 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center px-4 py-16">
+    <div className="flex min-h-[80dvh] items-center justify-center px-4 py-16">
       <div className="w-full max-w-2xl">
         {/* Progress indicator */}
         <div className="mb-8 flex items-center justify-center gap-2">

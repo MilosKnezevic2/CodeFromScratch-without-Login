@@ -2,7 +2,7 @@ import Link from "next/link";
 
 export default function CheckoutCancelPage() {
   return (
-    <div className="flex min-h-[40vh] flex-col items-center justify-center text-center">
+    <div className="flex min-h-[40dvh] flex-col items-center justify-center text-center">
       <h1 className="text-2xl font-bold text-foreground">Checkout Canceled</h1>
       <p className="mt-2 text-muted">
         Your checkout was canceled. No charges were made.
