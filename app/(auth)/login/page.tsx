@@ -7,11 +7,24 @@ import Link from "next/link";
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={<div className="rounded-xl border border-border bg-surface p-8 shadow-xl animate-pulse"><div className="h-8 w-32 bg-surface-2 rounded mb-6" /><div className="space-y-4"><div className="h-10 bg-surface-2 rounded" /><div className="h-10 bg-surface-2 rounded" /><div className="h-10 bg-surface-2 rounded" /></div></div>}>
+    <Suspense
+      fallback={
+        <div className="rounded-xl border border-border bg-surface p-8 shadow-xl animate-pulse">
+          <div className="h-8 w-32 bg-surface-2 rounded mb-6" />
+          <div className="space-y-4">
+            <div className="h-10 bg-surface-2 rounded" />
+            <div className="h-10 bg-surface-2 rounded" />
+            <div className="h-10 bg-surface-2 rounded" />
+          </div>
+        </div>
+      }
+    >
       <LoginForm />
     </Suspense>
   );
 }
+
+type Stage = "credentials" | "mfa";
 
 function LoginForm() {
   const router = useRouter();
@@ -22,6 +35,12 @@ function LoginForm() {
   const [hasGoogle, setHasGoogle] = useState(false);
   const [hasGithub, setHasGithub] = useState(false);
 
+  const [stage, setStage] = useState<Stage>("credentials");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaType, setMfaType] = useState<"totp" | "backup">("totp");
+
   useEffect(() => {
     getProviders().then((providers) => {
       if (providers?.google) setHasGoogle(true);
@@ -29,63 +48,239 @@ function LoginForm() {
     });
   }, []);
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function finishSignIn(code: string, type: "totp" | "backup") {
+    const result = await signIn("credentials", {
+      email,
+      password,
+      mfaCode: code,
+      mfaType: type,
+      redirect: false,
+    });
+    if (result?.error) {
+      setError(
+        type === "totp"
+          ? "Invalid code. Try again."
+          : "Invalid backup code. Try again.",
+      );
+      return false;
+    }
+    router.push(callbackUrl);
+    router.refresh();
+    return true;
+  }
+
+  async function handleCredentialsSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    const formData = new FormData(e.currentTarget);
-    const result = await signIn("credentials", {
-      email: formData.get("email"),
-      password: formData.get("password"),
-      redirect: false,
-    });
+    try {
+      const probe = await fetch("/api/auth/mfa-check", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
 
-    setLoading(false);
+      if (probe.status === 429) {
+        const data = await probe.json().catch(() => ({}));
+        setError(data.error || "Too many attempts. Try again later.");
+        return;
+      }
 
-    if (result?.error) {
-      setError("Invalid email or password");
-    } else {
+      const data = await probe.json().catch(() => ({ ok: false }));
+      if (!data.ok) {
+        setError("Invalid email or password");
+        return;
+      }
+
+      if (data.mfaRequired) {
+        setStage("mfa");
+        setMfaCode("");
+        setMfaType("totp");
+        return;
+      }
+
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
+      if (result?.error) {
+        setError("Invalid email or password");
+        return;
+      }
       router.push(callbackUrl);
       router.refresh();
+    } catch {
+      setError("Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
     }
   }
 
+  async function handleMfaSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError("");
+    setLoading(true);
+    try {
+      await finishSignIn(mfaCode.trim(), mfaType);
+    } catch {
+      setError("Something went wrong. Try again.");
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  function backToCredentials() {
+    setStage("credentials");
+    setMfaCode("");
+    setError("");
+  }
+
   const showOAuth = hasGoogle || hasGithub;
+
+  if (stage === "mfa") {
+    return (
+      <div className="rounded-xl border border-border bg-surface p-8 shadow-xl">
+        <h1 className="mb-2 text-2xl font-bold text-foreground">
+          Two-factor authentication
+        </h1>
+        <p className="mb-6 text-sm text-muted-foreground">
+          {mfaType === "totp"
+            ? "Enter the 6-digit code from your authenticator app."
+            : "Enter one of your backup codes."}
+        </p>
+
+        {error && (
+          <div
+            role="alert"
+            className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400"
+          >
+            {error}
+          </div>
+        )}
+
+        <form onSubmit={handleMfaSubmit} className="space-y-4">
+          <div>
+            <label
+              htmlFor="mfaCode"
+              className="block text-sm font-medium text-muted"
+            >
+              {mfaType === "totp" ? "6-digit code" : "Backup code"}
+            </label>
+            <input
+              id="mfaCode"
+              name="mfaCode"
+              type="text"
+              inputMode={mfaType === "totp" ? "numeric" : "text"}
+              autoComplete="one-time-code"
+              autoFocus
+              required
+              value={mfaCode}
+              onChange={(e) => {
+                if (mfaType === "totp") {
+                  setMfaCode(e.target.value.replace(/\D/g, "").slice(0, 6));
+                } else {
+                  setMfaCode(
+                    e.target.value
+                      .replace(/[^0-9A-Fa-f-]/g, "")
+                      .toUpperCase()
+                      .slice(0, 11),
+                  );
+                }
+              }}
+              placeholder={mfaType === "totp" ? "123456" : "ABCDE-12345"}
+              className="mt-1 block w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-center font-mono text-lg tracking-[0.3em] text-foreground placeholder-muted-foreground focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={
+              loading ||
+              (mfaType === "totp" && mfaCode.length !== 6) ||
+              (mfaType === "backup" && mfaCode.replace(/-/g, "").length !== 10)
+            }
+            className="w-full rounded-lg gradient-btn px-4 py-2 text-sm font-medium transition disabled:opacity-50"
+          >
+            {loading ? "Verifying…" : "Verify and sign in"}
+          </button>
+        </form>
+
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-2 text-sm">
+          <button
+            type="button"
+            onClick={() => {
+              setMfaType(mfaType === "totp" ? "backup" : "totp");
+              setMfaCode("");
+              setError("");
+            }}
+            className="text-accent transition hover:text-accent-2"
+          >
+            {mfaType === "totp"
+              ? "Use a backup code instead"
+              : "Use authenticator app"}
+          </button>
+          <button
+            type="button"
+            onClick={backToCredentials}
+            className="text-muted-foreground transition hover:text-foreground"
+          >
+            ← Back
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="rounded-xl border border-border bg-surface p-8 shadow-xl">
       <h1 className="mb-6 text-2xl font-bold text-foreground">Sign In</h1>
 
       {error && (
-        <div className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400">
+        <div
+          role="alert"
+          className="mb-4 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-sm text-red-400"
+        >
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleCredentialsSubmit} className="space-y-4">
         <div>
-          <label htmlFor="email" className="block text-sm font-medium text-muted">
+          <label
+            htmlFor="email"
+            className="block text-sm font-medium text-muted"
+          >
             Email
           </label>
           <input
             id="email"
             name="email"
             type="email"
+            autoComplete="email"
             required
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="mt-1 block w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-foreground shadow-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
           />
         </div>
 
         <div>
-          <label htmlFor="password" className="block text-sm font-medium text-muted">
+          <label
+            htmlFor="password"
+            className="block text-sm font-medium text-muted"
+          >
             Password
           </label>
           <input
             id="password"
             name="password"
             type="password"
+            autoComplete="current-password"
             required
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             className="mt-1 block w-full rounded-lg border border-border bg-surface-2 px-3 py-2 text-foreground shadow-sm focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
           />
         </div>

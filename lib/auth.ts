@@ -3,8 +3,9 @@ import { PrismaAdapter } from "@auth/prisma-adapter";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
-import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
+import { verifyPassword } from "@/lib/credentials";
+import { consumeBackupCode, verifyTotpCode } from "@/lib/services/mfa";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -31,24 +32,42 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       credentials: {
         email: { label: "Email", type: "email" },
         password: { label: "Password", type: "password" },
+        mfaCode: { label: "MFA code", type: "text" },
+        mfaType: { label: "MFA type", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        const email = credentials?.email as string | undefined;
+        const password = credentials?.password as string | undefined;
+        if (!email || !password) return null;
 
-        const user = await prisma.user.findUnique({
-          where: { email: credentials.email as string },
-          include: { subscription: true },
-        });
+        const user = await verifyPassword(email, password);
+        if (!user) return null;
 
-        if (!user || !user.passwordHash) return null;
-        if (user.banned) return null;
+        if (user.mfaEnabled) {
+          const mfaCode =
+            typeof credentials?.mfaCode === "string"
+              ? credentials.mfaCode.trim()
+              : "";
+          const mfaType =
+            credentials?.mfaType === "backup" ? "backup" : "totp";
 
-        const isValid = await bcrypt.compare(
-          credentials.password as string,
-          user.passwordHash
-        );
+          if (!mfaCode || !user.mfaSecret) return null;
 
-        if (!isValid) return null;
+          if (mfaType === "backup") {
+            const remaining = await consumeBackupCode(
+              mfaCode,
+              user.mfaBackupCodes,
+            );
+            if (!remaining) return null;
+            await prisma.user.update({
+              where: { id: user.id },
+              data: { mfaBackupCodes: remaining },
+            });
+          } else {
+            const ok = verifyTotpCode(user.mfaSecret, mfaCode);
+            if (!ok) return null;
+          }
+        }
 
         return {
           id: user.id,
