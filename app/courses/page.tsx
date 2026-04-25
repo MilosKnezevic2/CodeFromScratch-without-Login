@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { GraduationCap } from "lucide-react";
 
 export default function CoursesPage() {
   const [email, setEmail] = useState("");
@@ -32,9 +33,7 @@ export default function CoursesPage() {
     <section className="flex min-h-[70dvh] items-center justify-center px-4">
       <div className="animate-fade-up mx-auto max-w-lg text-center">
         <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
-          <svg className="h-8 w-8 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M5.25 5.653c0-.856.917-1.398 1.667-.986l11.54 6.348a1.125 1.125 0 010 1.971l-11.54 6.347a1.125 1.125 0 01-1.667-.985V5.653z" />
-          </svg>
+          <GraduationCap className="h-8 w-8 text-accent" strokeWidth={1.5} aria-hidden="true" />
         </div>
 
         <h1 className="text-3xl font-bold text-foreground">
