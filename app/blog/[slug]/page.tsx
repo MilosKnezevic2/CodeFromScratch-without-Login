@@ -6,6 +6,7 @@ import { getPostBySlug, getAllPostSlugs, getAdjacentPosts, getSidebarSuggestions
 import { urlFor } from "@/lib/sanity/image";
 import PortableTextRenderer from "@/components/blog/PortableTextRenderer";
 import { extractHeadings } from "@/lib/portable-text-utils";
+import { calculateReadingTime } from "@/lib/reading-time";
 import TableOfContents from "@/components/blog/TableOfContents";
 import SmartSuggestions from "@/components/blog/SmartSuggestions";
 import ReadingProgress from "@/components/blog/ReadingProgress";
@@ -90,6 +91,10 @@ export default async function PostPage({ params }: PageProps) {
   const categorySlugs = post.categories?.map((c) => c.slug.current) || [];
   const tagSlugs = post.tags?.map((t) => t.slug.current) || [];
   const categoryTitle = post.categories?.[0]?.title || "Related";
+  const readingMinutes =
+    typeof post.readingTime === "number" && post.readingTime > 0
+      ? post.readingTime
+      : calculateReadingTime(post.content ?? null);
 
   const [{ prev, next }, currentUser, suggestionGroups] = await Promise.all([
     getAdjacentPosts(post.publishedAt),
@@ -210,7 +215,7 @@ export default async function PostPage({ params }: PageProps) {
                     )}
                     <span className="text-[11px] text-white/50">
                       {new Date(post.publishedAt).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
-                      {post.readingTime && <> · {post.readingTime} min read</>}
+                      {readingMinutes > 0 && <> · {readingMinutes} min read</>}
                     </span>
                     <div className="ml-auto">
                       <ViewCounter slug={slug} />

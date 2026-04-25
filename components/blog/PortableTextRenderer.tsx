@@ -172,8 +172,170 @@ const components: PortableTextComponents = {
         </div>
       );
     },
+    lead: ({ value }) => (
+      <aside className="my-6 rounded-2xl border border-accent/20 bg-gradient-to-br from-accent/10 via-accent/5 to-transparent p-5">
+        <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent mb-2">
+          TL;DR
+        </p>
+        <p className="text-base leading-relaxed text-foreground">{value.text}</p>
+      </aside>
+    ),
+    divider: ({ value }) => {
+      const style = value?.style ?? "plain";
+      if (style === "decorative") {
+        return (
+          <div className="my-10 flex items-center justify-center gap-3" role="separator">
+            <span className="h-px w-16 bg-gradient-to-r from-transparent to-muted-foreground/40" />
+            <svg
+              className="h-4 w-4 text-muted-foreground/60"
+              fill="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
+              <circle cx="12" cy="12" r="3" />
+            </svg>
+            <span className="h-px w-16 bg-gradient-to-l from-transparent to-muted-foreground/40" />
+          </div>
+        );
+      }
+      if (style === "dotted") {
+        return (
+          <hr
+            className="my-10 border-0 border-t border-dashed border-muted-foreground/30"
+            role="separator"
+          />
+        );
+      }
+      return (
+        <hr
+          className="my-10 border-0 border-t border-border"
+          role="separator"
+        />
+      );
+    },
+    embed: ({ value }) => {
+      const url = typeof value?.url === "string" ? value.url : "";
+      const provider = typeof value?.provider === "string" ? value.provider : "iframe";
+      const caption = typeof value?.caption === "string" ? value.caption : "";
+      const embedSrc = resolveEmbedSrc(provider, url);
+      if (!embedSrc) return null;
+
+      const sandbox =
+        provider === "twitter"
+          ? "allow-scripts allow-same-origin allow-popups"
+          : "allow-scripts allow-same-origin allow-popups allow-presentation";
+
+      return (
+        <figure className="my-6">
+          <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-surface-2">
+            <iframe
+              src={embedSrc}
+              title={caption || `${provider} embed`}
+              loading="lazy"
+              sandbox={sandbox}
+              referrerPolicy="strict-origin-when-cross-origin"
+              allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              className="absolute inset-0 h-full w-full"
+            />
+          </div>
+          {caption && (
+            <figcaption className="mt-2 text-center text-sm text-muted-foreground">
+              {caption}
+            </figcaption>
+          )}
+        </figure>
+      );
+    },
+    table: ({ value }) => {
+      const rows = Array.isArray(value?.rows) ? (value.rows as { cells?: string[] }[]) : [];
+      if (rows.length === 0) return null;
+      const hasHeader = value?.hasHeader !== false;
+      const headerRow = hasHeader ? rows[0] : null;
+      const bodyRows = hasHeader ? rows.slice(1) : rows;
+      const caption = typeof value?.caption === "string" ? value.caption : "";
+
+      return (
+        <figure className="my-6 overflow-x-auto rounded-xl border border-border">
+          <table className="min-w-full text-sm">
+            {caption && (
+              <caption className="border-b border-border bg-surface-2 px-4 py-2 text-left text-xs font-medium text-muted-foreground">
+                {caption}
+              </caption>
+            )}
+            {headerRow && (
+              <thead className="bg-surface-2/50">
+                <tr>
+                  {(headerRow.cells ?? []).map((cell, ci) => (
+                    <th
+                      key={ci}
+                      scope="col"
+                      className="px-4 py-2 text-left font-semibold text-foreground"
+                    >
+                      {cell}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+            )}
+            <tbody>
+              {bodyRows.map((row, ri) => (
+                <tr key={ri} className="border-t border-border">
+                  {(row.cells ?? []).map((cell, ci) => (
+                    <td key={ci} className="px-4 py-2 align-top text-muted">
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </figure>
+      );
+    },
   },
 };
+
+function resolveEmbedSrc(provider: string, rawUrl: string): string | null {
+  if (!rawUrl) return null;
+  let url: URL;
+  try {
+    url = new URL(rawUrl);
+  } catch {
+    return null;
+  }
+
+  switch (provider) {
+    case "youtube": {
+      const id =
+        url.searchParams.get("v") ??
+        (url.hostname.includes("youtu.be")
+          ? url.pathname.replace(/^\//, "").split("/")[0]
+          : url.pathname.startsWith("/embed/")
+            ? url.pathname.replace("/embed/", "").split("/")[0]
+            : null);
+      return id ? `https://www.youtube-nocookie.com/embed/${id}` : null;
+    }
+    case "vimeo": {
+      const id = url.pathname.replace(/^\//, "").split("/")[0];
+      return /^\d+$/.test(id) ? `https://player.vimeo.com/video/${id}` : null;
+    }
+    case "twitter": {
+      return `https://platform.twitter.com/embed/Tweet.html?url=${encodeURIComponent(rawUrl)}`;
+    }
+    case "codepen": {
+      return rawUrl.replace(/\/pen\//, "/embed/preview/");
+    }
+    case "codesandbox": {
+      return rawUrl.replace(/\/s\//, "/embed/");
+    }
+    case "iframe": {
+      return url.protocol === "https:" ? rawUrl : null;
+    }
+    default:
+      return null;
+  }
+}
 
 export default function PortableTextRenderer({
   content,

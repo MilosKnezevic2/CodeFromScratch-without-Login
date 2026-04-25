@@ -4,6 +4,8 @@ import { presentationTool } from "sanity/presentation";
 import { visionTool } from "@sanity/vision";
 import { assist } from "@sanity/assist";
 import { schemas } from "./sanity/schemas";
+import SeoScoreBadge from "./sanity/badges/SeoScoreBadge";
+import ReadingTimeBadge from "./sanity/badges/ReadingTimeBadge";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
@@ -28,5 +30,11 @@ export default defineConfig({
     visionTool(),
   ],
   schema: { types: schemas },
+  document: {
+    badges: (prev, context) =>
+      context.schemaType === "post"
+        ? [...prev, SeoScoreBadge, ReadingTimeBadge]
+        : prev,
+  },
   basePath: "/portal-cfs-admin/studio",
 });
