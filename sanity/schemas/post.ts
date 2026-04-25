@@ -29,17 +29,31 @@ export const post = defineType({
       title: "Excerpt",
       type: "text",
       rows: 3,
+      description:
+        "Short summary (1-2 sentences) shown in listings and as meta description fallback.",
+      options: {
+        aiAssist: {
+          translateAction: false,
+        },
+      },
     }),
     defineField({
       name: "featuredImage",
       title: "Featured Image",
       type: "image",
-      options: { hotspot: true },
+      options: {
+        hotspot: true,
+        aiAssist: {
+          imageInstructionField: "title",
+          imageDescriptionField: "alt",
+        },
+      },
       fields: [
         defineField({
           name: "alt",
           title: "Alt Text",
           type: "string",
+          description: "Describe the image for screen readers. Keep under 125 characters.",
         }),
       ],
     }),
@@ -82,12 +96,26 @@ export const post = defineType({
       name: "seoTitle",
       title: "SEO Title",
       type: "string",
+      description:
+        "50-60 characters. Appears in Google search results — different from the article H1.",
+      options: {
+        aiAssist: {
+          translateAction: false,
+        },
+      },
     }),
     defineField({
       name: "seoDescription",
       title: "SEO Description",
       type: "text",
       rows: 2,
+      description:
+        "150-160 characters. Appears under the title in search results; should include the primary keyword naturally.",
+      options: {
+        aiAssist: {
+          translateAction: false,
+        },
+      },
     }),
     defineField({
       name: "publishedAt",

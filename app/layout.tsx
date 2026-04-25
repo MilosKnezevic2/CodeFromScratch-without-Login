@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
+import { draftMode } from "next/headers";
 import "@fontsource-variable/plus-jakarta-sans";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
@@ -11,6 +12,8 @@ import JsonLd from "../components/seo/JsonLd";
 import { organizationJsonLd } from "../lib/seo";
 import LayoutShell from "../components/LayoutShell";
 import CookieConsent from "../components/CookieConsent";
+import DraftModeIndicator from "../components/DraftModeIndicator";
+import VisualEditing from "../components/VisualEditing";
 
 export const metadata: Metadata = {
   title: {
@@ -35,17 +38,13 @@ export const metadata: Metadata = {
   manifest: "/site.webmanifest",
 };
 
-export const viewport: Viewport = {
-  width: "device-width",
-  initialScale: 1,
-  viewportFit: "cover",
-};
-
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const { isEnabled: isDraft } = await draftMode();
+
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
@@ -72,6 +71,12 @@ export default function RootLayout({
           </div>
           <JsonLd data={organizationJsonLd()} />
           <CookieConsent />
+          {isDraft && (
+            <>
+              <DraftModeIndicator />
+              <VisualEditing />
+            </>
+          )}
         </SavedPostsProvider>
         </SessionProvider>
         </ThemeProvider>
