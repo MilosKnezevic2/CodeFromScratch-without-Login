@@ -37,6 +37,7 @@ import SavedForLaterRail from "@/components/blog/SavedForLaterRail";
 import HideReadToggle from "@/components/blog/HideReadToggle";
 import ChipFilters from "@/components/blog/ChipFilters";
 import CommandPalette from "@/components/blog/CommandPalette";
+import PaletteTrigger from "@/components/blog/PaletteTrigger";
 import TopicSpotlight from "@/components/blog/TopicSpotlight";
 import AuthorSpotlight from "@/components/blog/AuthorSpotlight";
 import JsonLd from "@/components/seo/JsonLd";
@@ -385,16 +386,23 @@ export default async function BlogPage({
 
         {/* Toolbar */}
         <FadeUp delay={0.1}>
-          <div className={isFiltered ? "mt-3" : "mt-10"}>
-            <BlogToolbar
-              initialSearch={searchQuery}
-              activeSort={activeSort}
-              preserveQuery={{
-                ...(activeCategory ? { category: activeCategory } : {}),
-                ...(activeTag ? { tag: activeTag } : {}),
-                ...(activeSort !== "newest" ? { sort: activeSort } : {}),
-              }}
-            />
+          <div
+            className={`flex items-center gap-3 ${
+              isFiltered ? "mt-3" : "mt-10"
+            }`}
+          >
+            <div className="flex-1">
+              <BlogToolbar
+                initialSearch={searchQuery}
+                activeSort={activeSort}
+                preserveQuery={{
+                  ...(activeCategory ? { category: activeCategory } : {}),
+                  ...(activeTag ? { tag: activeTag } : {}),
+                  ...(activeSort !== "newest" ? { sort: activeSort } : {}),
+                }}
+              />
+            </div>
+            <PaletteTrigger className="hidden lg:inline-flex" />
           </div>
         </FadeUp>
 
