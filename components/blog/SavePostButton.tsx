@@ -210,15 +210,22 @@ export default function SavePostButton({
   }
 
   // --- Icon-only mode: simple save/unsave toggle, no popover ---
+  // Visible chrome by default — solid pill background + subtle ring
+  // so it reads as a real button at every state. Slight opacity dip
+  // when not hovered so it does not fight the editorial composition;
+  // clicks through full opacity on hover/focus.
   if (iconOnly) {
     return (
       <button
+        type="button"
         onClick={handleIconClick}
         disabled={loading}
-        className={`flex h-8 w-8 items-center justify-center rounded-full transition ${
+        aria-pressed={saved}
+        aria-label={saved ? "Unsave post" : "Save post"}
+        className={`flex h-9 w-9 items-center justify-center rounded-full ring-1 backdrop-blur-md transition-all duration-200 hover:scale-105 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
           saved
-            ? "bg-accent/20 text-accent"
-            : "bg-black/40 text-white/80 opacity-0 backdrop-blur-sm group-hover:opacity-100 hover:bg-black/60"
+            ? "bg-accent text-accent-foreground ring-accent shadow-lg shadow-accent/20"
+            : "bg-background/80 text-foreground ring-border opacity-80 hover:bg-background hover:opacity-100 hover:ring-foreground/40 group-hover:opacity-100"
         }`}
         title={saved ? "Unsave" : "Save post"}
       >
@@ -228,6 +235,7 @@ export default function SavePostButton({
           viewBox="0 0 24 24"
           stroke="currentColor"
           strokeWidth={2}
+          aria-hidden
         >
           <path strokeLinecap="round" strokeLinejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
         </svg>

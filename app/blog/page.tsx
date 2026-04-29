@@ -510,7 +510,7 @@ export default async function BlogPage({
                         </span>
                       </div>
                     </div>
-                    {/* Image — right, no overlay */}
+                    {/* Image — right, with save action overlaid on it */}
                     <div className="relative aspect-[5/4] overflow-hidden lg:col-span-5">
                       {featured.featuredImage?.asset ? (
                         <Image
@@ -534,14 +534,14 @@ export default async function BlogPage({
                           </span>
                         </div>
                       )}
+                      <div className="absolute right-3 top-3 z-10">
+                        <SavePostButton
+                          postSlug={featured.slug.current}
+                          iconOnly
+                        />
+                      </div>
                     </div>
                   </div>
-                </div>
-                <div className="absolute right-0 top-2 z-10 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
-                  <SavePostButton
-                    postSlug={featured.slug.current}
-                    iconOnly
-                  />
                 </div>
               </article>
             )}
