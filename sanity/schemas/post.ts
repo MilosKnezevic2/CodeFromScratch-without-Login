@@ -162,6 +162,14 @@ export const post = defineType({
       initialValue: false,
     }),
     defineField({
+      name: "editorPick",
+      title: "Editor's Pick",
+      type: "boolean",
+      description:
+        "Surfaces this post in the curated 'Editor's Pick' rail on the blog index. Use sparingly — three or four picks max.",
+      initialValue: false,
+    }),
+    defineField({
       name: "seoTitle",
       title: "SEO Title",
       type: "string",

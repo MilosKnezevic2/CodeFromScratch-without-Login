@@ -11,6 +11,11 @@ import {
   searchPosts,
 } from "@/lib/sanity/queries";
 import { getBlogHeroStats } from "@/lib/sanity/hero-stats";
+import {
+  getTrendingPosts,
+  getEditorPicks,
+  getRecentlyUpdatedPosts,
+} from "@/lib/sanity/discovery";
 import { urlFor } from "@/lib/sanity/image";
 import FadeUp from "@/components/animations/FadeUp";
 import CategoryFilter from "@/components/blog/CategoryFilter";
@@ -20,6 +25,9 @@ import BlogBreadcrumb from "@/components/blog/BlogBreadcrumb";
 import ActiveFilterChips, {
   type FilterChip,
 } from "@/components/blog/ActiveFilterChips";
+import DiscoveryRail from "@/components/blog/DiscoveryRail";
+import InlineNewsletterCard from "@/components/blog/InlineNewsletterCard";
+import SavePostButton from "@/components/blog/SavePostButton";
 import JsonLd from "@/components/seo/JsonLd";
 import {
   itemListJsonLd,
@@ -68,7 +76,14 @@ export async function generateMetadata({
       url: canonical,
       type: "website",
     },
-    alternates: { canonical },
+    alternates: {
+      canonical,
+      types: {
+        "application/rss+xml": `${SITE_URL}/blog/rss.xml`,
+        "application/atom+xml": `${SITE_URL}/blog/atom.xml`,
+        "application/feed+json": `${SITE_URL}/blog/feed.json`,
+      },
+    },
   };
 }
 
@@ -112,18 +127,25 @@ export default async function BlogPage({
     | "oldest";
   const LIMIT = 12;
 
-  const [result, categories, allTags, heroStats] = await Promise.all([
-    searchQuery
-      ? searchPosts(searchQuery, page, LIMIT)
-      : activeTag
-        ? getPostsByTag(activeTag, page, LIMIT)
-        : activeCategory
-          ? getPostsByCategory(activeCategory, page, LIMIT)
-          : getPosts(page, LIMIT, activeSort),
-    getCategoriesWithCounts(),
-    getTagsWithCategory(),
-    getBlogHeroStats(),
-  ]);
+  const isHomeState =
+    page === 1 && !activeCategory && !activeTag && !searchQuery;
+
+  const [result, categories, allTags, heroStats, trending, editorPicks, recentlyUpdated] =
+    await Promise.all([
+      searchQuery
+        ? searchPosts(searchQuery, page, LIMIT)
+        : activeTag
+          ? getPostsByTag(activeTag, page, LIMIT)
+          : activeCategory
+            ? getPostsByCategory(activeCategory, page, LIMIT)
+            : getPosts(page, LIMIT, activeSort),
+      getCategoriesWithCounts(),
+      getTagsWithCategory(),
+      getBlogHeroStats(),
+      isHomeState ? getTrendingPosts(7, 5) : Promise.resolve([]),
+      isHomeState ? getEditorPicks(3) : Promise.resolve([]),
+      isHomeState ? getRecentlyUpdatedPosts(14, 4) : Promise.resolve([]),
+    ]);
 
   const { posts, pages: totalPages } = result;
 
@@ -499,17 +521,39 @@ export default async function BlogPage({
               </FadeUp>
             )}
 
+            {/* ═══════════ TRENDING THIS WEEK ═══════════ */}
+            {trending.length > 0 && (
+              <FadeUp delay={0.22}>
+                <div className="mt-10">
+                  <DiscoveryRail
+                    title="Trending this week"
+                    icon="🔥"
+                    posts={trending}
+                    badge="Top reads · 7d"
+                    variant="trending"
+                  />
+                </div>
+              </FadeUp>
+            )}
+
             {/* ═══════════ SHOWCASE GRID ═══════════ */}
             {showcasePosts.length > 0 && (
               <ul className="mt-12 grid list-none gap-6 sm:grid-cols-2">
                 {showcasePosts.map((post, i) => (
                   <li key={post._id}>
                     <FadeUp delay={0.08 * i} className="stagger-enter">
-                      <Link
-                        href={`/blog/${post.slug.current}`}
-                        className="blog-card group flex h-full flex-col rounded-2xl"
+                      <article
+                        className="blog-card group relative flex h-full flex-col rounded-2xl"
                         style={{ borderRadius: "1rem", overflow: "hidden" }}
                       >
+                        <Link
+                          href={`/blog/${post.slug.current}`}
+                          aria-label={post.title}
+                          className="absolute inset-0 z-0"
+                        />
+                        <div className="absolute right-3.5 top-3.5 z-20 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+                          <SavePostButton postSlug={post.slug.current} iconOnly />
+                        </div>
                         <div
                           className="img-shine relative aspect-[16/10] w-full overflow-hidden rounded-t-2xl"
                           style={{
@@ -636,11 +680,35 @@ export default async function BlogPage({
                             </span>
                           </div>
                         </div>
-                      </Link>
+                      </article>
                     </FadeUp>
                   </li>
                 ))}
               </ul>
+            )}
+
+            {/* ═══════════ INLINE NEWSLETTER ═══════════ */}
+            {isHomeState && (
+              <FadeUp delay={0.1}>
+                <div className="mt-12">
+                  <InlineNewsletterCard />
+                </div>
+              </FadeUp>
+            )}
+
+            {/* ═══════════ EDITOR'S PICK ═══════════ */}
+            {editorPicks.length > 0 && (
+              <FadeUp delay={0.12}>
+                <div className="mt-12">
+                  <DiscoveryRail
+                    title="Editor's pick"
+                    icon="⭐"
+                    posts={editorPicks}
+                    badge="Curated"
+                    variant="picks"
+                  />
+                </div>
+              </FadeUp>
             )}
 
             {/* ═══════════ EDITORIAL LIST ═══════════ */}
@@ -660,10 +728,12 @@ export default async function BlogPage({
                   {editorialPosts.map((post, i) => (
                     <li key={post._id}>
                       <FadeUp delay={0.04 * i}>
-                        <Link
-                          href={`/blog/${post.slug.current}`}
-                          className="editorial-item group flex items-center gap-5 overflow-hidden rounded-xl border border-border bg-surface/50 p-4 sm:gap-6 sm:p-5"
-                        >
+                        <article className="editorial-item group relative flex items-center gap-5 overflow-hidden rounded-xl border border-border bg-surface/50 p-4 sm:gap-6 sm:p-5">
+                          <Link
+                            href={`/blog/${post.slug.current}`}
+                            aria-label={post.title}
+                            className="absolute inset-0 z-0"
+                          />
                           <span className="gradient-number hidden shrink-0 text-4xl font-black leading-none sm:block">
                             {String(i + 1).padStart(2, "0")}
                           </span>
@@ -771,12 +841,33 @@ export default async function BlogPage({
                               />
                             </svg>
                           </div>
-                        </Link>
+                          <div className="relative z-10 hidden opacity-0 transition group-hover:opacity-100 focus-within:opacity-100 sm:block">
+                            <SavePostButton
+                              postSlug={post.slug.current}
+                              iconOnly
+                            />
+                          </div>
+                        </article>
                       </FadeUp>
                     </li>
                   ))}
                 </ul>
               </div>
+            )}
+
+            {/* ═══════════ RECENTLY UPDATED ═══════════ */}
+            {recentlyUpdated.length > 0 && (
+              <FadeUp delay={0.08}>
+                <div className="mt-16">
+                  <DiscoveryRail
+                    title="Refreshed this fortnight"
+                    icon="✨"
+                    posts={recentlyUpdated}
+                    badge="Evergreen"
+                    variant="updated"
+                  />
+                </div>
+              </FadeUp>
             )}
           </>
         )}
