@@ -36,7 +36,7 @@
   --font-heading: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, sans-serif;
   --font-sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
-  --font-serif: 'Iowan Old Style', 'Palatino Linotype', 'Cambria', 'Georgia', serif;
+  --font-serif: 'Fraunces Variable', 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', 'Cambria', 'Georgia', serif;
 }
 
 /* Dark theme (default) */
@@ -72,6 +72,20 @@ body {
   font-family: var(--font-sans);
   background-color: var(--color-background);
   color: var(--color-foreground);
+  /* Better text rendering across the board. Fraunces (variable serif)
+     and Inter both honour these — they remove the muddy first-frame
+     and turn on contextual ligatures + kerning by default. */
+  font-feature-settings: "kern", "liga", "calt";
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Global optical sizing — variable fonts that ship the `opsz` axis
+   (Fraunces, Inter, JetBrains Mono) automatically pick the right cut
+   at the rendered size. No-op for non-variable fonts. */
+* {
+  font-optical-sizing: auto;
 }
 
 /* Gradient text utility */
@@ -879,15 +893,36 @@ html {
    issue-index, name band, masthead.
    ───────────────────────────────────────────────────────────── */
 
-/* Display-grade serif headline. Uses optical sizing on platforms
-   that support it; falls back gracefully on older browsers. */
+/* Display-grade serif headline. Built around Fraunces variable axes:
+   - opsz (auto) maps weight/contrast to size — display sizes get
+     thinner strokes + sharper serifs, body sizes get sturdier ones.
+   - SOFT (50/100) softens corner radii on glyph terminals — gives
+     the warm magazine feel without sacrificing legibility.
+   - WONK (1) on italics enables alternative wonky letterforms
+     (single-storey g, tilted f, etc.) — premium expressiveness.
+   System-serif fallback (Iowan / Palatino / Cambria / Georgia)
+   inherits the same letter-spacing + line-height, so the layout
+   does not shift when Fraunces eventually loads. */
 .editorial-display {
   font-family: var(--font-serif);
-  font-feature-settings: "liga", "dlig", "kern";
-  letter-spacing: -0.02em;
-  line-height: 0.95;
+  font-feature-settings: "liga", "dlig", "kern", "ss01";
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 50, "WONK" 1;
+  letter-spacing: -0.025em;
+  line-height: 0.96;
   font-style: italic;
   font-weight: 600;
+}
+
+/* Body-scale serif — used for excerpts, pull quotes, editor's note
+   block. Optical-size auto + low SOFT for a clear long-read shape. */
+.editorial-body {
+  font-family: var(--font-serif);
+  font-feature-settings: "liga", "kern", "onum";
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 30, "WONK" 0;
+  letter-spacing: 0;
+  line-height: 1.5;
 }
 
 /* Hairline section rule with optional small-caps label inset.
@@ -960,13 +995,16 @@ html {
 }
 
 /* Magazine-style numerals — large, tabular, italicised. Used by the
-   trending chart and editor's pick rank columns. */
+   trending chart and editor's pick rank columns. Fraunces' tabular
+   lining figures with WONK 1 give the digits real character. */
 .editorial-rank {
   font-family: var(--font-serif);
   font-style: italic;
   font-weight: 600;
-  font-feature-settings: "tnum", "lnum";
-  letter-spacing: -0.04em;
+  font-feature-settings: "tnum", "lnum", "kern";
+  font-optical-sizing: auto;
+  font-variation-settings: "SOFT" 50, "WONK" 1;
+  letter-spacing: -0.045em;
   line-height: 0.85;
 }
 

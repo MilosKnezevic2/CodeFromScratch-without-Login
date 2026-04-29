@@ -1,9 +1,14 @@
-import type { Metadata, Viewport } from "next";
+import type { Metadata } from "next";
 import Script from "next/script";
 import { draftMode } from "next/headers";
 import "@fontsource-variable/plus-jakarta-sans";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
+// Editorial serif used by /blog hero, pull quotes, headlines, and
+// magazine-style metadata. Variable axes give a premium feel:
+// weight 100-900, optical sizes 9-144, soft modulation, wonk italics.
+import "@fontsource-variable/fraunces";
+import "@fontsource-variable/fraunces/wght-italic.css";
 import "./globals.css";
 import SessionProvider from "../components/auth/SessionProvider";
 import SavedPostsProvider from "../components/blog/SavedPostsProvider";
