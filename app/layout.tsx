@@ -4,12 +4,11 @@ import { draftMode } from "next/headers";
 import "@fontsource-variable/plus-jakarta-sans";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
-// Display + body type — Space Grotesk variable. Geometric grotesque
-// with character (curved g, cut-corner numerals, distinctive a) —
-// premium without being generic SaaS. Geist Mono kept for tabular
-// meta lines, which benefit from monospace consistency regardless
-// of the body-font choice.
-import "@fontsource-variable/space-grotesk";
+// Display + body type — Sen variable. Humanist sans by Kosal Sen
+// (Google Fonts), warm soft-terminal letterforms, distinctive a + g.
+// Premium feel with personality, less geometric than Space Grotesk.
+// Geist Mono kept for tabular meta lines.
+import "@fontsource-variable/sen";
 import "@fontsource-variable/geist-mono";
 import "./globals.css";
 import SessionProvider from "../components/auth/SessionProvider";
