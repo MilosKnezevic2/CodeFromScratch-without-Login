@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import type { Metadata } from "next";
 import {
   getPostBySlug,
@@ -29,11 +30,11 @@ import TextSelectionShare from "@/components/blog/TextSelectionShare";
 import KeyboardNav from "@/components/blog/KeyboardNav";
 import SavePostButton from "@/components/blog/SavePostButton";
 import MobileTocDrawer from "@/components/blog/MobileTocDrawer";
-import BlogPostMasthead from "@/components/blog/BlogPostMasthead";
-import PostFeaturedImage from "@/components/blog/PostFeaturedImage";
+import ViewCounter from "@/components/blog/ViewCounter";
 import PostSignoff from "@/components/blog/PostSignoff";
 import FloatingActionRail from "@/components/blog/FloatingActionRail";
 import CommentsCollapse from "@/components/blog/CommentsCollapse";
+import FadeUp from "@/components/animations/FadeUp";
 
 import PremiumGate from "@/components/blog/PremiumGate";
 import { getCurrentUser } from "@/lib/auth-helpers";
@@ -154,42 +155,32 @@ export default async function PostPage({ params }: PageProps) {
         ])}
       />
 
-      {/* Mobile sticky bar — TOC + Save + reading time */}
-      <div className="sticky top-[64px] z-30 flex items-center gap-3 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md 2xl:hidden">
-        <MobileTocDrawer headings={headings} />
-        <span className="editorial-meta text-muted-foreground">
-          {readingMinutes} min read
-        </span>
-        <div className="ml-auto">
-          <SavePostButton postSlug={slug} iconOnly />
-        </div>
-      </div>
-
-      <main className="mx-auto max-w-[1600px] px-4 pb-32 sm:px-6 lg:px-8">
-        {/* Top breadcrumbs (desktop) */}
-        <div className="hidden pt-8 sm:block">
-          <Breadcrumbs
-            category={post.categories?.[0]}
-            postTitle={post.title}
-          />
+      {/* ══ MAIN LAYOUT ══ */}
+      <div className="article-ambient mx-auto max-w-[1600px] px-0 pb-24 sm:px-6 sm:pt-8 lg:px-8">
+        {/* Mobile TOC + Save — sticky bar */}
+        <div className="sticky top-[64px] z-30 mb-4 flex gap-2 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md sm:static sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none 2xl:hidden">
+          <MobileTocDrawer headings={headings} />
+          <div className="ml-auto flex items-center">
+            <SavePostButton postSlug={slug} />
+          </div>
         </div>
 
-        <div className="relative flex justify-center gap-12 2xl:gap-20">
-          {/* ── Left sidebar — TOC ── */}
-          <aside className="hidden w-52 shrink-0 2xl:block">
+        <div className="relative flex justify-center gap-8 2xl:gap-20">
+          {/* ── Left sidebar — TOC (desktop) ── */}
+          <aside className="hidden w-48 shrink-0 2xl:block 2xl:pr-8">
             <div className="sticky top-24">
-              <p className="editorial-meta mb-3 text-foreground">
+              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
                 On this page
               </p>
               <TableOfContents headings={headings} />
               <div className="mt-8 space-y-3 border-t border-border/30 pt-5">
                 <FontSizeToggle />
-                <p className="editorial-meta">
-                  <kbd className="rounded border border-border/50 px-1 py-0.5 text-[10px] font-mono">
+                <p className="text-[11px] text-muted-foreground">
+                  <kbd className="rounded border border-border/50 px-1 py-0.5 text-[10px]">
                     j
                   </kbd>{" "}
                   /{" "}
-                  <kbd className="rounded border border-border/50 px-1 py-0.5 text-[10px] font-mono">
+                  <kbd className="rounded border border-border/50 px-1 py-0.5 text-[10px]">
                     k
                   </kbd>{" "}
                   navigate headings
@@ -198,30 +189,123 @@ export default async function PostPage({ params }: PageProps) {
             </div>
           </aside>
 
-          {/* ── Center column — article ── */}
-          <article className="min-w-0 max-w-[860px] flex-1">
-            <BlogPostMasthead
-              title={post.title}
-              excerpt={post.excerpt}
-              categories={post.categories}
-              author={post.author}
-              publishedAt={post.publishedAt}
-              readingMinutes={readingMinutes}
-              isPremium={post.isPremium}
-              slug={slug}
-            />
-
-            {post.featuredImage?.asset && (
-              <PostFeaturedImage
-                image={post.featuredImage}
-                fallbackAlt={post.title}
+          {/* ── Center — Article ── */}
+          <article className="min-w-0 max-w-[1000px] flex-1">
+            {/* Breadcrumbs */}
+            <div className="px-4 sm:px-0">
+              <Breadcrumbs
+                category={post.categories?.[0]}
+                postTitle={post.title}
               />
+            </div>
+
+            {/* ── Featured Image + Author overlay ── */}
+            {post.featuredImage?.asset && (
+              <div className="relative mx-auto w-full">
+                <div className="pointer-events-none absolute -inset-3 rounded-3xl bg-gradient-to-r from-accent/10 via-accent-2/5 to-accent/10 blur-2xl" />
+                <div className="glow-border relative overflow-hidden rounded-2xl">
+                  <div className="relative aspect-[2/1] w-full">
+                    <Image
+                      src={urlFor(post.featuredImage)
+                        .width(1400)
+                        .quality(85)
+                        .url()}
+                      alt={post.featuredImage.alt || post.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 840px"
+                      className="object-cover"
+                      priority
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
+                  </div>
+                  {/* Author bar inside image card */}
+                  <div className="absolute inset-x-0 bottom-0 flex items-center gap-3 px-5 py-4 sm:px-6">
+                    {post.author && (
+                      <>
+                        {post.author.image?.asset ? (
+                          <Image
+                            src={urlFor(post.author.image)
+                              .width(64)
+                              .height(64)
+                              .url()}
+                            alt={post.author.name}
+                            width={32}
+                            height={32}
+                            className="rounded-full object-cover ring-2 ring-white/20"
+                          />
+                        ) : (
+                          <span className="flex h-8 w-8 items-center justify-center rounded-full bg-white/20 text-xs font-bold text-white">
+                            {post.author.name.charAt(0)}
+                          </span>
+                        )}
+                        <span className="text-sm font-medium text-white/90">
+                          {post.author.name}
+                        </span>
+                      </>
+                    )}
+                    <span className="text-[11px] text-white/50">
+                      {new Date(post.publishedAt).toLocaleDateString("en-GB", {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric",
+                      })}
+                      {readingMinutes > 0 && <> · {readingMinutes} min read</>}
+                    </span>
+                    <div className="ml-auto">
+                      <ViewCounter slug={slug} />
+                    </div>
+                  </div>
+                </div>
+              </div>
             )}
+
+            {/* ── Header — centered ── */}
+            <header className="relative px-4 pb-12 pt-8 text-center sm:px-0 sm:pt-10">
+              <FadeUp>
+                <div className="mb-5 flex flex-wrap items-center justify-center gap-3">
+                  {post.categories?.map((cat) => (
+                    <Link
+                      key={cat.slug.current}
+                      href={`/blog/category/${cat.slug.current}`}
+                      className="text-[13px] font-semibold uppercase tracking-[0.1em] text-accent transition hover:text-accent-2"
+                    >
+                      {cat.title}
+                    </Link>
+                  ))}
+                  {post.isPremium && (
+                    <span className="badge-glow rounded px-2 py-0.5 text-[10px] font-extrabold uppercase">
+                      PRO
+                    </span>
+                  )}
+                </div>
+              </FadeUp>
+
+              <FadeUp delay={0.05}>
+                <h1
+                  className="mx-auto max-w-[900px] text-[1.75rem] font-extrabold leading-[1.1] tracking-[-0.03em] text-foreground sm:text-[2.5rem] lg:text-[3rem]"
+                  style={{ fontFamily: "var(--font-heading)" }}
+                >
+                  {post.title}
+                </h1>
+              </FadeUp>
+
+              <FadeUp delay={0.08}>
+                <div className="mx-auto mt-6 h-[2px] w-16 rounded-full bg-gradient-to-r from-accent to-accent-2 shadow-[0_0_10px_rgba(45,212,191,0.4)]" />
+              </FadeUp>
+
+              <FadeUp delay={0.1}>
+                {post.excerpt && (
+                  <p className="mx-auto mt-5 max-w-[720px] text-[15px] leading-[1.7] text-muted">
+                    {post.excerpt}
+                  </p>
+                )}
+              </FadeUp>
+            </header>
 
             {/* ── Article body ── */}
             <div
               id="article-content"
-              className="prose-editorial mt-12"
+              className="prose-editorial px-4 sm:px-0"
             >
               {showGate ? (
                 <>
@@ -322,7 +406,7 @@ export default async function PostPage({ params }: PageProps) {
             </div>
           </aside>
         </div>
-      </main>
+      </div>
     </>
   );
 }
