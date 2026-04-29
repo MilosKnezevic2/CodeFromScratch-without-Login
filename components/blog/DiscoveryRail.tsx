@@ -68,7 +68,7 @@ function TrendingChart({ posts }: { posts: DiscoveryPost[] }) {
     <div className="grid gap-10 lg:grid-cols-12">
       {/* Hero chart cover — #1 with massive rank */}
       {top && (
-        <article className="group relative lg:col-span-7">
+        <article className="group relative lg:col-span-7 cursor-pointer">
           <Link
             href={`/blog/${top.slug.current}`}
             aria-label={top.title}
@@ -123,7 +123,7 @@ function TrendingChart({ posts }: { posts: DiscoveryPost[] }) {
               key={post._id}
               className="border-b border-border last:border-b-0"
             >
-              <article className="group relative">
+              <article className="group relative cursor-pointer">
                 <Link
                   href={`/blog/${post.slug.current}`}
                   aria-label={post.title}
@@ -173,7 +173,7 @@ function EditorPicks({ posts }: { posts: DiscoveryPost[] }) {
           key={post._id}
           className={`border-t border-border ${i === posts.length - 1 ? "border-b" : ""}`}
         >
-          <article className="group relative">
+          <article className="group relative cursor-pointer">
             <Link
               href={`/blog/${post.slug.current}`}
               aria-label={post.title}
@@ -225,7 +225,7 @@ function RefreshedRail({ posts }: { posts: DiscoveryPost[] }) {
     <ol className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
       {posts.map((post) => (
         <li key={post._id} className="border-t border-border pt-5">
-          <article className="group relative">
+          <article className="group relative cursor-pointer">
             <Link
               href={`/blog/${post.slug.current}`}
               aria-label={post.title}

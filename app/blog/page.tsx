@@ -452,7 +452,7 @@ export default async function BlogPage({
           <>
             {/* ═══════════ §01 — FEATURED COVER ═══════════ */}
             {featured && (
-              <article className="group relative mt-20">
+              <article className="group relative mt-20 cursor-pointer">
                 <Link
                   href={`/blog/${featured.slug.current}`}
                   aria-label={featured.title}
@@ -578,7 +578,7 @@ export default async function BlogPage({
                 <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
                   {/* Hero card — large, left, 7 cols */}
                   {showcasePosts[0] && (
-                    <article className="group relative lg:col-span-7">
+                    <article className="group relative lg:col-span-7 cursor-pointer">
                       <Link
                         href={`/blog/${showcasePosts[0].slug.current}`}
                         aria-label={showcasePosts[0].title}
@@ -660,7 +660,7 @@ export default async function BlogPage({
                   {/* Stack — right, 5 cols, two posts */}
                   <div className="space-y-12 lg:col-span-5">
                     {showcasePosts.slice(1, 3).map((post) => (
-                      <article key={post._id} className="group relative">
+                      <article key={post._id} className="group relative cursor-pointer">
                         <Link
                           href={`/blog/${post.slug.current}`}
                           aria-label={post.title}
@@ -770,7 +770,7 @@ export default async function BlogPage({
                 <ol className="border-b border-border">
                   {editorialPosts.map((post) => (
                     <li key={post._id} className="border-t border-border">
-                      <article className="group relative">
+                      <article className="group relative cursor-pointer">
                         <Link
                           href={`/blog/${post.slug.current}`}
                           aria-label={post.title}

@@ -31,7 +31,7 @@ export default function SavedForLaterRail({
       <ol className="grid gap-x-12 sm:grid-cols-2">
         {posts.map((post) => (
           <li key={post._id} className="border-t border-border">
-            <article className="group relative">
+            <article className="group relative cursor-pointer">
               <Link
                 href={`/blog/${post.slug.current}`}
                 aria-label={post.title}

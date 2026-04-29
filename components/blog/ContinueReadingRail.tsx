@@ -34,7 +34,7 @@ export default function ContinueReadingRail({
               : null;
           return (
             <li key={post._id} className="border-t border-border">
-              <article className="group relative">
+              <article className="group relative cursor-pointer">
                 <Link
                   href={`/blog/${post.slug.current}`}
                   aria-label={`Continue reading: ${post.title}`}
