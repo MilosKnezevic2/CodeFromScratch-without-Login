@@ -16,6 +16,12 @@ import {
   getEditorPicks,
   getRecentlyUpdatedPosts,
 } from "@/lib/sanity/discovery";
+import {
+  getContinueReading,
+  getSavedForLater,
+  getReadSlugs,
+} from "@/lib/sanity/personalisation";
+import { getCurrentUser } from "@/lib/auth-helpers";
 import { urlFor } from "@/lib/sanity/image";
 import FadeUp from "@/components/animations/FadeUp";
 import CategoryFilter from "@/components/blog/CategoryFilter";
@@ -28,6 +34,9 @@ import ActiveFilterChips, {
 import DiscoveryRail from "@/components/blog/DiscoveryRail";
 import InlineNewsletterCard from "@/components/blog/InlineNewsletterCard";
 import SavePostButton from "@/components/blog/SavePostButton";
+import ContinueReadingRail from "@/components/blog/ContinueReadingRail";
+import SavedForLaterRail from "@/components/blog/SavedForLaterRail";
+import HideReadToggle from "@/components/blog/HideReadToggle";
 import JsonLd from "@/components/seo/JsonLd";
 import {
   itemListJsonLd,
@@ -115,6 +124,7 @@ export default async function BlogPage({
     tag?: string;
     q?: string;
     sort?: string;
+    hideRead?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -125,29 +135,54 @@ export default async function BlogPage({
   const activeSort = (params.sort === "oldest" ? "oldest" : "newest") as
     | "newest"
     | "oldest";
+  const hideReadActive = params.hideRead === "1";
   const LIMIT = 12;
 
   const isHomeState =
     page === 1 && !activeCategory && !activeTag && !searchQuery;
 
-  const [result, categories, allTags, heroStats, trending, editorPicks, recentlyUpdated] =
-    await Promise.all([
-      searchQuery
-        ? searchPosts(searchQuery, page, LIMIT)
-        : activeTag
-          ? getPostsByTag(activeTag, page, LIMIT)
-          : activeCategory
-            ? getPostsByCategory(activeCategory, page, LIMIT)
-            : getPosts(page, LIMIT, activeSort),
-      getCategoriesWithCounts(),
-      getTagsWithCategory(),
-      getBlogHeroStats(),
-      isHomeState ? getTrendingPosts(7, 5) : Promise.resolve([]),
-      isHomeState ? getEditorPicks(3) : Promise.resolve([]),
-      isHomeState ? getRecentlyUpdatedPosts(14, 4) : Promise.resolve([]),
-    ]);
+  const currentUser = await getCurrentUser();
+  const userId = currentUser?.id ?? null;
 
-  const { posts, pages: totalPages } = result;
+  const [
+    result,
+    categories,
+    allTags,
+    heroStats,
+    trending,
+    editorPicks,
+    recentlyUpdated,
+    continueReading,
+    savedForLater,
+    readSlugs,
+  ] = await Promise.all([
+    searchQuery
+      ? searchPosts(searchQuery, page, LIMIT)
+      : activeTag
+        ? getPostsByTag(activeTag, page, LIMIT)
+        : activeCategory
+          ? getPostsByCategory(activeCategory, page, LIMIT)
+          : getPosts(page, LIMIT, activeSort),
+    getCategoriesWithCounts(),
+    getTagsWithCategory(),
+    getBlogHeroStats(),
+    isHomeState ? getTrendingPosts(7, 5) : Promise.resolve([]),
+    isHomeState ? getEditorPicks(3) : Promise.resolve([]),
+    isHomeState ? getRecentlyUpdatedPosts(14, 4) : Promise.resolve([]),
+    isHomeState && userId
+      ? getContinueReading(userId, 4)
+      : Promise.resolve([]),
+    isHomeState && userId ? getSavedForLater(userId, 4) : Promise.resolve([]),
+    userId && hideReadActive
+      ? getReadSlugs(userId)
+      : Promise.resolve(new Set<string>()),
+  ]);
+
+  const { posts: allPosts, pages: totalPages } = result;
+  const posts =
+    hideReadActive && readSlugs.size > 0
+      ? allPosts.filter((p) => !readSlugs.has(p.slug.current))
+      : allPosts;
 
   const activeCatObj = activeCategory
     ? categories.find((c) => c.slug.current === activeCategory)
@@ -176,6 +211,17 @@ export default async function BlogPage({
     if (activeCategory) parts.push(`category=${activeCategory}`);
     if (activeTag) parts.push(`tag=${activeTag}`);
     if (activeSort !== "newest") parts.push(`sort=${activeSort}`);
+    if (hideReadActive) parts.push("hideRead=1");
+    return parts.length > 0 ? `/blog?${parts.join("&")}` : "/blog";
+  }
+
+  function hideReadHref() {
+    const parts: string[] = [];
+    if (searchQuery) parts.push(`q=${encodeURIComponent(searchQuery)}`);
+    if (activeCategory) parts.push(`category=${activeCategory}`);
+    if (activeTag) parts.push(`tag=${activeTag}`);
+    if (activeSort !== "newest") parts.push(`sort=${activeSort}`);
+    if (!hideReadActive) parts.push("hideRead=1");
     return parts.length > 0 ? `/blog?${parts.join("&")}` : "/blog";
   }
 
@@ -309,11 +355,19 @@ export default async function BlogPage({
           </div>
         </FadeUp>
 
-        {/* Active filter chips */}
-        {filterChips.length > 0 && (
+        {/* Active filter chips + hide-read toggle */}
+        {(filterChips.length > 0 || userId) && (
           <FadeUp delay={0.12}>
-            <div className="mt-3">
-              <ActiveFilterChips chips={filterChips} clearHref="/blog" />
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              {filterChips.length > 0 && (
+                <ActiveFilterChips chips={filterChips} clearHref="/blog" />
+              )}
+              {userId && (
+                <HideReadToggle
+                  active={hideReadActive}
+                  toggleHref={hideReadHref()}
+                />
+              )}
             </div>
           </FadeUp>
         )}
@@ -521,6 +575,15 @@ export default async function BlogPage({
               </FadeUp>
             )}
 
+            {/* ═══════════ CONTINUE READING (auth) ═══════════ */}
+            {continueReading.length > 0 && (
+              <FadeUp delay={0.21}>
+                <div className="mt-10">
+                  <ContinueReadingRail posts={continueReading} />
+                </div>
+              </FadeUp>
+            )}
+
             {/* ═══════════ TRENDING THIS WEEK ═══════════ */}
             {trending.length > 0 && (
               <FadeUp delay={0.22}>
@@ -532,6 +595,15 @@ export default async function BlogPage({
                     badge="Top reads · 7d"
                     variant="trending"
                   />
+                </div>
+              </FadeUp>
+            )}
+
+            {/* ═══════════ SAVED FOR LATER (auth) ═══════════ */}
+            {savedForLater.length > 0 && (
+              <FadeUp delay={0.23}>
+                <div className="mt-10">
+                  <SavedForLaterRail posts={savedForLater} />
                 </div>
               </FadeUp>
             )}
