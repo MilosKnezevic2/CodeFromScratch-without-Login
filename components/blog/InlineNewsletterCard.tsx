@@ -51,20 +51,17 @@ export default function InlineNewsletterCard() {
           <h2
             id="inline-newsletter-heading"
             className="editorial-display mt-4 text-4xl leading-[0.95] sm:text-5xl lg:text-6xl"
-            style={{ color: "#f5f1e8", fontStyle: "normal" }}
+            style={{ color: "#f5f1e8" }}
           >
-            Read tomorrow&rsquo;s issue{" "}
-            <span style={{ fontStyle: "italic" }}>today.</span>
+            Read tomorrow&rsquo;s issue today.
           </h2>
           <p
-            className="mt-5 max-w-md text-base leading-relaxed"
-            style={{ color: "rgba(245,241,232,0.65)", fontFamily: "var(--font-serif)" }}
+            className="editorial-body mt-5 max-w-md text-base"
+            style={{ color: "rgba(245,241,232,0.65)" }}
           >
-            <em>
-              One short letter on a Sunday. A new piece of writing, what
-              we&rsquo;re reading, what we&rsquo;re building. Twenty seconds
-              to skim. Unsubscribe in one click.
-            </em>
+            One short letter on a Sunday. A new piece of writing, what
+            we&rsquo;re reading, what we&rsquo;re building. Twenty seconds
+            to skim. Unsubscribe in one click.
           </p>
         </div>
         <form
@@ -112,19 +109,19 @@ export default function InlineNewsletterCard() {
           {status === "success" && (
             <p
               role="status"
-              className="mt-3 text-xs"
-              style={{ color: "#a7f3d0", fontFamily: "var(--font-serif)" }}
+              className="mt-3 text-xs font-medium"
+              style={{ color: "#a7f3d0" }}
             >
-              <em>Check your inbox to confirm — that&rsquo;s the last step.</em>
+              Check your inbox to confirm — that&rsquo;s the last step.
             </p>
           )}
           {status === "error" && errorMessage && (
             <p
               role="alert"
-              className="mt-3 text-xs"
-              style={{ color: "#fca5a5", fontFamily: "var(--font-serif)" }}
+              className="mt-3 text-xs font-medium"
+              style={{ color: "#fca5a5" }}
             >
-              <em>{errorMessage}</em>
+              {errorMessage}
             </p>
           )}
         </form>

@@ -433,7 +433,7 @@ export default async function BlogPage({
           <div className="mt-32 border-t border-border pt-12 text-center">
             <p
               className="editorial-display mx-auto max-w-md text-3xl text-muted-foreground"
-              style={{ fontStyle: "italic" }}
+    
             >
               {searchQuery
                 ? `Nothing matches "${searchQuery}".`
@@ -486,18 +486,18 @@ export default async function BlogPage({
                       {featured.excerpt && (
                         <p
                           className="mt-8 max-w-xl text-xl leading-relaxed text-muted line-clamp-3"
-                          style={{ fontFamily: "var(--font-serif)" }}
+
                         >
-                          <em>{featured.excerpt}</em>
+                          {featured.excerpt}
                         </p>
                       )}
                       <div className="mt-10 flex items-center gap-6 text-sm">
                         {featured.author && (
                           <span
                             className="text-foreground"
-                            style={{ fontFamily: "var(--font-serif)" }}
+
                           >
-                            <em>By {featured.author.name}</em>
+                            By {featured.author.name}
                           </span>
                         )}
                         {featured.readingTime && (
@@ -570,7 +570,7 @@ export default async function BlogPage({
                   <span className="editorial-meta">§03</span>
                   <h2
                     className="editorial-display text-3xl text-foreground sm:text-4xl lg:text-5xl"
-                    style={{ fontStyle: "italic" }}
+          
                   >
                     The spread
                   </h2>
@@ -629,18 +629,18 @@ export default async function BlogPage({
                         {showcasePosts[0].excerpt && (
                           <p
                             className="mt-4 text-base leading-relaxed text-muted line-clamp-2"
-                            style={{ fontFamily: "var(--font-serif)" }}
+
                           >
-                            <em>{showcasePosts[0].excerpt}</em>
+                            {showcasePosts[0].excerpt}
                           </p>
                         )}
                         <div className="mt-5 flex items-center gap-4 text-sm">
                           {showcasePosts[0].author && (
                             <span
                               className="text-foreground"
-                              style={{ fontFamily: "var(--font-serif)" }}
+
                             >
-                              <em>By {showcasePosts[0].author.name}</em>
+                              By {showcasePosts[0].author.name}
                             </span>
                           )}
                           <span className="editorial-meta">
@@ -705,9 +705,9 @@ export default async function BlogPage({
                           {post.author && (
                             <p
                               className="mt-3 text-xs text-muted-foreground"
-                              style={{ fontFamily: "var(--font-serif)" }}
+
                             >
-                              <em>By {post.author.name}</em>
+                              By {post.author.name}
                             </p>
                           )}
                         </div>
@@ -751,7 +751,7 @@ export default async function BlogPage({
                   <span className="editorial-meta">§{isHomeState ? "07" : "01"}</span>
                   <h2
                     className="editorial-display text-3xl text-foreground sm:text-4xl lg:text-5xl"
-                    style={{ fontStyle: "italic" }}
+          
                   >
                     {isHomeState ? "From the archive" : "Articles"}
                   </h2>
@@ -786,7 +786,7 @@ export default async function BlogPage({
                             )}
                             <h3
                               className="editorial-title-link text-xl font-bold leading-snug text-foreground line-clamp-2 group-hover:text-accent sm:text-2xl"
-                              style={{ fontFamily: "var(--font-serif)" }}
+
                             >
                               {post.title}
                             </h3>
@@ -798,9 +798,9 @@ export default async function BlogPage({
                             {post.author && (
                               <p
                                 className="mt-2 text-xs text-muted-foreground"
-                                style={{ fontFamily: "var(--font-serif)" }}
+
                               >
-                                <em>By {post.author.name}</em>
+                                By {post.author.name}
                                 {post.readingTime &&
                                   ` · ${post.readingTime} min read`}
                               </p>

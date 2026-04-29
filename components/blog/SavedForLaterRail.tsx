@@ -15,7 +15,7 @@ export default function SavedForLaterRail({
         <span className="editorial-meta">§04</span>
         <h2
           className="editorial-display text-3xl text-foreground sm:text-4xl"
-          style={{ fontStyle: "italic" }}
+
         >
           Bookmarked
         </h2>
@@ -66,7 +66,7 @@ export default function SavedForLaterRail({
                   )}
                   <h3
                     className="editorial-title-link mt-1.5 text-base font-bold leading-snug text-foreground line-clamp-2 group-hover:text-accent sm:text-lg"
-                    style={{ fontFamily: "var(--font-serif)" }}
+
                   >
                     {post.title}
                   </h3>

@@ -44,7 +44,7 @@ export default function AuthorSpotlight({
                   <span
                     aria-hidden
                     className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full border border-border text-base font-bold"
-                    style={{ fontFamily: "var(--font-serif)" }}
+
                   >
                     {author.name.charAt(0)}
                   </span>
@@ -52,7 +52,7 @@ export default function AuthorSpotlight({
                 <span className="flex min-w-0 flex-1 flex-col">
                   <span
                     className="editorial-title-link truncate text-lg font-bold text-foreground group-hover:text-accent"
-                    style={{ fontFamily: "var(--font-serif)" }}
+
                   >
                     {author.name}
                   </span>

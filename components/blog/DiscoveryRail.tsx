@@ -43,7 +43,7 @@ export default function DiscoveryRail({
         </span>
         <h2
           className="editorial-display text-3xl text-foreground sm:text-4xl lg:text-5xl"
-          style={{ fontStyle: "italic" }}
+
         >
           {title}
         </h2>
@@ -84,18 +84,12 @@ function TrendingChart({ posts }: { posts: DiscoveryPost[] }) {
                   {top.categories[0].title}
                 </p>
               )}
-              <h3
-                className="editorial-display text-3xl leading-[0.95] text-foreground transition-colors group-hover:text-accent sm:text-4xl lg:text-5xl"
-                style={{ fontStyle: "normal" }}
-              >
+              <h3 className="editorial-display text-3xl leading-[0.95] text-foreground transition-colors group-hover:text-accent sm:text-4xl lg:text-5xl">
                 {top.title}
               </h3>
               {top.excerpt && (
-                <p
-                  className="mt-4 max-w-md text-base leading-relaxed text-muted line-clamp-2"
-                  style={{ fontFamily: "var(--font-serif)" }}
-                >
-                  <em>{top.excerpt}</em>
+                <p className="editorial-body mt-4 max-w-md text-base text-muted line-clamp-2">
+                  {top.excerpt}
                 </p>
               )}
               <p className="mt-5 flex items-center gap-3 text-xs text-muted-foreground">
@@ -194,19 +188,13 @@ function EditorPicks({ posts }: { posts: DiscoveryPost[] }) {
                 )}
               </div>
               <div className="lg:col-span-10">
-                <p
-                  className="editorial-display text-2xl leading-[1.05] text-foreground transition-colors group-hover:text-accent sm:text-3xl lg:text-4xl"
-                  style={{ fontStyle: "normal" }}
-                >
+                <p className="editorial-display text-2xl leading-[1.05] text-foreground transition-colors group-hover:text-accent sm:text-3xl lg:text-4xl">
                   &ldquo;{post.excerpt ?? post.title}&rdquo;
                 </p>
                 <p className="mt-5 flex flex-wrap items-baseline gap-3 text-sm text-muted-foreground">
                   {post.author && (
-                    <span
-                      className="text-foreground"
-                      style={{ fontFamily: "var(--font-serif)" }}
-                    >
-                      <em>— {post.author.name}</em>
+                    <span className="font-semibold text-foreground">
+                      — {post.author.name}
                     </span>
                   )}
                   <span aria-hidden>·</span>
@@ -267,11 +255,8 @@ function RefreshedRail({ posts }: { posts: DiscoveryPost[] }) {
                   {post.title}
                 </h3>
                 {post.author && (
-                  <p
-                    className="mt-2 text-sm text-muted-foreground"
-                    style={{ fontFamily: "var(--font-serif)" }}
-                  >
-                    <em>By {post.author.name}</em>
+                  <p className="mt-2 text-sm font-medium text-muted-foreground">
+                    By {post.author.name}
                   </p>
                 )}
               </div>

@@ -71,7 +71,7 @@ export default function BlogHero({ stats }: { stats: BlogHeroStats }) {
             </span>
             <span
               className="block text-[clamp(3rem,12vw,6.5rem)] sm:text-[clamp(4rem,10vw,9rem)]"
-              style={{ fontStyle: "italic", color: "var(--color-accent)" }}
+              style={{ color: "var(--color-accent)" }}
             >
               guides &amp;
             </span>
@@ -84,15 +84,10 @@ export default function BlogHero({ stats }: { stats: BlogHeroStats }) {
             <p className="editorial-meta mb-4 text-foreground">
               Editor&rsquo;s note
             </p>
-            <p
-              className="text-xl leading-snug text-foreground sm:text-2xl"
-              style={{ fontFamily: "var(--font-serif)" }}
-            >
-              <em>
-                A weekly journal of practical web-development writing.
-                Shipped from a small studio in Graz to readers across the
-                world. Just craft.
-              </em>
+            <p className="editorial-body text-xl text-foreground sm:text-2xl">
+              A weekly journal of practical web-development writing.
+              Shipped from a small studio in Graz to readers across the
+              world. Just craft.
             </p>
             <a
               href="#latest"

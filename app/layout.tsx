@@ -4,11 +4,12 @@ import { draftMode } from "next/headers";
 import "@fontsource-variable/plus-jakarta-sans";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
-// Editorial serif used by /blog hero, pull quotes, headlines, and
-// magazine-style metadata. Variable axes give a premium feel:
-// weight 100-900, optical sizes 9-144, soft modulation, wonk italics.
-import "@fontsource-variable/fraunces";
-import "@fontsource-variable/fraunces/wght-italic.css";
+// Premium minimalist sans — used as the new headline + body type
+// across the journal. Variable file covers weights 100-900, ships
+// with optical-size axis. Replaces the editorial serif used in the
+// previous design.
+import "@fontsource-variable/geist";
+import "@fontsource-variable/geist-mono";
 import "./globals.css";
 import SessionProvider from "../components/auth/SessionProvider";
 import SavedPostsProvider from "../components/blog/SavedPostsProvider";

@@ -17,7 +17,7 @@ export default function TopicSpotlight({
         <span className="editorial-meta">§07</span>
         <h2
           className="editorial-display text-3xl text-foreground sm:text-4xl lg:text-5xl"
-          style={{ fontStyle: "italic" }}
+
         >
           The index
         </h2>
@@ -38,7 +38,7 @@ export default function TopicSpotlight({
             >
               <span
                 className="editorial-title-link text-xl font-bold tracking-tight text-foreground group-hover:text-accent sm:text-2xl"
-                style={{ fontFamily: "var(--font-serif)" }}
+
               >
                 {cat.title}
               </span>

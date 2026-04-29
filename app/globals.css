@@ -33,10 +33,13 @@
   --color-muted: var(--theme-muted);
   --color-muted-foreground: var(--theme-muted-foreground);
   --color-border: var(--theme-border);
-  --font-heading: 'Plus Jakarta Sans Variable', 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
-  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', ui-monospace, monospace;
-  --font-serif: 'Fraunces Variable', 'Fraunces', 'Iowan Old Style', 'Palatino Linotype', 'Cambria', 'Georgia', serif;
+  --font-heading: 'Geist Variable', 'Geist', 'Inter Variable', system-ui, sans-serif;
+  --font-sans: 'Geist Variable', 'Geist', 'Inter Variable', system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', 'Geist Mono', 'JetBrains Mono Variable', ui-monospace, monospace;
+  /* Editorial body fallback — preserved for any legacy callers that
+     still set fontFamily: var(--font-serif). The /blog redesign no
+     longer uses serif by default; this is just a defensive token. */
+  --font-serif: 'Iowan Old Style', 'Palatino Linotype', 'Cambria', 'Georgia', serif;
 }
 
 /* Dark theme (default) */
@@ -903,26 +906,28 @@ html {
    System-serif fallback (Iowan / Palatino / Cambria / Georgia)
    inherits the same letter-spacing + line-height, so the layout
    does not shift when Fraunces eventually loads. */
+/* Display-grade sans headline — Geist at heavy weight with tight
+   negative tracking. The premium minimalist look: huge, sharp,
+   confident, no decorative italics. Used by /blog hero, section
+   heads, featured cover titles, pull-quotes. */
 .editorial-display {
-  font-family: var(--font-serif);
-  font-feature-settings: "liga", "dlig", "kern", "ss01";
-  font-optical-sizing: auto;
-  font-variation-settings: "SOFT" 50, "WONK" 1;
-  letter-spacing: -0.025em;
-  line-height: 0.96;
-  font-style: italic;
-  font-weight: 600;
+  font-family: var(--font-heading);
+  font-feature-settings: "kern", "ss01", "ss02";
+  letter-spacing: -0.035em;
+  line-height: 1;
+  font-style: normal;
+  font-weight: 700;
 }
 
-/* Body-scale serif — used for excerpts, pull quotes, editor's note
-   block. Optical-size auto + low SOFT for a clear long-read shape. */
+/* Body-scale sans — used for editorial copy that needs slightly
+   warmer rhythm than the default body class (excerpts, deck copy,
+   pull-quote bodies). Geist regular at normal tracking. */
 .editorial-body {
-  font-family: var(--font-serif);
-  font-feature-settings: "liga", "kern", "onum";
-  font-optical-sizing: auto;
-  font-variation-settings: "SOFT" 30, "WONK" 0;
-  letter-spacing: 0;
-  line-height: 1.5;
+  font-family: var(--font-sans);
+  font-feature-settings: "kern", "liga";
+  letter-spacing: -0.005em;
+  line-height: 1.55;
+  font-weight: 400;
 }
 
 /* Hairline section rule with optional small-caps label inset.
@@ -997,15 +1002,15 @@ html {
 /* Magazine-style numerals — large, tabular, italicised. Used by the
    trending chart and editor's pick rank columns. Fraunces' tabular
    lining figures with WONK 1 give the digits real character. */
+/* Magazine rank digits — Geist with tabular lining figures, tight
+   tracking, heavy weight. The expressive "1" in the chart card. */
 .editorial-rank {
-  font-family: var(--font-serif);
-  font-style: italic;
-  font-weight: 600;
+  font-family: var(--font-heading);
   font-feature-settings: "tnum", "lnum", "kern";
-  font-optical-sizing: auto;
-  font-variation-settings: "SOFT" 50, "WONK" 1;
-  letter-spacing: -0.045em;
+  letter-spacing: -0.06em;
   line-height: 0.85;
+  font-style: normal;
+  font-weight: 700;
 }
 
 /* Hover-only underline for editorial titles. Replaces card lift. */

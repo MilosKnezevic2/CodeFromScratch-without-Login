@@ -80,7 +80,7 @@ export default function BlogToolbar({
           onChange={(e) => setDraft(e.target.value)}
           placeholder="Search the journal"
           className="min-w-0 flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground focus:outline-none"
-          style={{ fontFamily: "var(--font-serif)", fontStyle: "italic" }}
+
         />
         {draft && (
           <button

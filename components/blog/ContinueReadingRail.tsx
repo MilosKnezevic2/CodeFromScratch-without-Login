@@ -13,7 +13,7 @@ export default function ContinueReadingRail({
         <span className="editorial-meta">§02a</span>
         <h2
           className="editorial-display text-3xl text-foreground sm:text-4xl"
-          style={{ fontStyle: "italic" }}
+
         >
           Where you left off
         </h2>
@@ -53,7 +53,7 @@ export default function ContinueReadingRail({
                   </div>
                   <h3
                     className="editorial-title-link mt-2 text-xl font-bold leading-snug text-foreground line-clamp-2 group-hover:text-accent sm:text-2xl"
-                    style={{ fontFamily: "var(--font-serif)" }}
+
                   >
                     {post.title}
                   </h3>

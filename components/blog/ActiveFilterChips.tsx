@@ -27,7 +27,7 @@ export default function ActiveFilterChips({
         >
           <span
             className="text-foreground"
-            style={{ fontFamily: "var(--font-serif)", fontStyle: "italic" }}
+
           >
             {chip.label.toLowerCase()}: {chip.value}
           </span>
