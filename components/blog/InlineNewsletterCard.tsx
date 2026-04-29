@@ -38,72 +38,97 @@ export default function InlineNewsletterCard() {
   return (
     <aside
       aria-labelledby="inline-newsletter-heading"
-      className="relative overflow-hidden rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/15 via-surface to-accent-2/15 p-6 sm:p-8"
+      className="letterpress-block px-6 py-12 sm:px-10 sm:py-16 lg:px-16 lg:py-20"
     >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 rounded-full bg-accent/20 blur-3xl"
-      />
-      <div className="relative grid gap-5 sm:grid-cols-[1fr_auto] sm:items-center">
-        <div>
-          <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-accent">
-            Newsletter
+      <div className="mx-auto grid max-w-5xl items-end gap-8 lg:grid-cols-12">
+        <div className="lg:col-span-7">
+          <p
+            className="editorial-meta"
+            style={{ color: "rgba(245,241,232,0.55)" }}
+          >
+            §05 — Subscription
           </p>
           <h2
             id="inline-newsletter-heading"
-            className="mt-2 text-xl font-extrabold leading-tight text-foreground sm:text-2xl"
-            style={{ fontFamily: "var(--font-heading)" }}
+            className="editorial-display mt-4 text-4xl leading-[0.95] sm:text-5xl lg:text-6xl"
+            style={{ color: "#f5f1e8", fontStyle: "normal" }}
           >
-            New articles, straight to your inbox
+            Read tomorrow&rsquo;s issue{" "}
+            <span style={{ fontStyle: "italic" }}>today.</span>
           </h2>
-          <p className="mt-2 max-w-md text-sm text-muted-foreground">
-            One short email per week. Best new tutorials, behind-the-scenes
-            notes, no fluff. Unsubscribe in one click.
+          <p
+            className="mt-5 max-w-md text-base leading-relaxed"
+            style={{ color: "rgba(245,241,232,0.65)", fontFamily: "var(--font-serif)" }}
+          >
+            <em>
+              One short letter on a Sunday. A new piece of writing, what
+              we&rsquo;re reading, what we&rsquo;re building. Twenty seconds
+              to skim. Unsubscribe in one click.
+            </em>
           </p>
         </div>
         <form
           onSubmit={onSubmit}
-          className="flex w-full max-w-sm flex-col gap-2 sm:max-w-none sm:flex-row sm:items-stretch"
+          className="lg:col-span-5"
         >
-          <label className="sr-only" htmlFor="inline-newsletter-email">
-            Email address
-          </label>
-          <input
-            id="inline-newsletter-email"
-            type="email"
-            required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="you@example.com"
-            disabled={status === "loading" || status === "success"}
-            className="flex-1 rounded-md border border-border bg-background px-3 py-2.5 text-sm text-foreground placeholder:text-muted-foreground focus:border-accent focus:outline-none disabled:opacity-60"
-          />
-          <button
-            type="submit"
-            disabled={status === "loading" || status === "success"}
-            className="whitespace-nowrap rounded-md bg-accent px-5 py-2.5 text-sm font-bold text-accent-foreground transition-opacity hover:opacity-90 disabled:opacity-60"
+          <label
+            className="editorial-meta block"
+            htmlFor="inline-newsletter-email"
+            style={{ color: "rgba(245,241,232,0.55)" }}
           >
-            {status === "loading"
-              ? "Subscribing…"
-              : status === "success"
-                ? "✓ Subscribed"
-                : "Subscribe"}
-          </button>
+            Your email address
+          </label>
+          <div className="mt-3 flex items-end gap-4">
+            <input
+              id="inline-newsletter-email"
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              disabled={status === "loading" || status === "success"}
+              className="flex-1 bg-transparent px-0 pb-2 text-lg outline-none placeholder:text-[rgba(245,241,232,0.35)] focus:border-accent disabled:opacity-60"
+              style={{ color: "#f5f1e8" }}
+            />
+            <button
+              type="submit"
+              disabled={status === "loading" || status === "success"}
+              className="whitespace-nowrap pb-2 text-sm font-bold uppercase tracking-[0.18em] transition disabled:opacity-60"
+              style={{ color: "#f5f1e8" }}
+            >
+              {status === "loading"
+                ? "Subscribing…"
+                : status === "success"
+                  ? "Subscribed ✓"
+                  : "Subscribe →"}
+            </button>
+          </div>
+          <p
+            className="editorial-meta mt-4"
+            style={{ color: "rgba(245,241,232,0.45)" }}
+          >
+            Once a week · No tracking pixels · Unsubscribe in one click
+          </p>
+          {status === "success" && (
+            <p
+              role="status"
+              className="mt-3 text-xs"
+              style={{ color: "#a7f3d0", fontFamily: "var(--font-serif)" }}
+            >
+              <em>Check your inbox to confirm — that&rsquo;s the last step.</em>
+            </p>
+          )}
+          {status === "error" && errorMessage && (
+            <p
+              role="alert"
+              className="mt-3 text-xs"
+              style={{ color: "#fca5a5", fontFamily: "var(--font-serif)" }}
+            >
+              <em>{errorMessage}</em>
+            </p>
+          )}
         </form>
       </div>
-      {status === "success" && (
-        <p
-          role="status"
-          className="relative mt-3 text-xs font-semibold text-green-400"
-        >
-          Check your inbox to confirm — that&apos;s the last step.
-        </p>
-      )}
-      {status === "error" && errorMessage && (
-        <p role="alert" className="relative mt-3 text-xs font-semibold text-red-400">
-          {errorMessage}
-        </p>
-      )}
     </aside>
   );
 }

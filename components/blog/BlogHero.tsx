@@ -1,5 +1,4 @@
 import type { BlogHeroStats } from "@/lib/sanity/hero-stats";
-import FadeUp from "@/components/animations/FadeUp";
 
 const formatNumber = (n: number) =>
   n >= 10_000 ? `${Math.round(n / 100) / 10}k` : n.toLocaleString("en-GB");
@@ -21,82 +20,114 @@ function relativeTime(iso: string | null): string | null {
   return d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 }
 
+function issueLine(): string {
+  const now = new Date();
+  const month = now.toLocaleString("en-GB", { month: "long" }).toUpperCase();
+  const year = now.getFullYear();
+  // ISO week number — gives a print-magazine "Issue 17" feel
+  const start = new Date(now.getFullYear(), 0, 1);
+  const week = Math.ceil(
+    ((now.getTime() - start.getTime()) / 86_400_000 + start.getDay() + 1) / 7,
+  );
+  return `Vol. ${year - 2024} · Issue ${String(week).padStart(2, "0")} · ${month} ${year}`;
+}
+
 export default function BlogHero({ stats }: { stats: BlogHeroStats }) {
   const lastPublished = relativeTime(stats.lastPublishedAt);
-  const lastUpdated = relativeTime(stats.lastUpdatedAt);
-  const tiles: Array<{ value: string; label: string; tone?: "accent" }> = [
+  const tiles: Array<{ value: string; label: string }> = [
     {
       value: stats.totalPosts > 0 ? formatNumber(stats.totalPosts) : "—",
-      label: "articles",
-      tone: "accent",
+      label: "Articles",
     },
     ...(lastPublished
-      ? [{ value: lastPublished, label: "last published" }]
+      ? [{ value: lastPublished, label: "Latest issue" }]
       : []),
     ...(stats.readsLast30d > 0
       ? [
           {
             value: formatNumber(stats.readsLast30d),
-            label: "reads · 30 days",
+            label: "Reads · 30 d",
           },
         ]
-      : []),
-    ...(lastUpdated && lastUpdated !== lastPublished
-      ? [{ value: lastUpdated, label: "last refreshed" }]
       : []),
   ];
 
   return (
-    <section className="relative overflow-hidden border-b border-border/60 bg-gradient-to-b from-background via-background to-surface/30 px-4 pb-14 pt-24 sm:px-6 lg:px-8">
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent"
-      />
-      <div className="relative mx-auto max-w-6xl text-center">
-        <FadeUp>
-          <p className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-muted-foreground">
-            <span aria-hidden className="h-px w-6 bg-accent" />
-            CodeFromScratch
-            <span aria-hidden className="h-px w-6 bg-accent" />
-          </p>
-        </FadeUp>
-        <FadeUp delay={0.05}>
-          <h1
-            className="mt-4 text-4xl font-extrabold leading-[1.1] tracking-tight text-foreground sm:text-5xl lg:text-6xl"
-            style={{ fontFamily: "var(--font-heading)" }}
-          >
-            Tutorials, guides &amp;{" "}
-            <span className="gradient-text">deep dives</span>
+    <section className="editorial-grain relative border-b border-border/80 bg-background px-4 sm:px-6 lg:px-8">
+      <div className="relative z-[1] mx-auto max-w-7xl">
+        {/* Top edition rule */}
+        <div className="flex items-center gap-3 border-b border-border/60 py-4">
+          <span className="editorial-meta">{issueLine()}</span>
+          <span aria-hidden className="ml-auto editorial-meta">
+            CodeFromScratch / The Journal
+          </span>
+        </div>
+
+        {/* Asymmetric masthead — left=display title, right=descriptor */}
+        <div className="grid gap-8 py-14 sm:py-20 lg:grid-cols-12 lg:gap-12">
+          <h1 className="editorial-display text-foreground sm:col-span-12 lg:col-span-8 lg:text-[clamp(4rem,9vw,9rem)]">
+            <span className="block text-[clamp(3rem,12vw,6.5rem)] sm:text-[clamp(4rem,10vw,9rem)]">
+              Tutorials,
+            </span>
+            <span
+              className="block text-[clamp(3rem,12vw,6.5rem)] sm:text-[clamp(4rem,10vw,9rem)]"
+              style={{ fontStyle: "italic", color: "var(--color-accent)" }}
+            >
+              guides &amp;
+            </span>
+            <span className="block text-[clamp(3rem,12vw,6.5rem)] sm:text-[clamp(4rem,10vw,9rem)]">
+              deep dives.
+            </span>
           </h1>
-        </FadeUp>
-        <FadeUp delay={0.1}>
-          <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-muted sm:text-lg">
-            Practical web-development articles to sharpen your skills and
-            ship real-world projects.
-          </p>
-        </FadeUp>
+
+          <div className="self-end sm:col-span-12 lg:col-span-4">
+            <p
+              className="text-base leading-relaxed text-muted sm:text-lg"
+              style={{ fontFamily: "var(--font-serif)" }}
+            >
+              <em>
+                A weekly journal of practical web-development writing —
+                shipped from a small studio in Graz to readers across the
+                world. No newsletters about newsletters. No 12-step listicles.
+                Just craft.
+              </em>
+            </p>
+            <a
+              href="#latest"
+              className="mt-6 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground hover:text-accent"
+            >
+              Read this issue
+              <span aria-hidden>↓</span>
+            </a>
+          </div>
+        </div>
+
+        {/* Bottom stats band */}
         {tiles.length > 0 && (
-          <FadeUp delay={0.15}>
-            <dl className="mx-auto mt-8 flex flex-wrap items-end justify-center gap-x-8 gap-y-3 text-left">
-              {tiles.map((tile) => (
-                <div key={tile.label}>
-                  <dt className="text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                    {tile.label}
+          <div className="flex flex-wrap items-center justify-between gap-y-4 border-t border-border/60 py-4">
+            <dl className="flex flex-wrap items-baseline gap-x-10 gap-y-2">
+              {tiles.map((tile, i) => (
+                <div
+                  key={tile.label}
+                  className="flex items-baseline gap-2"
+                >
+                  <dt className="editorial-meta">
+                    {String(i + 1).padStart(2, "0")} · {tile.label}
                   </dt>
-                  <dd
-                    className={`mt-0.5 text-xl font-extrabold tabular-nums ${
-                      tile.tone === "accent"
-                        ? "text-accent"
-                        : "text-foreground"
-                    }`}
-                    style={{ fontFamily: "var(--font-heading)" }}
-                  >
+                  <dd className="text-base font-extrabold tabular-nums text-foreground">
                     {tile.value}
                   </dd>
                 </div>
               ))}
             </dl>
-          </FadeUp>
+            <span className="editorial-meta">
+              {new Date().toLocaleDateString("en-GB", {
+                weekday: "long",
+                day: "2-digit",
+                month: "long",
+              })}
+            </span>
+          </div>
         )}
       </div>
     </section>

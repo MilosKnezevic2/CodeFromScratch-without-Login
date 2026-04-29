@@ -21,110 +21,264 @@ function relativeDate(iso?: string): string | null {
 
 export default function DiscoveryRail({
   title,
-  icon,
+  sectionNumber,
   posts,
-  badge,
   variant = "trending",
 }: {
   title: string;
-  icon: string;
+  sectionNumber: string;
   posts: DiscoveryPost[];
+  /** Legacy props kept for back-compat; both no-op in this version. */
+  icon?: string;
   badge?: string;
   variant?: "trending" | "picks" | "updated";
 }) {
   if (posts.length === 0) return null;
+
   return (
-    <section
-      aria-label={title}
-      className="glow-border rounded-2xl border border-border/60 bg-surface/50 p-5 sm:p-6"
-    >
-      <header className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
-        <h2 className="flex items-center gap-2 text-sm font-bold uppercase tracking-[0.2em] text-foreground">
-          <span aria-hidden className="text-base">
-            {icon}
-          </span>
+    <section aria-label={title} className="relative">
+      <header className="mb-10 flex flex-wrap items-baseline gap-4 border-t border-border pt-6">
+        <span className="editorial-meta">
+          §{sectionNumber}
+        </span>
+        <h2
+          className="editorial-display text-3xl text-foreground sm:text-4xl lg:text-5xl"
+          style={{ fontStyle: "italic" }}
+        >
           {title}
-          {badge && (
-            <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-accent">
-              {badge}
-            </span>
-          )}
         </h2>
       </header>
 
-      <ol className="grid list-none gap-3 sm:grid-cols-2 lg:grid-cols-5">
-        {posts.map((post, i) => (
-          <li key={post._id}>
-            <article className="group relative h-full rounded-xl border border-border bg-background/60 transition hover:border-accent/40 hover:bg-surface">
-              <Link
-                href={`/blog/${post.slug.current}`}
-                className="block h-full p-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+      {variant === "trending" && <TrendingChart posts={posts} />}
+      {variant === "picks" && <EditorPicks posts={posts} />}
+      {variant === "updated" && <RefreshedRail posts={posts} />}
+    </section>
+  );
+}
+
+/* ────────────── Trending — Billboard-style chart, no images ──────────────
+   Big rank digit on the left, title + meta in the middle, view count
+   on the right. Looks like the front-of-book chart spread of a print
+   magazine. */
+function TrendingChart({ posts }: { posts: DiscoveryPost[] }) {
+  const top = posts[0];
+  const rest = posts.slice(1);
+
+  return (
+    <div className="grid gap-10 lg:grid-cols-12">
+      {/* Hero chart cover — #1 with massive rank */}
+      {top && (
+        <article className="group relative lg:col-span-7">
+          <Link
+            href={`/blog/${top.slug.current}`}
+            aria-label={top.title}
+            className="absolute inset-0 z-0"
+          />
+          <div className="relative grid grid-cols-[auto_1fr] gap-6 border-l-4 border-accent pl-6 sm:gap-8">
+            <span className="editorial-rank text-[8rem] leading-none text-accent sm:text-[10rem] lg:text-[12rem]">
+              1
+            </span>
+            <div className="flex flex-col justify-end pb-2">
+              {top.categories?.[0] && (
+                <p className="editorial-meta mb-3">
+                  {top.categories[0].title}
+                </p>
+              )}
+              <h3
+                className="editorial-display text-3xl leading-[0.95] text-foreground transition-colors group-hover:text-accent sm:text-4xl lg:text-5xl"
+                style={{ fontStyle: "normal" }}
               >
-                <div className="relative aspect-[16/10] overflow-hidden rounded-lg">
-                  {post.featuredImage?.asset ? (
-                    <Image
-                      src={urlFor(post.featuredImage)
-                        .width(480)
-                        .height(300)
-                        .quality(75)
-                        .url()}
-                      alt={post.featuredImage.alt || post.title}
-                      fill
-                      sizes="(max-width: 640px) 100vw, 240px"
-                      className="object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-accent/10 to-accent-2/10">
-                      <span aria-hidden className="text-2xl opacity-30">
-                        {icon}
-                      </span>
-                    </div>
-                  )}
-                  {variant === "trending" && (
-                    <span className="absolute left-2 top-2 rounded-full bg-background/90 px-2 py-0.5 text-[10px] font-extrabold tabular-nums text-foreground backdrop-blur">
-                      #{i + 1}
+                {top.title}
+              </h3>
+              {top.excerpt && (
+                <p
+                  className="mt-4 max-w-md text-base leading-relaxed text-muted line-clamp-2"
+                  style={{ fontFamily: "var(--font-serif)" }}
+                >
+                  <em>{top.excerpt}</em>
+                </p>
+              )}
+              <p className="mt-5 flex items-center gap-3 text-xs text-muted-foreground">
+                {top.author && (
+                  <span className="font-bold uppercase tracking-wider text-foreground">
+                    By {top.author.name}
+                  </span>
+                )}
+                {top.viewCount !== undefined && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <span className="tabular-nums">
+                      {formatNumber(top.viewCount)} reads this week
                     </span>
-                  )}
-                  {post.isPremium && (
-                    <span className="absolute right-2 top-2 rounded-full bg-accent px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-accent-foreground">
-                      PRO
+                  </>
+                )}
+              </p>
+            </div>
+          </div>
+          <div className="absolute right-0 top-0 z-10 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+            <SavePostButton postSlug={top.slug.current} iconOnly />
+          </div>
+        </article>
+      )}
+
+      {/* Ranks 2–N as a tight vertical list */}
+      {rest.length > 0 && (
+        <ol className="lg:col-span-5">
+          {rest.map((post, i) => (
+            <li
+              key={post._id}
+              className="border-b border-border last:border-b-0"
+            >
+              <article className="group relative">
+                <Link
+                  href={`/blog/${post.slug.current}`}
+                  aria-label={post.title}
+                  className="absolute inset-0 z-0"
+                />
+                <div className="grid grid-cols-[2.5rem_1fr_auto] items-baseline gap-4 py-4">
+                  <span className="editorial-rank text-3xl text-muted-foreground">
+                    {i + 2}
+                  </span>
+                  <div className="min-w-0">
+                    {post.categories?.[0] && (
+                      <p className="editorial-meta mb-1 text-[10px]">
+                        {post.categories[0].title}
+                      </p>
+                    )}
+                    <h3 className="editorial-title-link text-base font-bold leading-snug text-foreground line-clamp-2 group-hover:text-accent">
+                      {post.title}
+                    </h3>
+                  </div>
+                  {post.viewCount !== undefined && (
+                    <span className="whitespace-nowrap text-xs tabular-nums text-muted-foreground">
+                      {formatNumber(post.viewCount)}
                     </span>
                   )}
                 </div>
-                <h3 className="mt-3 text-sm font-bold leading-snug text-foreground line-clamp-2 group-hover:text-accent">
+              </article>
+            </li>
+          ))}
+        </ol>
+      )}
+    </div>
+  );
+}
+
+/* ────────────── Editor's picks — pull-quote rows, no thumbnails ──────────────
+   Each pick is a serif pull quote from the article (excerpt) at large
+   display size, with a small byline + read link. Reads like the
+   "Editor's Letter" page of a print magazine. */
+function EditorPicks({ posts }: { posts: DiscoveryPost[] }) {
+  return (
+    <ol>
+      {posts.map((post, i) => (
+        <li
+          key={post._id}
+          className={`border-t border-border ${i === posts.length - 1 ? "border-b" : ""}`}
+        >
+          <article className="group relative">
+            <Link
+              href={`/blog/${post.slug.current}`}
+              aria-label={post.title}
+              className="absolute inset-0 z-0"
+            />
+            <div className="grid items-end gap-6 py-10 lg:grid-cols-12 lg:gap-12">
+              <div className="lg:col-span-2">
+                <p className="editorial-meta">
+                  Pick {String(i + 1).padStart(2, "0")}
+                </p>
+                {post.categories?.[0] && (
+                  <p className="editorial-meta mt-1 text-foreground">
+                    {post.categories[0].title}
+                  </p>
+                )}
+              </div>
+              <div className="lg:col-span-10">
+                <p
+                  className="editorial-display text-2xl leading-[1.05] text-foreground transition-colors group-hover:text-accent sm:text-3xl lg:text-4xl"
+                  style={{ fontStyle: "normal" }}
+                >
+                  &ldquo;{post.excerpt ?? post.title}&rdquo;
+                </p>
+                <p className="mt-5 flex flex-wrap items-baseline gap-3 text-sm text-muted-foreground">
+                  {post.author && (
+                    <span
+                      className="text-foreground"
+                      style={{ fontFamily: "var(--font-serif)" }}
+                    >
+                      <em>— {post.author.name}</em>
+                    </span>
+                  )}
+                  <span aria-hidden>·</span>
+                  <span className="editorial-title-link font-bold uppercase tracking-[0.2em]">
+                    Read the article →
+                  </span>
+                </p>
+              </div>
+            </div>
+          </article>
+        </li>
+      ))}
+    </ol>
+  );
+}
+
+/* ────────────── Refreshed — side-by-side pairs, hairline stack ──────────────
+   Smaller posts surfacing for evergreen rediscovery. Two columns of
+   minimalist rows with thumbnail + title + "refreshed" timestamp. */
+function RefreshedRail({ posts }: { posts: DiscoveryPost[] }) {
+  return (
+    <ol className="grid gap-x-10 gap-y-6 sm:grid-cols-2">
+      {posts.map((post) => (
+        <li key={post._id} className="border-t border-border pt-5">
+          <article className="group relative">
+            <Link
+              href={`/blog/${post.slug.current}`}
+              aria-label={post.title}
+              className="absolute inset-0 z-0"
+            />
+            <div className="grid grid-cols-[5rem_1fr] gap-4">
+              <div className="relative aspect-square overflow-hidden">
+                {post.featuredImage?.asset ? (
+                  <Image
+                    src={urlFor(post.featuredImage)
+                      .width(160)
+                      .height(160)
+                      .quality(75)
+                      .url()}
+                    alt={post.featuredImage.alt || post.title}
+                    fill
+                    sizes="80px"
+                    className="object-cover grayscale transition-all duration-500 group-hover:grayscale-0"
+                  />
+                ) : (
+                  <div className="flex h-full w-full items-center justify-center bg-surface-2">
+                    <span aria-hidden className="text-2xl opacity-30">
+                      ✦
+                    </span>
+                  </div>
+                )}
+              </div>
+              <div>
+                <p className="editorial-meta">
+                  Refreshed {relativeDate(post.updatedAt)}
+                </p>
+                <h3 className="editorial-title-link mt-2 text-base font-bold leading-snug text-foreground line-clamp-2 group-hover:text-accent">
                   {post.title}
                 </h3>
-                <p className="mt-2 flex items-center gap-2 text-[11px] text-muted-foreground">
-                  {variant === "trending" && post.viewCount !== undefined && (
-                    <span className="font-bold text-accent">
-                      {formatNumber(post.viewCount)} reads
-                    </span>
-                  )}
-                  {variant === "picks" && post.categories?.[0] && (
-                    <span className="font-bold uppercase tracking-wider text-accent">
-                      {post.categories[0].title}
-                    </span>
-                  )}
-                  {variant === "updated" && post.updatedAt && (
-                    <span className="font-bold uppercase tracking-wider text-accent-2">
-                      Refreshed {relativeDate(post.updatedAt)}
-                    </span>
-                  )}
-                  {post.readingTime && (
-                    <>
-                      <span aria-hidden>·</span>
-                      <span>{post.readingTime} min</span>
-                    </>
-                  )}
-                </p>
-              </Link>
-              <div className="absolute right-2 top-2 z-10 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
-                <SavePostButton postSlug={post.slug.current} iconOnly />
+                {post.author && (
+                  <p
+                    className="mt-2 text-sm text-muted-foreground"
+                    style={{ fontFamily: "var(--font-serif)" }}
+                  >
+                    <em>By {post.author.name}</em>
+                  </p>
+                )}
               </div>
-            </article>
-          </li>
-        ))}
-      </ol>
-    </section>
+            </div>
+          </article>
+        </li>
+      ))}
+    </ol>
   );
 }

@@ -1,95 +1,145 @@
 /**
- * Skeleton state for /blog. Mirrors the production layout shipped
- * across PRs A-D so the perceived load looks like the page settling
- * into place, not a fresh paint. Uses tabular widths so layout shift
- * after hydration is minimal.
+ * Skeleton state for /blog. Mirrors the editorial magazine layout
+ * (issue rule, asymmetric masthead, chart, side-by-side spread,
+ * letterpress, pull-quote rows, date-indexed list) so the perceived
+ * load looks like the page settling into print, not a flash of cards.
  */
 export default function BlogLoading() {
   return (
     <div aria-busy="true" aria-live="polite">
-      <span className="sr-only">Loading blog…</span>
+      <span className="sr-only">Loading the journal…</span>
 
-      {/* Hero skeleton */}
-      <section className="border-b border-border/60 bg-gradient-to-b from-background via-background to-surface/30 px-4 pb-14 pt-24 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl text-center">
-          <div className="mx-auto h-3 w-40 animate-pulse rounded bg-surface-2" />
-          <div className="mx-auto mt-4 h-12 w-[60%] animate-pulse rounded-lg bg-surface-2 sm:h-14" />
-          <div className="mx-auto mt-3 h-12 w-[40%] animate-pulse rounded-lg bg-surface-2 sm:h-14" />
-          <div className="mx-auto mt-5 h-5 w-[55%] animate-pulse rounded bg-surface-2" />
-          <div className="mx-auto mt-8 flex flex-wrap justify-center gap-x-8 gap-y-3">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="space-y-2">
-                <div className="h-2.5 w-20 animate-pulse rounded bg-surface-2" />
-                <div className="h-6 w-16 animate-pulse rounded bg-surface-2" />
-              </div>
-            ))}
+      {/* Hero — issue rule + asymmetric masthead + stats */}
+      <section className="border-b border-border/80 bg-background px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl">
+          <div className="flex items-center gap-3 border-b border-border/60 py-4">
+            <div className="h-3 w-48 animate-pulse bg-surface-2" />
+            <div className="ml-auto h-3 w-44 animate-pulse bg-surface-2" />
+          </div>
+          <div className="grid gap-8 py-14 sm:py-20 lg:grid-cols-12 lg:gap-12">
+            <div className="space-y-4 lg:col-span-8">
+              <div className="h-20 w-[80%] animate-pulse bg-surface-2 sm:h-28" />
+              <div className="h-20 w-[60%] animate-pulse bg-surface-2 sm:h-28" />
+              <div className="h-20 w-[70%] animate-pulse bg-surface-2 sm:h-28" />
+            </div>
+            <div className="space-y-3 self-end lg:col-span-4">
+              <div className="h-4 w-full animate-pulse bg-surface-2" />
+              <div className="h-4 w-[80%] animate-pulse bg-surface-2" />
+              <div className="h-4 w-[60%] animate-pulse bg-surface-2" />
+            </div>
+          </div>
+          <div className="flex items-center justify-between border-t border-border/60 py-4">
+            <div className="flex gap-10">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="space-y-2">
+                  <div className="h-2.5 w-20 animate-pulse bg-surface-2" />
+                  <div className="h-4 w-12 animate-pulse bg-surface-2" />
+                </div>
+              ))}
+            </div>
+            <div className="h-3 w-24 animate-pulse bg-surface-2" />
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
-        {/* Toolbar skeleton */}
-        <div className="mt-10 flex flex-col gap-3 rounded-2xl border border-border/60 bg-surface/70 p-3 sm:flex-row">
-          <div className="h-10 flex-1 animate-pulse rounded-xl bg-surface-2" />
-          <div className="h-10 w-44 animate-pulse rounded-xl bg-surface-2" />
+      <main className="mx-auto max-w-7xl px-4 pb-32 sm:px-6 lg:px-8">
+        {/* Toolbar */}
+        <div className="mt-10 border-y border-border py-4">
+          <div className="h-6 w-full animate-pulse bg-surface-2" />
         </div>
 
-        {/* Chip filters skeleton */}
-        <div className="mt-4 flex flex-wrap gap-2">
+        {/* Featured cover */}
+        <div className="mt-20 border-t border-border pt-6">
+          <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
+            <div className="space-y-6 lg:col-span-7">
+              <div className="h-3 w-24 animate-pulse bg-surface-2" />
+              <div className="h-16 w-full animate-pulse bg-surface-2" />
+              <div className="h-16 w-[80%] animate-pulse bg-surface-2" />
+              <div className="h-5 w-[60%] animate-pulse bg-surface-2" />
+              <div className="h-5 w-[40%] animate-pulse bg-surface-2" />
+            </div>
+            <div className="aspect-[5/4] animate-pulse bg-surface-2 lg:col-span-5" />
+          </div>
+        </div>
+
+        {/* Chart */}
+        <div className="mt-24 border-t border-border pt-6">
+          <div className="mb-10 flex items-baseline gap-4">
+            <div className="h-3 w-12 animate-pulse bg-surface-2" />
+            <div className="h-10 w-48 animate-pulse bg-surface-2" />
+          </div>
+          <div className="grid gap-10 lg:grid-cols-12">
+            <div className="grid grid-cols-[8rem_1fr] gap-8 border-l-4 border-accent pl-6 lg:col-span-7">
+              <div className="h-40 w-32 animate-pulse bg-surface-2" />
+              <div className="space-y-4">
+                <div className="h-12 w-full animate-pulse bg-surface-2" />
+                <div className="h-12 w-[80%] animate-pulse bg-surface-2" />
+                <div className="h-4 w-[50%] animate-pulse bg-surface-2" />
+              </div>
+            </div>
+            <ol className="lg:col-span-5">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <li
+                  key={i}
+                  className="grid grid-cols-[2.5rem_1fr_3rem] gap-4 border-b border-border py-4"
+                >
+                  <div className="h-8 w-8 animate-pulse bg-surface-2" />
+                  <div className="space-y-2">
+                    <div className="h-3 w-16 animate-pulse bg-surface-2" />
+                    <div className="h-4 w-full animate-pulse bg-surface-2" />
+                  </div>
+                  <div className="h-3 w-12 animate-pulse bg-surface-2 ml-auto" />
+                </li>
+              ))}
+            </ol>
+          </div>
+        </div>
+
+        {/* Asymmetric spread */}
+        <div className="mt-24 border-t border-border pt-6">
+          <div className="mb-10 flex items-baseline gap-4">
+            <div className="h-3 w-12 animate-pulse bg-surface-2" />
+            <div className="h-10 w-32 animate-pulse bg-surface-2" />
+          </div>
+          <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
+            <div className="space-y-6 lg:col-span-7">
+              <div className="aspect-[4/3] animate-pulse bg-surface-2" />
+              <div className="space-y-3">
+                <div className="h-3 w-16 animate-pulse bg-surface-2" />
+                <div className="h-12 w-full animate-pulse bg-surface-2" />
+                <div className="h-12 w-[70%] animate-pulse bg-surface-2" />
+              </div>
+            </div>
+            <div className="space-y-12 lg:col-span-5">
+              {Array.from({ length: 2 }).map((_, i) => (
+                <div key={i} className="space-y-3">
+                  <div className="aspect-[5/3] animate-pulse bg-surface-2" />
+                  <div className="h-3 w-16 animate-pulse bg-surface-2" />
+                  <div className="h-7 w-full animate-pulse bg-surface-2" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+
+        {/* Editorial list */}
+        <div className="mt-24 border-y border-border">
           {Array.from({ length: 6 }).map((_, i) => (
             <div
               key={i}
-              className="h-7 w-20 animate-pulse rounded-full bg-surface-2"
-            />
-          ))}
-        </div>
-
-        {/* Featured skeleton */}
-        <div className="mt-10 aspect-[16/9] animate-pulse rounded-3xl bg-surface-2 sm:aspect-[16/7]" />
-
-        {/* Showcase 2x2 skeleton */}
-        <div className="mt-12 grid gap-6 sm:grid-cols-2">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <div
-              key={i}
-              className="overflow-hidden rounded-2xl border border-border bg-surface"
+              className="grid grid-cols-[5.5rem_1fr_auto] items-baseline gap-6 border-t border-border py-6"
             >
-              <div className="aspect-[16/10] animate-pulse bg-surface-2" />
-              <div className="space-y-3 p-5">
-                <div className="flex gap-2">
-                  <div className="h-5 w-16 animate-pulse rounded-full bg-surface-2" />
-                  <div className="h-5 w-20 animate-pulse rounded-full bg-surface-2" />
-                </div>
-                <div className="h-6 w-full animate-pulse rounded bg-surface-2" />
-                <div className="h-4 w-3/4 animate-pulse rounded bg-surface-2" />
-                <div className="flex items-center justify-between border-t border-border pt-4">
-                  <div className="h-5 w-24 animate-pulse rounded bg-surface-2" />
-                  <div className="h-4 w-16 animate-pulse rounded bg-surface-2" />
-                </div>
+              <div className="h-3 w-16 animate-pulse bg-surface-2" />
+              <div className="space-y-2">
+                <div className="h-3 w-20 animate-pulse bg-surface-2" />
+                <div className="h-6 w-full animate-pulse bg-surface-2" />
+                <div className="h-3 w-[40%] animate-pulse bg-surface-2" />
               </div>
+              <div className="hidden h-6 w-6 animate-pulse bg-surface-2 sm:block" />
             </div>
           ))}
         </div>
-
-        {/* Editorial list skeleton */}
-        <div className="mt-16 space-y-3">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div
-              key={i}
-              className="flex items-center gap-5 rounded-xl border border-border bg-surface/50 p-4 sm:p-5"
-            >
-              <div className="hidden h-10 w-8 animate-pulse rounded bg-surface-2 sm:block" />
-              <div className="h-16 w-16 shrink-0 animate-pulse rounded-xl bg-surface-2 sm:h-[72px] sm:w-[72px]" />
-              <div className="flex-1 space-y-2">
-                <div className="h-3 w-24 animate-pulse rounded bg-surface-2" />
-                <div className="h-5 w-full animate-pulse rounded bg-surface-2" />
-                <div className="h-3 w-2/3 animate-pulse rounded bg-surface-2" />
-              </div>
-              <div className="hidden h-9 w-9 shrink-0 animate-pulse rounded-full bg-surface-2 sm:block" />
-            </div>
-          ))}
-        </div>
-      </section>
+      </main>
     </div>
   );
 }

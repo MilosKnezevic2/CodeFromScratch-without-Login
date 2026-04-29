@@ -8,18 +8,18 @@ type Group<T extends string> = {
 };
 
 const READING_TIME: Group<"short" | "medium" | "long"> = {
-  label: "Reading time",
+  label: "Length",
   paramName: "readingTime",
   options: [
-    { value: "short", label: "5 min", hint: "Quick reads" },
-    { value: "medium", label: "10 min", hint: "Standard" },
-    { value: "long", label: "Deep dive", hint: "12+ min" },
+    { value: "short", label: "Short" },
+    { value: "medium", label: "Standard" },
+    { value: "long", label: "Long-form" },
   ],
   active: "",
 };
 
 const DIFFICULTY: Group<"beginner" | "intermediate" | "advanced"> = {
-  label: "Difficulty",
+  label: "Level",
   paramName: "difficulty",
   options: [
     { value: "beginner", label: "Beginner" },
@@ -47,35 +47,41 @@ export default function ChipFilters({
   ];
 
   return (
-    <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-xs">
+    <div className="flex flex-wrap items-baseline gap-x-10 gap-y-3">
       {groups.map((group) => (
         <fieldset
           key={group.paramName}
-          className="flex flex-wrap items-center gap-2"
+          className="flex flex-wrap items-baseline gap-x-3 gap-y-2"
         >
-          <legend className="mr-1 text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-            {group.label}
-          </legend>
-          {group.options.map((opt) => {
+          <legend className="editorial-meta">{group.label}</legend>
+          {group.options.map((opt, i) => {
             const isActive = group.active === opt.value;
             const href = buildHref({
               [group.paramName]: isActive ? null : opt.value,
               page: null,
             });
             return (
-              <Link
+              <span
                 key={opt.value}
-                href={href}
-                aria-pressed={isActive}
-                title={opt.hint}
-                className={`rounded-full border px-3 py-1 font-semibold transition ${
-                  isActive
-                    ? "border-accent bg-accent/15 text-accent"
-                    : "border-border bg-surface-2 text-muted-foreground hover:text-foreground"
-                }`}
+                className="flex items-baseline gap-2 text-xs"
               >
-                {opt.label}
-              </Link>
+                <Link
+                  href={href}
+                  aria-pressed={isActive}
+                  className={`font-bold uppercase tracking-[0.16em] transition-colors ${
+                    isActive
+                      ? "text-foreground underline underline-offset-4"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {opt.label}
+                </Link>
+                {i < group.options.length - 1 && (
+                  <span aria-hidden className="text-muted-foreground">
+                    ·
+                  </span>
+                )}
+              </span>
             );
           })}
         </fieldset>
