@@ -170,6 +170,21 @@ export const post = defineType({
       initialValue: false,
     }),
     defineField({
+      name: "difficulty",
+      title: "Difficulty",
+      type: "string",
+      description:
+        "Reader-facing difficulty signal. Used by the Difficulty filter chip on the blog index.",
+      options: {
+        list: [
+          { title: "Beginner", value: "beginner" },
+          { title: "Intermediate", value: "intermediate" },
+          { title: "Advanced", value: "advanced" },
+        ],
+        layout: "radio",
+      },
+    }),
+    defineField({
       name: "seoTitle",
       title: "SEO Title",
       type: "string",

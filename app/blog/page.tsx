@@ -3,12 +3,10 @@ import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
 import {
-  getPosts,
-  getPostsByCategory,
-  getPostsByTag,
+  getPostsAdvanced,
   getCategoriesWithCounts,
   getTagsWithCategory,
-  searchPosts,
+  getFeaturedAuthors,
 } from "@/lib/sanity/queries";
 import { getBlogHeroStats } from "@/lib/sanity/hero-stats";
 import {
@@ -37,6 +35,10 @@ import SavePostButton from "@/components/blog/SavePostButton";
 import ContinueReadingRail from "@/components/blog/ContinueReadingRail";
 import SavedForLaterRail from "@/components/blog/SavedForLaterRail";
 import HideReadToggle from "@/components/blog/HideReadToggle";
+import ChipFilters from "@/components/blog/ChipFilters";
+import CommandPalette from "@/components/blog/CommandPalette";
+import TopicSpotlight from "@/components/blog/TopicSpotlight";
+import AuthorSpotlight from "@/components/blog/AuthorSpotlight";
 import JsonLd from "@/components/seo/JsonLd";
 import {
   itemListJsonLd,
@@ -125,6 +127,8 @@ export default async function BlogPage({
     q?: string;
     sort?: string;
     hideRead?: string;
+    readingTime?: string;
+    difficulty?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -136,10 +140,21 @@ export default async function BlogPage({
     | "newest"
     | "oldest";
   const hideReadActive = params.hideRead === "1";
+  const readingTimeFilter = (
+    ["short", "medium", "long"] as const
+  ).find((v) => v === params.readingTime);
+  const difficultyFilter = (
+    ["beginner", "intermediate", "advanced"] as const
+  ).find((v) => v === params.difficulty);
   const LIMIT = 12;
 
   const isHomeState =
-    page === 1 && !activeCategory && !activeTag && !searchQuery;
+    page === 1 &&
+    !activeCategory &&
+    !activeTag &&
+    !searchQuery &&
+    !readingTimeFilter &&
+    !difficultyFilter;
 
   const currentUser = await getCurrentUser();
   const userId = currentUser?.id ?? null;
@@ -155,14 +170,18 @@ export default async function BlogPage({
     continueReading,
     savedForLater,
     readSlugs,
+    featuredAuthors,
   ] = await Promise.all([
-    searchQuery
-      ? searchPosts(searchQuery, page, LIMIT)
-      : activeTag
-        ? getPostsByTag(activeTag, page, LIMIT)
-        : activeCategory
-          ? getPostsByCategory(activeCategory, page, LIMIT)
-          : getPosts(page, LIMIT, activeSort),
+    getPostsAdvanced({
+      page,
+      limit: LIMIT,
+      sort: activeSort,
+      ...(activeCategory ? { category: activeCategory } : {}),
+      ...(activeTag ? { tag: activeTag } : {}),
+      ...(searchQuery ? { search: searchQuery } : {}),
+      ...(readingTimeFilter ? { readingTime: readingTimeFilter } : {}),
+      ...(difficultyFilter ? { difficulty: difficultyFilter } : {}),
+    }),
     getCategoriesWithCounts(),
     getTagsWithCategory(),
     getBlogHeroStats(),
@@ -176,6 +195,7 @@ export default async function BlogPage({
     userId && hideReadActive
       ? getReadSlugs(userId)
       : Promise.resolve(new Set<string>()),
+    isHomeState ? getFeaturedAuthors(6) : Promise.resolve([]),
   ]);
 
   const { posts: allPosts, pages: totalPages } = result;
@@ -204,25 +224,34 @@ export default async function BlogPage({
 
   const pageWindow = getPageWindow(page, totalPages);
 
+  function buildHref(
+    overrides: Partial<Record<string, string | null>>,
+  ): string {
+    const current: Record<string, string> = {
+      ...(page > 1 ? { page: String(page) } : {}),
+      ...(searchQuery ? { q: searchQuery } : {}),
+      ...(activeCategory ? { category: activeCategory } : {}),
+      ...(activeTag ? { tag: activeTag } : {}),
+      ...(activeSort !== "newest" ? { sort: activeSort } : {}),
+      ...(hideReadActive ? { hideRead: "1" } : {}),
+      ...(readingTimeFilter ? { readingTime: readingTimeFilter } : {}),
+      ...(difficultyFilter ? { difficulty: difficultyFilter } : {}),
+    };
+    for (const [k, v] of Object.entries(overrides)) {
+      if (v === null) delete current[k];
+      else if (v !== undefined) current[k] = v;
+    }
+    const params = new URLSearchParams(current);
+    const qs = params.toString();
+    return qs ? `/blog?${qs}` : "/blog";
+  }
+
   function pageHref(p: number) {
-    const parts: string[] = [];
-    if (p > 1) parts.push(`page=${p}`);
-    if (searchQuery) parts.push(`q=${encodeURIComponent(searchQuery)}`);
-    if (activeCategory) parts.push(`category=${activeCategory}`);
-    if (activeTag) parts.push(`tag=${activeTag}`);
-    if (activeSort !== "newest") parts.push(`sort=${activeSort}`);
-    if (hideReadActive) parts.push("hideRead=1");
-    return parts.length > 0 ? `/blog?${parts.join("&")}` : "/blog";
+    return buildHref({ page: p > 1 ? String(p) : null });
   }
 
   function hideReadHref() {
-    const parts: string[] = [];
-    if (searchQuery) parts.push(`q=${encodeURIComponent(searchQuery)}`);
-    if (activeCategory) parts.push(`category=${activeCategory}`);
-    if (activeTag) parts.push(`tag=${activeTag}`);
-    if (activeSort !== "newest") parts.push(`sort=${activeSort}`);
-    if (!hideReadActive) parts.push("hideRead=1");
-    return parts.length > 0 ? `/blog?${parts.join("&")}` : "/blog";
+    return buildHref({ hideRead: hideReadActive ? null : "1" });
   }
 
   // Active filter chips
@@ -254,16 +283,29 @@ export default async function BlogPage({
     });
   }
   if (searchQuery) {
-    const removeParams: string[] = [];
-    if (activeCategory) removeParams.push(`category=${activeCategory}`);
-    if (activeTag) removeParams.push(`tag=${activeTag}`);
-    if (activeSort !== "newest") removeParams.push(`sort=${activeSort}`);
     filterChips.push({
       label: "Search",
       value: searchQuery,
-      removeHref:
-        removeParams.length > 0 ? `/blog?${removeParams.join("&")}` : "/blog",
+      removeHref: buildHref({ q: null, page: null }),
       tone: "search",
+    });
+  }
+  if (readingTimeFilter) {
+    const labelMap = { short: "≤ 5 min", medium: "≤ 12 min", long: "Deep dive" };
+    filterChips.push({
+      label: "Reading",
+      value: labelMap[readingTimeFilter],
+      removeHref: buildHref({ readingTime: null, page: null }),
+      tone: "sort",
+    });
+  }
+  if (difficultyFilter) {
+    filterChips.push({
+      label: "Difficulty",
+      value:
+        difficultyFilter.charAt(0).toUpperCase() + difficultyFilter.slice(1),
+      removeHref: buildHref({ difficulty: null, page: null }),
+      tone: "sort",
     });
   }
 
@@ -328,6 +370,7 @@ export default async function BlogPage({
         <link rel="next" href={`${SITE_URL}${pageHref(page + 1)}`} />
       )}
 
+      <CommandPalette />
       <BlogHero stats={heroStats} />
 
       <section className="mx-auto max-w-7xl px-4 pb-24 sm:px-6 lg:px-8">
@@ -351,6 +394,19 @@ export default async function BlogPage({
                 ...(activeTag ? { tag: activeTag } : {}),
                 ...(activeSort !== "newest" ? { sort: activeSort } : {}),
               }}
+            />
+          </div>
+        </FadeUp>
+
+        {/* Chip filters: reading time + difficulty */}
+        <FadeUp delay={0.13}>
+          <div className="mt-4">
+            <ChipFilters
+              value={{
+                readingTime: readingTimeFilter ?? "",
+                difficulty: difficultyFilter ?? "",
+              }}
+              buildHref={buildHref}
             />
           </div>
         </FadeUp>
@@ -938,6 +994,24 @@ export default async function BlogPage({
                     badge="Evergreen"
                     variant="updated"
                   />
+                </div>
+              </FadeUp>
+            )}
+
+            {/* ═══════════ TOPIC SPOTLIGHT ═══════════ */}
+            {isHomeState && categories.length > 0 && (
+              <FadeUp delay={0.06}>
+                <div className="mt-16">
+                  <TopicSpotlight categories={categories} />
+                </div>
+              </FadeUp>
+            )}
+
+            {/* ═══════════ AUTHOR SPOTLIGHT ═══════════ */}
+            {featuredAuthors.length > 0 && (
+              <FadeUp delay={0.04}>
+                <div className="mt-12">
+                  <AuthorSpotlight authors={featuredAuthors} />
                 </div>
               </FadeUp>
             )}

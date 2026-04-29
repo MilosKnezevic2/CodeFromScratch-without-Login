@@ -57,6 +57,71 @@ const postFields = `
   readingTime
 `;
 
+export type PostsAdvancedQuery = {
+  page?: number;
+  limit?: number;
+  sort?: "newest" | "oldest";
+  category?: string;
+  tag?: string;
+  search?: string;
+  readingTime?: "short" | "medium" | "long";
+  difficulty?: "beginner" | "intermediate" | "advanced";
+};
+
+/**
+ * Single-entry query that composes all blog-index filters server-side
+ * (category, tag, free-text search, reading-time bucket, difficulty).
+ * Returns the same shape as getPosts so it drops in everywhere the
+ * older helpers are used.
+ */
+export async function getPostsAdvanced(q: PostsAdvancedQuery) {
+  if (!isSanityConfigured) return { posts: [], total: 0, pages: 0 };
+  const page = q.page ?? 1;
+  const limit = q.limit ?? 10;
+  const start = (page - 1) * limit;
+
+  const clauses: string[] = [
+    `_type == "post"`,
+    `status == "published"`,
+  ];
+  const params: Record<string, string | number> = {};
+  if (q.category) {
+    clauses.push(`$categorySlug in categories[]->slug.current`);
+    params.categorySlug = q.category;
+  }
+  if (q.tag) {
+    clauses.push(`$tagSlug in tags[]->slug.current`);
+    params.tagSlug = q.tag;
+  }
+  if (q.search && q.search.length >= 2) {
+    clauses.push(`(title match $searchTerm || excerpt match $searchTerm)`);
+    params.searchTerm = `${q.search}*`;
+  }
+  if (q.readingTime) {
+    if (q.readingTime === "short") clauses.push(`readingTime <= 5`);
+    else if (q.readingTime === "medium")
+      clauses.push(`readingTime > 5 && readingTime <= 12`);
+    else if (q.readingTime === "long") clauses.push(`readingTime > 12`);
+  }
+  if (q.difficulty) {
+    clauses.push(`difficulty == $difficulty`);
+    params.difficulty = q.difficulty;
+  }
+
+  const filter = clauses.join(" && ");
+  const orderClause =
+    q.sort === "oldest" ? "order(publishedAt asc)" : "order(publishedAt desc)";
+
+  const [posts, total] = await Promise.all([
+    client.fetch<SanityPost[]>(
+      `*[${filter}] | ${orderClause} [${start}...${start + limit}] { ${postFields} }`,
+      params,
+    ),
+    client.fetch<number>(`count(*[${filter}])`, params),
+  ]);
+  return { posts, total, pages: Math.ceil(total / limit) };
+}
+
 export async function getPosts(page = 1, limit = 10, sort: "newest" | "oldest" = "newest") {
   if (!isSanityConfigured) return { posts: [], total: 0, pages: 0 };
   const start = (page - 1) * limit;
@@ -108,6 +173,52 @@ export async function getPostsByTag(tagSlug: string, page = 1, limit = 10) {
     ),
   ]);
   return { posts, total, pages: Math.ceil(total / limit) };
+}
+
+export type InstantSearchPost = {
+  _id: string;
+  title: string;
+  slug: { current: string };
+  excerpt?: string;
+  category?: string;
+  readingTime?: number;
+};
+
+export async function instantSearch(
+  query: string,
+  limit = 8,
+): Promise<InstantSearchPost[]> {
+  if (!isSanityConfigured || query.length < 2) return [];
+  const filter = `_type == "post" && status == "published" && (title match $q || excerpt match $q)`;
+  return client.fetch<InstantSearchPost[]>(
+    `*[${filter}] | order(publishedAt desc) [0...${limit}] {
+      _id, title, slug, excerpt, readingTime,
+      "category": categories[0]->title
+    }`,
+    { q: `${query}*` } as Record<string, string>,
+  );
+}
+
+export type AuthorWithPostCount = {
+  _id: string;
+  name: string;
+  slug?: { current: string };
+  image?: { asset: { _ref: string } };
+  bio?: string;
+  postCount: number;
+};
+
+export async function getFeaturedAuthors(
+  limit = 6,
+): Promise<AuthorWithPostCount[]> {
+  if (!isSanityConfigured) return [];
+  return client.fetch<AuthorWithPostCount[]>(
+    `*[_type == "author"]{
+      _id, name, slug, image, bio,
+      "postCount": count(*[_type == "post" && status == "published" && references(^._id)])
+    } | order(postCount desc) [0...$limit][postCount > 0]`,
+    { limit },
+  );
 }
 
 export async function searchPosts(query: string, page = 1, limit = 10) {
