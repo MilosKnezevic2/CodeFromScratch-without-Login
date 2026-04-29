@@ -478,7 +478,7 @@ export default async function BlogPage({
                         className="editorial-display text-foreground transition-colors group-hover:text-accent"
                         style={{
                           fontStyle: "normal",
-                          fontSize: "clamp(2.5rem,7vw,6rem)",
+                          fontSize: "clamp(2rem,5.5vw,4.5rem)",
                         }}
                       >
                         {featured.title}
@@ -621,7 +621,7 @@ export default async function BlogPage({
                           className="editorial-display text-foreground transition-colors group-hover:text-accent"
                           style={{
                             fontStyle: "normal",
-                            fontSize: "clamp(2rem,4vw,3.5rem)",
+                            fontSize: "clamp(1.75rem,3.2vw,2.75rem)",
                           }}
                         >
                           {showcasePosts[0].title}

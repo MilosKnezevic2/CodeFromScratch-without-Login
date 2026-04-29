@@ -65,17 +65,17 @@ export default function BlogHero({ stats }: { stats: BlogHeroStats }) {
 
         {/* Asymmetric masthead — left=display title, right=descriptor */}
         <div className="grid gap-8 py-14 sm:py-20 lg:grid-cols-12 lg:gap-12">
-          <h1 className="editorial-display text-foreground sm:col-span-12 lg:col-span-8 lg:text-[clamp(4rem,9vw,9rem)]">
-            <span className="block text-[clamp(3rem,12vw,6.5rem)] sm:text-[clamp(4rem,10vw,9rem)]">
+          <h1 className="editorial-display text-foreground sm:col-span-12 lg:col-span-8">
+            <span className="block text-[clamp(2.5rem,9vw,5rem)] sm:text-[clamp(3.5rem,8vw,7rem)]">
               Tutorials,
             </span>
             <span
-              className="block text-[clamp(3rem,12vw,6.5rem)] sm:text-[clamp(4rem,10vw,9rem)]"
+              className="block text-[clamp(2.5rem,9vw,5rem)] sm:text-[clamp(3.5rem,8vw,7rem)]"
               style={{ color: "var(--color-accent)" }}
             >
               guides &amp;
             </span>
-            <span className="block text-[clamp(3rem,12vw,6.5rem)] sm:text-[clamp(4rem,10vw,9rem)]">
+            <span className="block text-[clamp(2.5rem,9vw,5rem)] sm:text-[clamp(3.5rem,8vw,7rem)]">
               deep dives.
             </span>
           </h1>

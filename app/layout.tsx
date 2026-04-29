@@ -4,11 +4,12 @@ import { draftMode } from "next/headers";
 import "@fontsource-variable/plus-jakarta-sans";
 import "@fontsource-variable/inter";
 import "@fontsource-variable/jetbrains-mono";
-// Premium minimalist sans — used as the new headline + body type
-// across the journal. Variable file covers weights 100-900, ships
-// with optical-size axis. Replaces the editorial serif used in the
-// previous design.
-import "@fontsource-variable/geist";
+// Display + body type — Space Grotesk variable. Geometric grotesque
+// with character (curved g, cut-corner numerals, distinctive a) —
+// premium without being generic SaaS. Geist Mono kept for tabular
+// meta lines, which benefit from monospace consistency regardless
+// of the body-font choice.
+import "@fontsource-variable/space-grotesk";
 import "@fontsource-variable/geist-mono";
 import "./globals.css";
 import SessionProvider from "../components/auth/SessionProvider";
