@@ -202,7 +202,7 @@ export default async function PostPage({ params }: PageProps) {
             {/* ── Featured Image + Author overlay ── */}
             {post.featuredImage?.asset && (
               <div className="relative mx-auto w-full">
-                <div className="pointer-events-none absolute -inset-3 rounded-3xl bg-gradient-to-r from-accent/10 via-accent-2/5 to-accent/10 blur-2xl" />
+                <div className="pointer-events-none absolute -inset-2 rounded-3xl bg-gradient-to-r from-accent/[0.06] via-accent-2/[0.03] to-accent/[0.06] blur-xl" />
                 <div className="glow-border relative overflow-hidden rounded-2xl">
                   <div className="relative aspect-[2/1] w-full">
                     <Image
