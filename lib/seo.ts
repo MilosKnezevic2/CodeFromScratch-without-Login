@@ -117,3 +117,33 @@ export function itemListJsonLd(items: { name: string; url: string }[]) {
     })),
   };
 }
+
+/**
+ * Schema.org Blog (CollectionPage) marker for the /blog index. Helps
+ * Google identify the page as a blog hub rather than a generic listing
+ * and enables rich-card listings on SERPs. Pair with itemListJsonLd to
+ * surface the actual posts.
+ */
+export function blogCollectionJsonLd({
+  url,
+  name,
+  description,
+}: {
+  url: string;
+  name: string;
+  description: string;
+}) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "Blog",
+    "@id": url,
+    url,
+    name,
+    description,
+    publisher: {
+      "@type": "Organization",
+      name: "CodeFromScratch",
+      url: siteUrl,
+    },
+  };
+}
