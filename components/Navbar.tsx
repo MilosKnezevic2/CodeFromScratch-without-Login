@@ -60,7 +60,7 @@ export default function Navbar() {
                   href={link.href}
                   className={`nav-link rounded-lg px-3 py-1.5 text-sm transition ${
                     isActive
-                      ? "active bg-accent/10 text-accent font-medium"
+                      ? "active text-accent font-medium"
                       : "text-muted hover:text-foreground hover:bg-surface/50"
                   }`}
                 >
