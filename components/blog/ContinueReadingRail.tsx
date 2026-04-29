@@ -38,7 +38,7 @@ export default function ContinueReadingRail({
                 <Link
                   href={`/blog/${post.slug.current}`}
                   aria-label={`Continue reading: ${post.title}`}
-                  className="absolute inset-0 z-0"
+                  className="absolute inset-0 z-[1]"
                 />
                 <div className="flex items-start gap-3 py-5">
                   <div className="min-w-0 flex-1">

@@ -35,7 +35,7 @@ export default function SavedForLaterRail({
               <Link
                 href={`/blog/${post.slug.current}`}
                 aria-label={post.title}
-                className="absolute inset-0 z-0"
+                className="absolute inset-0 z-[1]"
               />
               <div className="grid grid-cols-[4rem_1fr_auto] items-start gap-4 py-5">
                 <div className="relative aspect-square overflow-hidden">

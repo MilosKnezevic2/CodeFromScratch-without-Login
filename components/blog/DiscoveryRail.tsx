@@ -72,7 +72,7 @@ function TrendingChart({ posts }: { posts: DiscoveryPost[] }) {
           <Link
             href={`/blog/${top.slug.current}`}
             aria-label={top.title}
-            className="absolute inset-0 z-0"
+            className="absolute inset-0 z-[1]"
           />
           <div className="relative grid grid-cols-[auto_1fr] gap-6 border-l-4 border-accent pl-6 sm:gap-8">
             <span className="editorial-rank text-[6rem] leading-none text-accent sm:text-[7rem] lg:text-[8rem]">
@@ -109,7 +109,7 @@ function TrendingChart({ posts }: { posts: DiscoveryPost[] }) {
               </p>
             </div>
           </div>
-          <div className="absolute right-0 top-0 z-10 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+          <div className="absolute right-0 top-0 z-10">
             <SavePostButton postSlug={top.slug.current} iconOnly />
           </div>
         </article>
@@ -127,7 +127,7 @@ function TrendingChart({ posts }: { posts: DiscoveryPost[] }) {
                 <Link
                   href={`/blog/${post.slug.current}`}
                   aria-label={post.title}
-                  className="absolute inset-0 z-0"
+                  className="absolute inset-0 z-[1]"
                 />
                 <div className="grid grid-cols-[2.5rem_1fr_auto_auto] items-center gap-4 py-4">
                   <span className="editorial-rank text-3xl text-muted-foreground">
@@ -177,7 +177,7 @@ function EditorPicks({ posts }: { posts: DiscoveryPost[] }) {
             <Link
               href={`/blog/${post.slug.current}`}
               aria-label={post.title}
-              className="absolute inset-0 z-0"
+              className="absolute inset-0 z-[1]"
             />
             <div className="grid items-end gap-6 py-10 lg:grid-cols-12 lg:gap-12">
               <div className="lg:col-span-2">
@@ -229,7 +229,7 @@ function RefreshedRail({ posts }: { posts: DiscoveryPost[] }) {
             <Link
               href={`/blog/${post.slug.current}`}
               aria-label={post.title}
-              className="absolute inset-0 z-0"
+              className="absolute inset-0 z-[1]"
             />
             <div className="grid grid-cols-[5rem_1fr_auto] items-start gap-4">
               <div className="relative aspect-square overflow-hidden">

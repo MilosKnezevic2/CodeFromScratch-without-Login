@@ -456,7 +456,7 @@ export default async function BlogPage({
                 <Link
                   href={`/blog/${featured.slug.current}`}
                   aria-label={featured.title}
-                  className="absolute inset-0 z-0"
+                  className="absolute inset-0 z-[1]"
                 />
                 <div className="border-t border-border pt-6">
                   <div className="flex items-baseline gap-4 pb-10">
@@ -510,7 +510,9 @@ export default async function BlogPage({
                         </span>
                       </div>
                     </div>
-                    {/* Image — right, with save action overlaid on it */}
+                    {/* Image — right column, save button is hoisted to
+                        article level below so its click area is not
+                        intercepted by the stretched-link. */}
                     <div className="relative aspect-[5/4] overflow-hidden lg:col-span-5">
                       {featured.featuredImage?.asset ? (
                         <Image
@@ -534,14 +536,14 @@ export default async function BlogPage({
                           </span>
                         </div>
                       )}
-                      <div className="absolute right-3 top-3 z-10">
-                        <SavePostButton
-                          postSlug={featured.slug.current}
-                          iconOnly
-                        />
-                      </div>
                     </div>
                   </div>
+                </div>
+                <div className="absolute right-3 top-12 z-10 sm:top-14">
+                  <SavePostButton
+                    postSlug={featured.slug.current}
+                    iconOnly
+                  />
                 </div>
               </article>
             )}
@@ -582,7 +584,7 @@ export default async function BlogPage({
                       <Link
                         href={`/blog/${showcasePosts[0].slug.current}`}
                         aria-label={showcasePosts[0].title}
-                        className="absolute inset-0 z-0"
+                        className="absolute inset-0 z-[1]"
                       />
                       <div className="relative aspect-[4/3] overflow-hidden">
                         {showcasePosts[0].featuredImage?.asset ? (
@@ -648,7 +650,7 @@ export default async function BlogPage({
                           </span>
                         </div>
                       </div>
-                      <div className="absolute right-0 top-2 z-10 opacity-0 transition group-hover:opacity-100 focus-within:opacity-100">
+                      <div className="absolute right-2 top-2 z-10">
                         <SavePostButton
                           postSlug={showcasePosts[0].slug.current}
                           iconOnly
@@ -664,7 +666,7 @@ export default async function BlogPage({
                         <Link
                           href={`/blog/${post.slug.current}`}
                           aria-label={post.title}
-                          className="absolute inset-0 z-0"
+                          className="absolute inset-0 z-[1]"
                         />
                         <div className="relative aspect-[5/3] overflow-hidden">
                           {post.featuredImage?.asset ? (
@@ -689,12 +691,12 @@ export default async function BlogPage({
                               </span>
                             </div>
                           )}
-                          <div className="absolute right-3 top-3 z-10">
-                            <SavePostButton
-                              postSlug={post.slug.current}
-                              iconOnly
-                            />
-                          </div>
+                        </div>
+                        <div className="absolute right-3 top-3 z-10">
+                          <SavePostButton
+                            postSlug={post.slug.current}
+                            iconOnly
+                          />
                         </div>
                         <div className="mt-4">
                           {post.categories?.[0] && (
@@ -774,7 +776,7 @@ export default async function BlogPage({
                         <Link
                           href={`/blog/${post.slug.current}`}
                           aria-label={post.title}
-                          className="absolute inset-0 z-0"
+                          className="absolute inset-0 z-[1]"
                         />
                         <div className="grid grid-cols-[5.5rem_1fr_auto] items-baseline gap-6 py-6 sm:grid-cols-[6.5rem_1fr_auto]">
                           <time
