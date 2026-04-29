@@ -75,7 +75,7 @@ function TrendingChart({ posts }: { posts: DiscoveryPost[] }) {
             className="absolute inset-0 z-0"
           />
           <div className="relative grid grid-cols-[auto_1fr] gap-6 border-l-4 border-accent pl-6 sm:gap-8">
-            <span className="editorial-rank text-[8rem] leading-none text-accent sm:text-[10rem] lg:text-[12rem]">
+            <span className="editorial-rank text-[6rem] leading-none text-accent sm:text-[7rem] lg:text-[8rem]">
               1
             </span>
             <div className="flex flex-col justify-end pb-2">

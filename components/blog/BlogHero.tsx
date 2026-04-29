@@ -80,21 +80,23 @@ export default function BlogHero({ stats }: { stats: BlogHeroStats }) {
             </span>
           </h1>
 
-          <div className="self-end sm:col-span-12 lg:col-span-4">
+          <div className="self-end border-l border-border pl-6 sm:col-span-12 lg:col-span-4">
+            <p className="editorial-meta mb-4 text-foreground">
+              Editor&rsquo;s note
+            </p>
             <p
-              className="text-base leading-relaxed text-muted sm:text-lg"
+              className="text-xl leading-snug text-foreground sm:text-2xl"
               style={{ fontFamily: "var(--font-serif)" }}
             >
               <em>
-                A weekly journal of practical web-development writing —
-                shipped from a small studio in Graz to readers across the
-                world. No newsletters about newsletters. No 12-step listicles.
-                Just craft.
+                A weekly journal of practical web-development writing.
+                Shipped from a small studio in Graz to readers across the
+                world. Just craft.
               </em>
             </p>
             <a
               href="#latest"
-              className="mt-6 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground hover:text-accent"
+              className="mt-8 inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground hover:text-accent"
             >
               Read this issue
               <span aria-hidden>↓</span>

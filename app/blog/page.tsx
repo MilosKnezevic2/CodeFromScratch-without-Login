@@ -1,4 +1,3 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
@@ -21,7 +20,6 @@ import {
 } from "@/lib/sanity/personalisation";
 import { getCurrentUser } from "@/lib/auth-helpers";
 import { urlFor } from "@/lib/sanity/image";
-import CategoryFilter from "@/components/blog/CategoryFilter";
 import BlogHero from "@/components/blog/BlogHero";
 import BlogToolbar from "@/components/blog/BlogToolbar";
 import BlogBreadcrumb from "@/components/blog/BlogBreadcrumb";
@@ -181,6 +179,9 @@ export default async function BlogPage({
       ...(difficultyFilter ? { difficulty: difficultyFilter } : {}),
     }),
     getCategoriesWithCounts(),
+    // allTags is still queried so the active-tag chip can show the
+    // human title even though the inline tag dropdown was retired in
+    // this redesign in favour of the topic index at the bottom.
     getTagsWithCategory(),
     getBlogHeroStats(),
     isHomeState ? getTrendingPosts(7, 5) : Promise.resolve([]),
@@ -208,10 +209,6 @@ export default async function BlogPage({
   const activeTagObj = activeTag
     ? allTags.find((t) => t.slug.current === activeTag)
     : null;
-
-  const visibleTags = activeCategory
-    ? allTags.filter((t) => t.categorySlug === activeCategory)
-    : allTags;
 
   const isFiltered = !!(
     activeCategory ||
@@ -381,7 +378,11 @@ export default async function BlogPage({
         id="latest"
         className="mx-auto max-w-7xl px-4 pb-32 sm:px-6 lg:px-8"
       >
-        {/* Toolbar + breadcrumb */}
+        {/* Toolbar + breadcrumb. Consolidated into a single block:
+            row 1 = search + sort + palette trigger;
+            row 2 = inline chip filters · hide-read · active chips.
+            The legacy CategoryFilter dropdown was retired in favour
+            of the topic index at §07 + the ⌘K palette. */}
         <div className="pt-10">
           {isFiltered && (
             <div className="mb-4">
@@ -403,42 +404,30 @@ export default async function BlogPage({
             <PaletteTrigger className="hidden lg:inline-flex" />
           </div>
 
-          {/* Chip filters + active chips + hide-read */}
-          <div className="mt-6 flex flex-wrap items-baseline gap-x-10 gap-y-4">
-            <ChipFilters
-              value={{
-                readingTime: readingTimeFilter ?? "",
-                difficulty: difficultyFilter ?? "",
-              }}
-              buildHref={buildHref}
-            />
-            {filterChips.length > 0 && (
-              <ActiveFilterChips chips={filterChips} clearHref="/blog" />
-            )}
-            {userId && (
-              <HideReadToggle
-                active={hideReadActive}
-                toggleHref={hideReadHref()}
+          {(filterChips.length > 0 ||
+            userId ||
+            readingTimeFilter ||
+            difficultyFilter) && (
+            <div className="mt-5 flex flex-wrap items-baseline gap-x-10 gap-y-3">
+              <ChipFilters
+                value={{
+                  readingTime: readingTimeFilter ?? "",
+                  difficulty: difficultyFilter ?? "",
+                }}
+                buildHref={buildHref}
               />
-            )}
-          </div>
+              {userId && (
+                <HideReadToggle
+                  active={hideReadActive}
+                  toggleHref={hideReadHref()}
+                />
+              )}
+              {filterChips.length > 0 && (
+                <ActiveFilterChips chips={filterChips} clearHref="/blog" />
+              )}
+            </div>
+          )}
         </div>
-
-        {categories.length > 0 && (
-          <div className="relative z-[100] mt-6">
-            <Suspense fallback={null}>
-              <CategoryFilter
-                categories={categories}
-                tags={visibleTags}
-                activeCategory={activeCategory}
-                activeTag={activeTag}
-                activeCategoryLabel={activeCatObj?.title}
-                activeTagLabel={activeTagObj?.title}
-                searchQuery={searchQuery}
-              />
-            </Suspense>
-          </div>
-        )}
 
         {posts.length === 0 ? (
           <div className="mt-32 border-t border-border pt-12 text-center">
@@ -559,12 +548,12 @@ export default async function BlogPage({
 
             {/* ═══════════ §02 — TRENDING (auth or anon) ═══════════ */}
             {continueReading.length > 0 && (
-              <div className="mt-24">
+              <div className="mt-32">
                 <ContinueReadingRail posts={continueReading} />
               </div>
             )}
             {trending.length > 0 && (
-              <div className="mt-24">
+              <div className="mt-32">
                 <DiscoveryRail
                   title="The charts"
                   sectionNumber="02"
@@ -576,7 +565,7 @@ export default async function BlogPage({
 
             {/* ═══════════ §03 — ASYMMETRIC SHOWCASE ═══════════ */}
             {showcasePosts.length > 0 && (
-              <section className="mt-24 border-t border-border pt-6">
+              <section className="mt-32 border-t border-border pt-6">
                 <header className="mb-10 flex flex-wrap items-baseline gap-4">
                   <span className="editorial-meta">§03</span>
                   <h2
@@ -713,19 +702,14 @@ export default async function BlogPage({
                           >
                             {post.title}
                           </h3>
-                          <div className="mt-3 flex items-center gap-3 text-xs">
-                            {post.author && (
-                              <span
-                                className="text-foreground"
-                                style={{ fontFamily: "var(--font-serif)" }}
-                              >
-                                <em>By {post.author.name}</em>
-                              </span>
-                            )}
-                            <span className="editorial-meta">
-                              {formatDate(post.publishedAt)}
-                            </span>
-                          </div>
+                          {post.author && (
+                            <p
+                              className="mt-3 text-xs text-muted-foreground"
+                              style={{ fontFamily: "var(--font-serif)" }}
+                            >
+                              <em>By {post.author.name}</em>
+                            </p>
+                          )}
                         </div>
                       </article>
                     ))}
@@ -736,42 +720,33 @@ export default async function BlogPage({
 
             {/* ═══════════ §04 — SAVED FOR LATER ═══════════ */}
             {savedForLater.length > 0 && (
-              <div className="mt-24">
+              <div className="mt-32">
                 <SavedForLaterRail posts={savedForLater} />
               </div>
             )}
 
             {/* ═══════════ §05 — NEWSLETTER LETTERPRESS ═══════════ */}
             {isHomeState && (
-              <div className="mt-24">
+              <div className="mt-32">
                 <InlineNewsletterCard />
               </div>
             )}
 
             {/* ═══════════ §06 — EDITOR'S PICKS PULL QUOTES ═══════════ */}
             {editorPicks.length > 0 && (
-              <section className="mt-24">
-                <header className="mb-2 flex flex-wrap items-baseline gap-4 border-t border-border pt-6">
-                  <span className="editorial-meta">§06</span>
-                  <h2
-                    className="editorial-display text-3xl text-foreground sm:text-4xl lg:text-5xl"
-                    style={{ fontStyle: "italic" }}
-                  >
-                    Editor&rsquo;s desk
-                  </h2>
-                </header>
+              <div className="mt-32">
                 <DiscoveryRail
-                  title="Editor's picks"
+                  title="Editor's desk"
                   sectionNumber="06"
                   posts={editorPicks}
                   variant="picks"
                 />
-              </section>
+              </div>
             )}
 
             {/* ═══════════ §07 — EDITORIAL INDEX (date+title rows) ═══════════ */}
             {editorialPosts.length > 0 && (
-              <section className="mt-24 border-t border-border pt-6">
+              <section className="mt-32 border-t border-border pt-6">
                 <header className="mb-10 flex flex-wrap items-baseline gap-4">
                   <span className="editorial-meta">§{isHomeState ? "07" : "01"}</span>
                   <h2
@@ -847,7 +822,7 @@ export default async function BlogPage({
 
             {/* ═══════════ §08 — REFRESHED ═══════════ */}
             {recentlyUpdated.length > 0 && (
-              <div className="mt-24">
+              <div className="mt-32">
                 <DiscoveryRail
                   title="Refreshed this fortnight"
                   sectionNumber="08"
@@ -859,14 +834,14 @@ export default async function BlogPage({
 
             {/* ═══════════ §09 — TOPIC INDEX ═══════════ */}
             {isHomeState && categories.length > 0 && (
-              <div className="mt-24">
+              <div className="mt-32">
                 <TopicSpotlight categories={categories} />
               </div>
             )}
 
             {/* ═══════════ §10 — MASTHEAD AUTHORS ═══════════ */}
             {featuredAuthors.length > 0 && (
-              <div className="mt-24">
+              <div className="mt-32">
                 <AuthorSpotlight authors={featuredAuthors} />
               </div>
             )}
