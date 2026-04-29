@@ -129,7 +129,7 @@ function TrendingChart({ posts }: { posts: DiscoveryPost[] }) {
                   aria-label={post.title}
                   className="absolute inset-0 z-0"
                 />
-                <div className="grid grid-cols-[2.5rem_1fr_auto] items-baseline gap-4 py-4">
+                <div className="grid grid-cols-[2.5rem_1fr_auto_auto] items-center gap-4 py-4">
                   <span className="editorial-rank text-3xl text-muted-foreground">
                     {i + 2}
                   </span>
@@ -148,6 +148,9 @@ function TrendingChart({ posts }: { posts: DiscoveryPost[] }) {
                       {formatNumber(post.viewCount)}
                     </span>
                   )}
+                  <span className="relative z-10">
+                    <SavePostButton postSlug={post.slug.current} iconOnly />
+                  </span>
                 </div>
               </article>
             </li>
@@ -191,7 +194,7 @@ function EditorPicks({ posts }: { posts: DiscoveryPost[] }) {
                 <p className="editorial-display text-2xl leading-[1.05] text-foreground transition-colors group-hover:text-accent sm:text-3xl lg:text-4xl">
                   &ldquo;{post.excerpt ?? post.title}&rdquo;
                 </p>
-                <p className="mt-5 flex flex-wrap items-baseline gap-3 text-sm text-muted-foreground">
+                <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
                   {post.author && (
                     <span className="font-semibold text-foreground">
                       — {post.author.name}
@@ -201,7 +204,10 @@ function EditorPicks({ posts }: { posts: DiscoveryPost[] }) {
                   <span className="editorial-title-link font-bold uppercase tracking-[0.2em]">
                     Read the article →
                   </span>
-                </p>
+                  <span className="relative z-10 ml-auto">
+                    <SavePostButton postSlug={post.slug.current} iconOnly />
+                  </span>
+                </div>
               </div>
             </div>
           </article>
@@ -225,7 +231,7 @@ function RefreshedRail({ posts }: { posts: DiscoveryPost[] }) {
               aria-label={post.title}
               className="absolute inset-0 z-0"
             />
-            <div className="grid grid-cols-[5rem_1fr] gap-4">
+            <div className="grid grid-cols-[5rem_1fr_auto] items-start gap-4">
               <div className="relative aspect-square overflow-hidden">
                 {post.featuredImage?.asset ? (
                   <Image
@@ -260,6 +266,9 @@ function RefreshedRail({ posts }: { posts: DiscoveryPost[] }) {
                   </p>
                 )}
               </div>
+              <span className="relative z-10">
+                <SavePostButton postSlug={post.slug.current} iconOnly />
+              </span>
             </div>
           </article>
         </li>

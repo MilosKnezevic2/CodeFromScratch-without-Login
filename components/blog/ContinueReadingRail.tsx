@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ContinueReadingPost } from "@/lib/sanity/personalisation";
+import SavePostButton from "./SavePostButton";
 
 export default function ContinueReadingRail({
   posts,
@@ -39,33 +40,35 @@ export default function ContinueReadingRail({
                   aria-label={`Continue reading: ${post.title}`}
                   className="absolute inset-0 z-0"
                 />
-                <div className="py-5">
-                  <div className="flex flex-wrap items-baseline gap-x-3">
-                    {post.categories?.[0] && (
-                      <p className="editorial-meta text-foreground">
-                        {post.categories[0].title}
-                      </p>
-                    )}
-                    <span className="editorial-meta tabular-nums">
-                      {post.scrollPercent}% read
-                      {minsLeft ? ` · ${minsLeft} min left` : ""}
-                    </span>
+                <div className="flex items-start gap-3 py-5">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-baseline gap-x-3">
+                      {post.categories?.[0] && (
+                        <p className="editorial-meta text-foreground">
+                          {post.categories[0].title}
+                        </p>
+                      )}
+                      <span className="editorial-meta tabular-nums">
+                        {post.scrollPercent}% read
+                        {minsLeft ? ` · ${minsLeft} min left` : ""}
+                      </span>
+                    </div>
+                    <h3 className="editorial-title-link mt-2 text-xl font-bold leading-snug text-foreground line-clamp-2 group-hover:text-accent sm:text-2xl">
+                      {post.title}
+                    </h3>
+                    {/* Hairline progress bar */}
+                    <div className="mt-4 h-px w-full overflow-hidden bg-border" aria-hidden>
+                      <div
+                        className="h-full bg-accent"
+                        style={{
+                          width: `${Math.max(5, Math.min(95, post.scrollPercent))}%`,
+                        }}
+                      />
+                    </div>
                   </div>
-                  <h3
-                    className="editorial-title-link mt-2 text-xl font-bold leading-snug text-foreground line-clamp-2 group-hover:text-accent sm:text-2xl"
-
-                  >
-                    {post.title}
-                  </h3>
-                  {/* Hairline progress bar */}
-                  <div className="mt-4 h-px w-full overflow-hidden bg-border" aria-hidden>
-                    <div
-                      className="h-full bg-accent"
-                      style={{
-                        width: `${Math.max(5, Math.min(95, post.scrollPercent))}%`,
-                      }}
-                    />
-                  </div>
+                  <span className="relative z-10 shrink-0">
+                    <SavePostButton postSlug={post.slug.current} iconOnly />
+                  </span>
                 </div>
               </article>
             </li>

@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { urlFor } from "@/lib/sanity/image";
 import type { SavedForLaterPost } from "@/lib/sanity/personalisation";
+import SavePostButton from "./SavePostButton";
 
 export default function SavedForLaterRail({
   posts,
@@ -36,7 +37,7 @@ export default function SavedForLaterRail({
                 aria-label={post.title}
                 className="absolute inset-0 z-0"
               />
-              <div className="grid grid-cols-[4rem_1fr] gap-4 py-5">
+              <div className="grid grid-cols-[4rem_1fr_auto] items-start gap-4 py-5">
                 <div className="relative aspect-square overflow-hidden">
                   {post.featuredImage?.asset ? (
                     <Image
@@ -64,13 +65,13 @@ export default function SavedForLaterRail({
                       {post.categories[0].title}
                     </p>
                   )}
-                  <h3
-                    className="editorial-title-link mt-1.5 text-base font-bold leading-snug text-foreground line-clamp-2 group-hover:text-accent sm:text-lg"
-
-                  >
+                  <h3 className="editorial-title-link mt-1.5 text-base font-bold leading-snug text-foreground line-clamp-2 group-hover:text-accent sm:text-lg">
                     {post.title}
                   </h3>
                 </div>
+                <span className="relative z-10">
+                  <SavePostButton postSlug={post.slug.current} iconOnly />
+                </span>
               </div>
             </article>
           </li>

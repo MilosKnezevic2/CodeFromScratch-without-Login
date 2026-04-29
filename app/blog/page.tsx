@@ -689,6 +689,12 @@ export default async function BlogPage({
                               </span>
                             </div>
                           )}
+                          <div className="absolute right-3 top-3 z-10">
+                            <SavePostButton
+                              postSlug={post.slug.current}
+                              iconOnly
+                            />
+                          </div>
                         </div>
                         <div className="mt-4">
                           {post.categories?.[0] && (
@@ -806,11 +812,19 @@ export default async function BlogPage({
                               </p>
                             )}
                           </div>
-                          <span
-                            aria-hidden
-                            className="hidden text-2xl text-muted-foreground transition group-hover:translate-x-1 group-hover:text-accent sm:inline"
-                          >
-                            →
+                          <span className="flex shrink-0 items-center gap-3 self-center">
+                            <span className="relative z-10">
+                              <SavePostButton
+                                postSlug={post.slug.current}
+                                iconOnly
+                              />
+                            </span>
+                            <span
+                              aria-hidden
+                              className="hidden text-2xl text-muted-foreground transition group-hover:translate-x-1 group-hover:text-accent sm:inline"
+                            >
+                              →
+                            </span>
                           </span>
                         </div>
                       </article>
