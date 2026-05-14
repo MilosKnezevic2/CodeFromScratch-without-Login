@@ -346,7 +346,6 @@ export default async function BlogPage({
                       {featured.categories?.[0] && (
                         <p className="editorial-meta mb-6 text-foreground">
                           {featured.categories[0].title}
-                          {featured.isPremium ? " · Premium" : ""}
                         </p>
                       )}
                       <h2
@@ -450,8 +449,7 @@ export default async function BlogPage({
                               {post.categories?.[0] && (
                                 <p className="editorial-meta text-foreground">
                                   {post.categories[0].title}
-                                  {post.isPremium ? " · Premium" : ""}
-                                </p>
+                                        </p>
                               )}
                               <time
                                 dateTime={post.publishedAt}

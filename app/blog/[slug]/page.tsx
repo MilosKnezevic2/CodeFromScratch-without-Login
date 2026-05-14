@@ -261,11 +261,9 @@ export default async function PostPage({ params }: PageProps) {
                       {cat.title}
                     </Link>
                   ))}
-                  {post.isPremium && (
-                    <span className="badge-glow rounded px-2 py-0.5 text-[10px] font-extrabold uppercase">
-                      PRO
-                    </span>
-                  )}
+                  {/* Premium PRO badge hidden — schema field still tracked
+                      for future paywall, but no public rendering while
+                      nothing on the site is paid. */}
                 </div>
               </FadeUp>
 

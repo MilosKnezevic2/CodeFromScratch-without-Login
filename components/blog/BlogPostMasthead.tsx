@@ -27,7 +27,6 @@ export default function BlogPostMasthead({
   author,
   publishedAt,
   readingMinutes,
-  isPremium,
   slug,
 }: {
   title: string;
@@ -36,6 +35,8 @@ export default function BlogPostMasthead({
   author?: Author;
   publishedAt: string;
   readingMinutes: number;
+  /** isPremium accepted for callsite compatibility but currently unused
+      — the Premium badge is hidden site-wide during the unpaid phase. */
   isPremium?: boolean;
   slug: string;
 }) {
@@ -69,11 +70,7 @@ export default function BlogPostMasthead({
         <time dateTime={publishedAt} className="editorial-meta">
           {dateTagLine}
         </time>
-        {isPremium && (
-          <span className="editorial-meta ml-2 rounded-full border border-accent/40 px-2 py-0.5 text-accent">
-            Premium
-          </span>
-        )}
+        {/* Premium badge hidden during the unpaid phase. */}
         <span className="editorial-meta ml-auto">
           {readingMinutes} min read
         </span>
