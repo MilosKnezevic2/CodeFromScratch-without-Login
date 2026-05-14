@@ -3,16 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
-import UserMenu from "./auth/UserMenu";
 import ThemeToggle from "./ThemeToggle";
 import SearchModal from "./blog/SearchModal";
 import Logo from "./Logo";
 
+// Public-facing nav. Ebooks, Courses, and the user menu are wired up in
+// code (routes still exist under app/*) but hidden from this list while
+// the backend for those features is being built. To re-enable: add the
+// link back here and restore <UserMenu /> in the desktop + mobile blocks.
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/blog", label: "Blog" },
-  { href: "/ebooks", label: "Ebooks" },
-  { href: "/courses", label: "Courses" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -71,7 +72,6 @@ export default function Navbar() {
           </nav>
           <SearchModal />
           <ThemeToggle />
-          <UserMenu />
         </div>
 
         {/* Mobile hamburger */}
@@ -115,9 +115,6 @@ export default function Navbar() {
               );
             })}
           </nav>
-          <div className="mt-3 border-t border-border pt-3">
-            <UserMenu />
-          </div>
         </div>
       )}
     </header>

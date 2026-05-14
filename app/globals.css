@@ -896,6 +896,45 @@ html {
    issue-index, name band, masthead.
    ───────────────────────────────────────────────────────────── */
 
+/* ─── Wordmark cursor — gentle blink animation ───────────────────────
+   Terminal cursor as the brand mark. 1.4s cycle, opacity dips to 0.35
+   rather than 0 — keeps the bar legible in the navbar at all times,
+   feels more like a slow heartbeat than an aggressive terminal blink.
+   `step-end` would feel mechanical; the eased fade reads as premium.
+   On hover the animation pauses at full opacity (active state). */
+@keyframes wordmark-cursor-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+.wordmark-cursor {
+  animation: wordmark-cursor-blink 1.4s ease-in-out infinite;
+}
+.group:hover .wordmark-cursor {
+  animation-play-state: paused;
+  opacity: 1;
+}
+@media (prefers-reduced-motion: reduce) {
+  .wordmark-cursor {
+    animation: none;
+  }
+}
+
+/* ─── Wordmark italic — Fraunces with WONK axis animation ────────────
+   The italic word in the imprint stack sits at WONK 0 by default and
+   animates to WONK 1 on hover of the wordmark group, swapping in
+   Fraunces' alternative wonky letterforms (single-storey g, kicked f,
+   curved e). Subtle, premium, typographically signature. Falls back
+   gracefully if Fraunces is unavailable — WONK simply has no effect. */
+.logo-wonk-italic {
+  font-variation-settings: "opsz" 100, "SOFT" 60, "WONK" 0;
+  transition:
+    font-variation-settings 600ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 400ms ease;
+}
+.group:hover .logo-wonk-italic {
+  font-variation-settings: "opsz" 100, "SOFT" 60, "WONK" 1;
+}
+
 /* Display-grade serif headline. Built around Fraunces variable axes:
    - opsz (auto) maps weight/contrast to size — display sizes get
      thinner strokes + sharper serifs, body sizes get sturdier ones.

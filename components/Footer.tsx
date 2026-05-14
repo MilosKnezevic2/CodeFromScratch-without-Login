@@ -63,7 +63,8 @@ export default function Footer() {
             </div>
           </div>
 
-          {/* Explore */}
+          {/* Explore — public surfaces only (commerce + auth surfaces are
+              hidden during the content-first launch phase). */}
           <div className="lg:col-span-2">
             <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
               Explore
@@ -71,38 +72,28 @@ export default function Footer() {
             <ul className="mt-4 space-y-3 text-sm">
               <li>
                 <Link href="/blog" className="text-muted transition hover:text-accent">
-                  Blog
+                  Journal
                 </Link>
               </li>
-              <li>
-                <Link href="/ebooks" className="text-muted transition hover:text-accent">
-                  Ebooks
-                </Link>
-              </li>
-              <li>
-                <Link href="/courses" className="text-muted transition hover:text-accent">
-                  Courses
-                </Link>
-              </li>
-              <li>
-                <Link href="/pricing" className="text-muted transition hover:text-accent">
-                  Pricing
-                </Link>
-              </li>
-            </ul>
-          </div>
-
-          {/* Company */}
-          <div className="lg:col-span-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
-              Company
-            </h4>
-            <ul className="mt-4 space-y-3 text-sm">
               <li>
                 <Link href="/contact" className="text-muted transition hover:text-accent">
                   Contact
                 </Link>
               </li>
+              <li>
+                <Link href="/blog/rss.xml" className="text-muted transition hover:text-accent">
+                  RSS feed
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div className="lg:col-span-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+              Legal
+            </h4>
+            <ul className="mt-4 space-y-3 text-sm">
               <li>
                 <Link href="/privacy" className="text-muted transition hover:text-accent">
                   Privacy Policy
@@ -116,16 +107,6 @@ export default function Footer() {
               <li>
                 <Link href="/impressum" className="text-muted transition hover:text-accent">
                   Impressum
-                </Link>
-              </li>
-              <li>
-                <Link href="/login" className="text-muted transition hover:text-accent">
-                  Sign In
-                </Link>
-              </li>
-              <li>
-                <Link href="/register" className="text-muted transition hover:text-accent">
-                  Sign Up
                 </Link>
               </li>
             </ul>

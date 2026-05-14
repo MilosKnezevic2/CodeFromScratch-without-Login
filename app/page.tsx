@@ -8,7 +8,6 @@ import { getHomeStats } from "@/lib/sanity/home-stats";
 import HomeHero from "@/components/home/HomeHero";
 import HomeStartHere from "@/components/home/HomeStartHere";
 import HomeAuthorLetter from "@/components/home/HomeAuthorLetter";
-import HomeNowBlock from "@/components/home/HomeNowBlock";
 import MobileSubscribeBar from "@/components/home/MobileSubscribeBar";
 import InlineNewsletterCard from "@/components/blog/InlineNewsletterCard";
 import JsonLd from "@/components/seo/JsonLd";
@@ -88,11 +87,6 @@ export default async function HomePage() {
         {/* From the editor — personal note */}
         <div className="mt-24">
           <HomeAuthorLetter />
-        </div>
-
-        {/* What I'm working on now */}
-        <div className="mt-16">
-          <HomeNowBlock />
         </div>
 
         {/* Browse the archive — handoff to /blog */}

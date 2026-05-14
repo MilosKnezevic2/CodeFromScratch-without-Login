@@ -38,13 +38,10 @@ export default function DiscoveryRail({
   return (
     <section aria-label={title} className="relative">
       <header className="mb-10 flex flex-wrap items-baseline gap-4 border-t border-border pt-6">
-        <span className="editorial-meta">
-          §{sectionNumber}
-        </span>
-        <h2
-          className="editorial-display text-3xl text-foreground sm:text-4xl lg:text-5xl"
-
-        >
+        {sectionNumber && (
+          <span className="editorial-meta">§{sectionNumber}</span>
+        )}
+        <h2 className="editorial-display text-3xl text-foreground sm:text-4xl lg:text-5xl">
           {title}
         </h2>
       </header>

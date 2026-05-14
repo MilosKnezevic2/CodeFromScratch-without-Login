@@ -5,22 +5,10 @@ import {
   getPostsAdvanced,
   getCategoriesWithCounts,
   getTagsWithCategory,
-  getFeaturedAuthors,
 } from "@/lib/sanity/queries";
 import { getBlogHeroStats } from "@/lib/sanity/hero-stats";
-import {
-  getTrendingPosts,
-  getEditorPicks,
-  getRecentlyUpdatedPosts,
-} from "@/lib/sanity/discovery";
-import {
-  getContinueReading,
-  getSavedForLater,
-  getReadSlugs,
-} from "@/lib/sanity/personalisation";
-import { getCurrentUser } from "@/lib/auth-helpers";
+import { getEditorPicks } from "@/lib/sanity/discovery";
 import { urlFor } from "@/lib/sanity/image";
-import BlogHero from "@/components/blog/BlogHero";
 import BlogToolbar from "@/components/blog/BlogToolbar";
 import BlogBreadcrumb from "@/components/blog/BlogBreadcrumb";
 import ActiveFilterChips, {
@@ -29,14 +17,9 @@ import ActiveFilterChips, {
 import DiscoveryRail from "@/components/blog/DiscoveryRail";
 import InlineNewsletterCard from "@/components/blog/InlineNewsletterCard";
 import SavePostButton from "@/components/blog/SavePostButton";
-import ContinueReadingRail from "@/components/blog/ContinueReadingRail";
-import SavedForLaterRail from "@/components/blog/SavedForLaterRail";
-import HideReadToggle from "@/components/blog/HideReadToggle";
-import ChipFilters from "@/components/blog/ChipFilters";
+import CategoryRail from "@/components/blog/CategoryRail";
 import CommandPalette from "@/components/blog/CommandPalette";
-import PaletteTrigger from "@/components/blog/PaletteTrigger";
-import TopicSpotlight from "@/components/blog/TopicSpotlight";
-import AuthorSpotlight from "@/components/blog/AuthorSpotlight";
+import BackToTop from "@/components/blog/BackToTop";
 import JsonLd from "@/components/seo/JsonLd";
 import {
   itemListJsonLd,
@@ -122,9 +105,6 @@ export default async function BlogPage({
     tag?: string;
     q?: string;
     sort?: string;
-    hideRead?: string;
-    readingTime?: string;
-    difficulty?: string;
   }>;
 }) {
   const params = await searchParams;
@@ -135,73 +115,28 @@ export default async function BlogPage({
   const activeSort = (params.sort === "oldest" ? "oldest" : "newest") as
     | "newest"
     | "oldest";
-  const hideReadActive = params.hideRead === "1";
-  const readingTimeFilter = (
-    ["short", "medium", "long"] as const
-  ).find((v) => v === params.readingTime);
-  const difficultyFilter = (
-    ["beginner", "intermediate", "advanced"] as const
-  ).find((v) => v === params.difficulty);
   const LIMIT = 12;
 
   const isHomeState =
-    page === 1 &&
-    !activeCategory &&
-    !activeTag &&
-    !searchQuery &&
-    !readingTimeFilter &&
-    !difficultyFilter;
+    page === 1 && !activeCategory && !activeTag && !searchQuery;
 
-  const currentUser = await getCurrentUser();
-  const userId = currentUser?.id ?? null;
+  const [result, categories, allTags, heroStats, editorPicks] =
+    await Promise.all([
+      getPostsAdvanced({
+        page,
+        limit: LIMIT,
+        sort: activeSort,
+        ...(activeCategory ? { category: activeCategory } : {}),
+        ...(activeTag ? { tag: activeTag } : {}),
+        ...(searchQuery ? { search: searchQuery } : {}),
+      }),
+      getCategoriesWithCounts(),
+      getTagsWithCategory(),
+      getBlogHeroStats(),
+      isHomeState ? getEditorPicks(3) : Promise.resolve([]),
+    ]);
 
-  const [
-    result,
-    categories,
-    allTags,
-    heroStats,
-    trending,
-    editorPicks,
-    recentlyUpdated,
-    continueReading,
-    savedForLater,
-    readSlugs,
-    featuredAuthors,
-  ] = await Promise.all([
-    getPostsAdvanced({
-      page,
-      limit: LIMIT,
-      sort: activeSort,
-      ...(activeCategory ? { category: activeCategory } : {}),
-      ...(activeTag ? { tag: activeTag } : {}),
-      ...(searchQuery ? { search: searchQuery } : {}),
-      ...(readingTimeFilter ? { readingTime: readingTimeFilter } : {}),
-      ...(difficultyFilter ? { difficulty: difficultyFilter } : {}),
-    }),
-    getCategoriesWithCounts(),
-    // allTags is still queried so the active-tag chip can show the
-    // human title even though the inline tag dropdown was retired in
-    // this redesign in favour of the topic index at the bottom.
-    getTagsWithCategory(),
-    getBlogHeroStats(),
-    isHomeState ? getTrendingPosts(7, 5) : Promise.resolve([]),
-    isHomeState ? getEditorPicks(3) : Promise.resolve([]),
-    isHomeState ? getRecentlyUpdatedPosts(14, 4) : Promise.resolve([]),
-    isHomeState && userId
-      ? getContinueReading(userId, 4)
-      : Promise.resolve([]),
-    isHomeState && userId ? getSavedForLater(userId, 4) : Promise.resolve([]),
-    userId && hideReadActive
-      ? getReadSlugs(userId)
-      : Promise.resolve(new Set<string>()),
-    isHomeState ? getFeaturedAuthors(6) : Promise.resolve([]),
-  ]);
-
-  const { posts: allPosts, pages: totalPages } = result;
-  const posts =
-    hideReadActive && readSlugs.size > 0
-      ? allPosts.filter((p) => !readSlugs.has(p.slug.current))
-      : allPosts;
+  const { posts, pages: totalPages } = result;
 
   const activeCatObj = activeCategory
     ? categories.find((c) => c.slug.current === activeCategory)
@@ -210,19 +145,10 @@ export default async function BlogPage({
     ? allTags.find((t) => t.slug.current === activeTag)
     : null;
 
-  const isFiltered = !!(
-    activeCategory ||
-    activeTag ||
-    searchQuery ||
-    readingTimeFilter ||
-    difficultyFilter
-  );
+  const isFiltered = !!(activeCategory || activeTag || searchQuery);
   const showFeatured = page === 1 && !isFiltered && posts.length > 0;
   const featured = showFeatured ? posts[0] : null;
-  const gridPosts = showFeatured ? posts.slice(1) : posts;
-  /** Asymmetric magazine spread: 1 large + 2 stacked = 3 visual slots. */
-  const showcasePosts = gridPosts.slice(0, 3);
-  const editorialPosts = gridPosts.slice(3);
+  const articles = showFeatured ? posts.slice(1) : posts;
 
   const pageWindow = getPageWindow(page, totalPages);
 
@@ -235,9 +161,6 @@ export default async function BlogPage({
       ...(activeCategory ? { category: activeCategory } : {}),
       ...(activeTag ? { tag: activeTag } : {}),
       ...(activeSort !== "newest" ? { sort: activeSort } : {}),
-      ...(hideReadActive ? { hideRead: "1" } : {}),
-      ...(readingTimeFilter ? { readingTime: readingTimeFilter } : {}),
-      ...(difficultyFilter ? { difficulty: difficultyFilter } : {}),
     };
     for (const [k, v] of Object.entries(overrides)) {
       if (v === null) delete current[k];
@@ -252,11 +175,7 @@ export default async function BlogPage({
     return buildHref({ page: p > 1 ? String(p) : null });
   }
 
-  function hideReadHref() {
-    return buildHref({ hideRead: hideReadActive ? null : "1" });
-  }
-
-  // Active filter chips
+  // Active filter chips shown above the list when a filter is in play.
   const filterChips: FilterChip[] = [];
   if (activeCatObj) {
     filterChips.push({
@@ -282,26 +201,7 @@ export default async function BlogPage({
       tone: "search",
     });
   }
-  if (readingTimeFilter) {
-    const labelMap = { short: "Short", medium: "Standard", long: "Long-form" };
-    filterChips.push({
-      label: "Length",
-      value: labelMap[readingTimeFilter],
-      removeHref: buildHref({ readingTime: null, page: null }),
-      tone: "sort",
-    });
-  }
-  if (difficultyFilter) {
-    filterChips.push({
-      label: "Level",
-      value:
-        difficultyFilter.charAt(0).toUpperCase() + difficultyFilter.slice(1),
-      removeHref: buildHref({ difficulty: null, page: null }),
-      tone: "sort",
-    });
-  }
 
-  // Breadcrumbs
   const breadcrumbItems: { label: string; href?: string }[] = [
     { label: "Home", href: "/" },
     { label: "Journal", href: isFiltered ? "/blog" : undefined },
@@ -372,69 +272,45 @@ export default async function BlogPage({
       )}
 
       <CommandPalette />
-      <BlogHero stats={heroStats} />
+      <BackToTop />
 
       <main
         id="latest"
         className="mx-auto max-w-7xl px-4 pb-32 sm:px-6 lg:px-8"
       >
-        {/* Toolbar + breadcrumb. Consolidated into a single block:
-            row 1 = search + sort + palette trigger;
-            row 2 = inline chip filters · hide-read · active chips.
-            The legacy CategoryFilter dropdown was retired in favour
-            of the topic index at §07 + the ⌘K palette. */}
         <div className="pt-10">
           {isFiltered && (
             <div className="mb-4">
               <BlogBreadcrumb items={breadcrumbItems} />
             </div>
           )}
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <BlogToolbar
-                initialSearch={searchQuery}
-                activeSort={activeSort}
-                preserveQuery={{
-                  ...(activeCategory ? { category: activeCategory } : {}),
-                  ...(activeTag ? { tag: activeTag } : {}),
-                  ...(activeSort !== "newest" ? { sort: activeSort } : {}),
-                }}
-              />
-            </div>
-            <PaletteTrigger className="hidden lg:inline-flex" />
-          </div>
-
-          {(filterChips.length > 0 ||
-            userId ||
-            readingTimeFilter ||
-            difficultyFilter) && (
-            <div className="mt-5 flex flex-wrap items-baseline gap-x-10 gap-y-3">
-              <ChipFilters
-                value={{
-                  readingTime: readingTimeFilter ?? "",
-                  difficulty: difficultyFilter ?? "",
-                }}
-                buildHref={buildHref}
-              />
-              {userId && (
-                <HideReadToggle
-                  active={hideReadActive}
-                  toggleHref={hideReadHref()}
-                />
-              )}
-              {filterChips.length > 0 && (
-                <ActiveFilterChips chips={filterChips} clearHref="/blog" />
-              )}
+          {categories.length > 0 && (
+            <CategoryRail
+              categories={categories}
+              activeCategory={activeCategory}
+              buildHref={buildHref}
+              totalPosts={heroStats.totalPosts}
+            />
+          )}
+          <BlogToolbar
+            initialSearch={searchQuery}
+            activeSort={activeSort}
+            preserveQuery={{
+              ...(activeCategory ? { category: activeCategory } : {}),
+              ...(activeTag ? { tag: activeTag } : {}),
+              ...(activeSort !== "newest" ? { sort: activeSort } : {}),
+            }}
+          />
+          {filterChips.length > 0 && (
+            <div className="mt-5">
+              <ActiveFilterChips chips={filterChips} clearHref="/blog" />
             </div>
           )}
         </div>
 
         {posts.length === 0 ? (
           <div className="mt-32 border-t border-border pt-12 text-center">
-            <p
-              className="editorial-display mx-auto max-w-md text-3xl text-muted-foreground"
-    
-            >
+            <p className="editorial-display mx-auto max-w-md text-3xl text-muted-foreground">
               {searchQuery
                 ? `Nothing matches "${searchQuery}".`
                 : "No articles found."}
@@ -450,7 +326,7 @@ export default async function BlogPage({
           </div>
         ) : (
           <>
-            {/* ═══════════ §01 — FEATURED COVER ═══════════ */}
+            {/* Cover story — only on the home state (page 1, no filters). */}
             {featured && (
               <article className="group relative mt-20 cursor-pointer">
                 <Link
@@ -460,13 +336,12 @@ export default async function BlogPage({
                 />
                 <div className="border-t border-border pt-6">
                   <div className="flex items-baseline gap-4 pb-10">
-                    <span className="editorial-meta">§01 · Cover story</span>
+                    <span className="editorial-meta">Cover story</span>
                     <span className="editorial-meta ml-auto">
                       {formatDate(featured.publishedAt)}
                     </span>
                   </div>
                   <div className="grid gap-10 lg:grid-cols-12 lg:gap-16">
-                    {/* Display title — left */}
                     <div className="lg:col-span-7">
                       {featured.categories?.[0] && (
                         <p className="editorial-meta mb-6 text-foreground">
@@ -484,19 +359,13 @@ export default async function BlogPage({
                         {featured.title}
                       </h2>
                       {featured.excerpt && (
-                        <p
-                          className="mt-8 max-w-xl text-xl leading-relaxed text-muted line-clamp-3"
-
-                        >
+                        <p className="mt-8 max-w-xl text-xl leading-relaxed text-muted line-clamp-3">
                           {featured.excerpt}
                         </p>
                       )}
                       <div className="mt-10 flex items-center gap-6 text-sm">
                         {featured.author && (
-                          <span
-                            className="text-foreground"
-
-                          >
+                          <span className="text-foreground">
                             By {featured.author.name}
                           </span>
                         )}
@@ -510,9 +379,6 @@ export default async function BlogPage({
                         </span>
                       </div>
                     </div>
-                    {/* Image — right column, save button is hoisted to
-                        article level below so its click area is not
-                        intercepted by the stretched-link. */}
                     <div className="relative aspect-[5/4] overflow-hidden lg:col-span-5">
                       {featured.featuredImage?.asset ? (
                         <Image
@@ -521,9 +387,7 @@ export default async function BlogPage({
                             .height(720)
                             .quality(90)
                             .url()}
-                          alt={
-                            featured.featuredImage.alt || featured.title
-                          }
+                          alt={featured.featuredImage.alt || featured.title}
                           fill
                           sizes="(max-width: 1024px) 100vw, 41vw"
                           className="object-cover transition-transform duration-[1.2s] ease-out group-hover:scale-[1.03]"
@@ -531,7 +395,10 @@ export default async function BlogPage({
                         />
                       ) : (
                         <div className="flex h-full w-full items-center justify-center bg-surface-2">
-                          <span aria-hidden className="editorial-rank text-9xl text-accent/30">
+                          <span
+                            aria-hidden
+                            className="editorial-rank text-9xl text-accent/30"
+                          >
                             ✦
                           </span>
                         </div>
@@ -540,237 +407,29 @@ export default async function BlogPage({
                   </div>
                 </div>
                 <div className="absolute right-3 top-12 z-10 sm:top-14">
-                  <SavePostButton
-                    postSlug={featured.slug.current}
-                    iconOnly
-                  />
+                  <SavePostButton postSlug={featured.slug.current} iconOnly />
                 </div>
               </article>
             )}
 
-            {/* ═══════════ §02 — TRENDING (auth or anon) ═══════════ */}
-            {continueReading.length > 0 && (
-              <div className="mt-32">
-                <ContinueReadingRail posts={continueReading} />
-              </div>
-            )}
-            {trending.length > 0 && (
-              <div className="mt-32">
-                <DiscoveryRail
-                  title="The charts"
-                  sectionNumber="02"
-                  posts={trending}
-                  variant="trending"
-                />
-              </div>
-            )}
-
-            {/* ═══════════ §03 — ASYMMETRIC SHOWCASE ═══════════ */}
-            {showcasePosts.length > 0 && (
+            {/* Article list — thumbnail-right rows, the primary content surface. */}
+            {articles.length > 0 && (
               <section className="mt-32 border-t border-border pt-6">
                 <header className="mb-10 flex flex-wrap items-baseline gap-4">
-                  <span className="editorial-meta">§03</span>
                   <h2
-                    className="editorial-display text-3xl text-foreground sm:text-4xl lg:text-5xl"
-          
+                    className="editorial-display text-3xl text-foreground sm:text-4xl"
+                    style={{ fontStyle: "normal" }}
                   >
-                    The spread
-                  </h2>
-                </header>
-                <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
-                  {/* Hero card — large, left, 7 cols */}
-                  {showcasePosts[0] && (
-                    <article className="group relative lg:col-span-7 cursor-pointer">
-                      <Link
-                        href={`/blog/${showcasePosts[0].slug.current}`}
-                        aria-label={showcasePosts[0].title}
-                        className="absolute inset-0 z-[1]"
-                      />
-                      <div className="relative aspect-[4/3] overflow-hidden">
-                        {showcasePosts[0].featuredImage?.asset ? (
-                          <Image
-                            src={urlFor(showcasePosts[0].featuredImage)
-                              .width(900)
-                              .height(675)
-                              .quality(85)
-                              .url()}
-                            alt={
-                              showcasePosts[0].featuredImage.alt ||
-                              showcasePosts[0].title
-                            }
-                            fill
-                            sizes="(max-width: 1024px) 100vw, 58vw"
-                            className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
-                          />
-                        ) : (
-                          <div className="flex h-full w-full items-center justify-center bg-surface-2">
-                            <span
-                              aria-hidden
-                              className="editorial-rank text-9xl text-accent/20"
-                            >
-                              ✶
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                      <div className="mt-6">
-                        {showcasePosts[0].categories?.[0] && (
-                          <p className="editorial-meta mb-3 text-foreground">
-                            {showcasePosts[0].categories[0].title}
-                          </p>
-                        )}
-                        <h3
-                          className="editorial-display text-foreground transition-colors group-hover:text-accent"
-                          style={{
-                            fontStyle: "normal",
-                            fontSize: "clamp(1.75rem,3.2vw,2.75rem)",
-                          }}
-                        >
-                          {showcasePosts[0].title}
-                        </h3>
-                        {showcasePosts[0].excerpt && (
-                          <p
-                            className="mt-4 text-base leading-relaxed text-muted line-clamp-2"
-
-                          >
-                            {showcasePosts[0].excerpt}
-                          </p>
-                        )}
-                        <div className="mt-5 flex items-center gap-4 text-sm">
-                          {showcasePosts[0].author && (
-                            <span
-                              className="text-foreground"
-
-                            >
-                              By {showcasePosts[0].author.name}
-                            </span>
-                          )}
-                          <span className="editorial-meta">
-                            {formatDate(showcasePosts[0].publishedAt)}
-                          </span>
-                        </div>
-                      </div>
-                      <div className="absolute right-2 top-2 z-10">
-                        <SavePostButton
-                          postSlug={showcasePosts[0].slug.current}
-                          iconOnly
-                        />
-                      </div>
-                    </article>
-                  )}
-
-                  {/* Stack — right, 5 cols, two posts */}
-                  <div className="space-y-12 lg:col-span-5">
-                    {showcasePosts.slice(1, 3).map((post) => (
-                      <article key={post._id} className="group relative cursor-pointer">
-                        <Link
-                          href={`/blog/${post.slug.current}`}
-                          aria-label={post.title}
-                          className="absolute inset-0 z-[1]"
-                        />
-                        <div className="relative aspect-[5/3] overflow-hidden">
-                          {post.featuredImage?.asset ? (
-                            <Image
-                              src={urlFor(post.featuredImage)
-                                .width(640)
-                                .height(384)
-                                .quality(82)
-                                .url()}
-                              alt={post.featuredImage.alt || post.title}
-                              fill
-                              sizes="(max-width: 1024px) 100vw, 41vw"
-                              className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.02]"
-                            />
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center bg-surface-2">
-                              <span
-                                aria-hidden
-                                className="editorial-rank text-7xl text-accent/20"
-                              >
-                                ◆
-                              </span>
-                            </div>
-                          )}
-                        </div>
-                        <div className="absolute right-3 top-3 z-10">
-                          <SavePostButton
-                            postSlug={post.slug.current}
-                            iconOnly
-                          />
-                        </div>
-                        <div className="mt-4">
-                          {post.categories?.[0] && (
-                            <p className="editorial-meta mb-2 text-foreground">
-                              {post.categories[0].title}
-                            </p>
-                          )}
-                          <h3
-                            className="editorial-display text-2xl leading-tight text-foreground transition-colors group-hover:text-accent sm:text-3xl"
-                            style={{ fontStyle: "normal" }}
-                          >
-                            {post.title}
-                          </h3>
-                          {post.author && (
-                            <p
-                              className="mt-3 text-xs text-muted-foreground"
-
-                            >
-                              By {post.author.name}
-                            </p>
-                          )}
-                        </div>
-                      </article>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            )}
-
-            {/* ═══════════ §04 — SAVED FOR LATER ═══════════ */}
-            {savedForLater.length > 0 && (
-              <div className="mt-32">
-                <SavedForLaterRail posts={savedForLater} />
-              </div>
-            )}
-
-            {/* ═══════════ §05 — NEWSLETTER LETTERPRESS ═══════════ */}
-            {isHomeState && (
-              <div className="mt-32">
-                <InlineNewsletterCard />
-              </div>
-            )}
-
-            {/* ═══════════ §06 — EDITOR'S PICKS PULL QUOTES ═══════════ */}
-            {editorPicks.length > 0 && (
-              <div className="mt-32">
-                <DiscoveryRail
-                  title="Editor's desk"
-                  sectionNumber="06"
-                  posts={editorPicks}
-                  variant="picks"
-                />
-              </div>
-            )}
-
-            {/* ═══════════ §07 — EDITORIAL INDEX (date+title rows) ═══════════ */}
-            {editorialPosts.length > 0 && (
-              <section className="mt-32 border-t border-border pt-6">
-                <header className="mb-10 flex flex-wrap items-baseline gap-4">
-                  <span className="editorial-meta">§{isHomeState ? "07" : "01"}</span>
-                  <h2
-                    className="editorial-display text-3xl text-foreground sm:text-4xl lg:text-5xl"
-          
-                  >
-                    {isHomeState ? "From the archive" : "Articles"}
+                    {showFeatured ? "Latest" : "Articles"}
                   </h2>
                   <span className="editorial-meta ml-auto">
-                    {editorialPosts.length}{" "}
-                    {editorialPosts.length === 1 ? "entry" : "entries"}
+                    {articles.length}{" "}
+                    {articles.length === 1 ? "entry" : "entries"}
                   </span>
                 </header>
 
                 <ol className="border-b border-border">
-                  {editorialPosts.map((post) => (
+                  {articles.map((post) => (
                     <li key={post._id} className="border-t border-border">
                       <article className="group relative cursor-pointer">
                         <Link
@@ -778,56 +437,90 @@ export default async function BlogPage({
                           aria-label={post.title}
                           className="absolute inset-0 z-[1]"
                         />
-                        <div className="grid grid-cols-[5.5rem_1fr_auto] items-baseline gap-6 py-6 sm:grid-cols-[6.5rem_1fr_auto]">
+                        <div className="grid grid-cols-[1fr_6rem] items-start gap-4 py-7 sm:grid-cols-[5rem_1fr_10rem] sm:gap-7 lg:grid-cols-[6rem_1fr_13rem] lg:gap-8">
                           <time
                             dateTime={post.publishedAt}
-                            className="editorial-meta tabular-nums"
+                            className="editorial-meta hidden tabular-nums pt-1 sm:block"
                           >
                             {formatDateShort(post.publishedAt)}
                           </time>
-                          <div className="min-w-0">
-                            {post.categories?.[0] && (
-                              <p className="editorial-meta mb-1.5 text-foreground">
-                                {post.categories[0].title}
-                                {post.isPremium ? " · Premium" : ""}
-                              </p>
-                            )}
-                            <h3
-                              className="editorial-title-link text-xl font-bold leading-snug text-foreground line-clamp-2 group-hover:text-accent sm:text-2xl"
 
-                            >
+                          <div className="min-w-0">
+                            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+                              {post.categories?.[0] && (
+                                <p className="editorial-meta text-foreground">
+                                  {post.categories[0].title}
+                                  {post.isPremium ? " · Premium" : ""}
+                                </p>
+                              )}
+                              <time
+                                dateTime={post.publishedAt}
+                                className="editorial-meta tabular-nums opacity-70 sm:hidden"
+                              >
+                                {formatDateShort(post.publishedAt)}
+                              </time>
+                            </div>
+                            <h3 className="editorial-title-link mt-2.5 text-lg font-bold leading-snug text-foreground line-clamp-2 group-hover:text-accent sm:mt-3 sm:text-2xl lg:text-[1.6rem]">
                               {post.title}
                             </h3>
                             {post.excerpt && (
-                              <p className="mt-1.5 text-sm text-muted-foreground line-clamp-1">
+                              <p className="mt-2 hidden text-sm leading-relaxed text-muted-foreground line-clamp-2 sm:mt-3 sm:block sm:text-base">
                                 {post.excerpt}
                               </p>
                             )}
-                            {post.author && (
-                              <p
-                                className="mt-2 text-xs text-muted-foreground"
-
+                            <div className="mt-3 flex items-center gap-3 text-xs text-muted-foreground sm:mt-4">
+                              {post.author && (
+                                <span className="truncate">
+                                  By {post.author.name}
+                                </span>
+                              )}
+                              {post.author && post.readingTime && (
+                                <span aria-hidden>·</span>
+                              )}
+                              {post.readingTime && (
+                                <span className="editorial-meta tabular-nums whitespace-nowrap">
+                                  {post.readingTime} min
+                                </span>
+                              )}
+                              <span
+                                aria-hidden
+                                className="ml-auto hidden text-lg text-muted-foreground transition group-hover:translate-x-1 group-hover:text-accent sm:inline"
                               >
-                                By {post.author.name}
-                                {post.readingTime &&
-                                  ` · ${post.readingTime} min read`}
-                              </p>
-                            )}
+                                →
+                              </span>
+                            </div>
                           </div>
-                          <span className="flex shrink-0 items-center gap-3 self-center">
-                            <span className="relative z-10">
+
+                          <div className="relative aspect-[4/3] self-start overflow-hidden">
+                            {post.featuredImage?.asset ? (
+                              <Image
+                                src={urlFor(post.featuredImage)
+                                  .width(420)
+                                  .height(315)
+                                  .quality(82)
+                                  .url()}
+                                alt={post.featuredImage.alt || post.title}
+                                fill
+                                sizes="(max-width: 640px) 96px, (max-width: 1024px) 160px, 208px"
+                                className="object-cover transition-transform duration-700 ease-out group-hover:scale-[1.04]"
+                              />
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center bg-surface-2">
+                                <span
+                                  aria-hidden
+                                  className="editorial-rank text-4xl text-accent/25 sm:text-5xl"
+                                >
+                                  ◆
+                                </span>
+                              </div>
+                            )}
+                            <div className="absolute right-2 top-2 z-10">
                               <SavePostButton
                                 postSlug={post.slug.current}
                                 iconOnly
                               />
-                            </span>
-                            <span
-                              aria-hidden
-                              className="hidden text-2xl text-muted-foreground transition group-hover:translate-x-1 group-hover:text-accent sm:inline"
-                            >
-                              →
-                            </span>
-                          </span>
+                            </div>
+                          </div>
                         </div>
                       </article>
                     </li>
@@ -836,97 +529,120 @@ export default async function BlogPage({
               </section>
             )}
 
-            {/* ═══════════ §08 — REFRESHED ═══════════ */}
-            {recentlyUpdated.length > 0 && (
+            {/* Pagination — primary CTA, placed right after the list so it
+                isn't lost beneath the discovery rails. */}
+            {totalPages > 1 && (
+              <nav
+                aria-label="Pagination"
+                className="mt-24 border-t border-border pt-10"
+              >
+                <p className="editorial-meta mb-6 text-center text-muted-foreground tabular-nums">
+                  Page {String(page).padStart(2, "0")} of{" "}
+                  {String(totalPages).padStart(2, "0")}
+                </p>
+
+                <div className="flex items-center justify-center gap-6 sm:gap-10">
+                  {page > 1 ? (
+                    <Link
+                      href={pageHref(page - 1)}
+                      rel="prev"
+                      className="group flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <span
+                        aria-hidden
+                        className="transition-transform group-hover:-translate-x-1"
+                      >
+                        ←
+                      </span>
+                      <span className="hidden sm:inline">Previous</span>
+                      <span className="sm:hidden">Prev</span>
+                    </Link>
+                  ) : (
+                    <span
+                      aria-hidden
+                      className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground/30"
+                    >
+                      <span>←</span>
+                      <span className="hidden sm:inline">Previous</span>
+                      <span className="sm:hidden">Prev</span>
+                    </span>
+                  )}
+
+                  <ol className="flex list-none items-center gap-1 sm:gap-2">
+                    {pageWindow.map((item, idx) =>
+                      item === "..." ? (
+                        <li
+                          key={`ellipsis-${idx}`}
+                          className="px-1 text-sm text-muted-foreground/50 sm:px-2"
+                          aria-hidden
+                        >
+                          …
+                        </li>
+                      ) : (
+                        <li key={item}>
+                          <Link
+                            href={pageHref(item)}
+                            aria-current={item === page ? "page" : undefined}
+                            aria-label={`Page ${item}`}
+                            className={`flex h-11 min-w-[2.5rem] items-center justify-center border-b-2 px-1.5 text-base font-bold tabular-nums transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:min-w-[2.75rem] sm:text-lg ${
+                              item === page
+                                ? "border-foreground text-foreground"
+                                : "border-transparent text-muted-foreground hover:border-border hover:text-foreground"
+                            }`}
+                          >
+                            {String(item).padStart(2, "0")}
+                          </Link>
+                        </li>
+                      ),
+                    )}
+                  </ol>
+
+                  {page < totalPages ? (
+                    <Link
+                      href={pageHref(page + 1)}
+                      rel="next"
+                      className="group flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-foreground transition-colors hover:text-accent"
+                    >
+                      <span>Next</span>
+                      <span
+                        aria-hidden
+                        className="transition-transform group-hover:translate-x-1"
+                      >
+                        →
+                      </span>
+                    </Link>
+                  ) : (
+                    <span
+                      aria-hidden
+                      className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground/30"
+                    >
+                      <span>Next</span>
+                      <span>→</span>
+                    </span>
+                  )}
+                </div>
+              </nav>
+            )}
+
+            {/* Editor's picks — single curated discovery rail, only on home. */}
+            {editorPicks.length > 0 && (
               <div className="mt-32">
                 <DiscoveryRail
-                  title="Refreshed this fortnight"
-                  sectionNumber="08"
-                  posts={recentlyUpdated}
-                  variant="updated"
+                  title="Editor's picks"
+                  sectionNumber=""
+                  posts={editorPicks}
+                  variant="picks"
                 />
               </div>
             )}
 
-            {/* ═══════════ §09 — TOPIC INDEX ═══════════ */}
-            {isHomeState && categories.length > 0 && (
+            {/* Newsletter — at the very end, after the user has read everything. */}
+            {isHomeState && (
               <div className="mt-32">
-                <TopicSpotlight categories={categories} />
-              </div>
-            )}
-
-            {/* ═══════════ §10 — MASTHEAD AUTHORS ═══════════ */}
-            {featuredAuthors.length > 0 && (
-              <div className="mt-32">
-                <AuthorSpotlight authors={featuredAuthors} />
+                <InlineNewsletterCard />
               </div>
             )}
           </>
-        )}
-
-        {/* ── Pagination ── */}
-        {totalPages > 1 && (
-          <nav
-            aria-label="Pagination"
-            className="mt-32 flex items-center justify-center gap-6 border-t border-border pt-10"
-          >
-            {page > 1 ? (
-              <Link
-                href={pageHref(page - 1)}
-                rel="prev"
-                className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground hover:text-foreground"
-              >
-                ← Prev
-              </Link>
-            ) : (
-              <span aria-hidden className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground/40">
-                ← Prev
-              </span>
-            )}
-
-            <ol className="flex list-none items-center gap-2">
-              {pageWindow.map((item, idx) =>
-                item === "..." ? (
-                  <li
-                    key={`ellipsis-${idx}`}
-                    className="px-2 text-sm text-muted-foreground"
-                    aria-hidden
-                  >
-                    …
-                  </li>
-                ) : (
-                  <li key={item}>
-                    <Link
-                      href={pageHref(item)}
-                      aria-current={item === page ? "page" : undefined}
-                      aria-label={`Page ${item}`}
-                      className={`editorial-rank px-2 text-2xl tabular-nums transition ${
-                        item === page
-                          ? "text-foreground"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {item}
-                    </Link>
-                  </li>
-                ),
-              )}
-            </ol>
-
-            {page < totalPages ? (
-              <Link
-                href={pageHref(page + 1)}
-                rel="next"
-                className="text-xs font-bold uppercase tracking-[0.2em] text-foreground hover:text-accent"
-              >
-                Next →
-              </Link>
-            ) : (
-              <span aria-hidden className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground/40">
-                Next →
-              </span>
-            )}
-          </nav>
         )}
       </main>
     </div>

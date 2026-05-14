@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <title>CodeFromScratch</title>
+  <rect width="64" height="64" rx="11.5" fill="#0a0a0a"/>
+  <!--
+    Full wordmark — same imprint stack as the site logo. Sized for a
+    64-unit master grid so the type stays readable even when rasterised
+    down to 32 or 16px by the browser. The italic 'from' uses Fraunces
+    italic; uppercase rows use Fraunces 700.
+  -->
+  <g text-anchor="middle" font-family="'Fraunces','Cormorant Garamond',Georgia,serif" font-feature-settings="'kern'">
+    <text x="32" y="22" font-size="9.5" font-weight="800" fill="#f5f1e8" letter-spacing="1.3">CODE</text>
+    <text x="32" y="32.5" font-size="9" font-weight="500" font-style="italic" fill="#2dd4bf" letter-spacing="0.2">from</text>
+    <text x="32" y="43" font-size="9.5" font-weight="800" fill="#f5f1e8" letter-spacing="1.3">SCRATCH</text>
+  </g>
+  <!-- Fleuron: short rule · dot · short rule -->
+  <rect x="22" y="49" width="6.5" height="1.2" rx="0.4" fill="#2dd4bf"/>
+  <circle cx="32" cy="49.6" r="1.1" fill="#2dd4bf"/>
+  <rect x="35.5" y="49" width="6.5" height="1.2" rx="0.4" fill="#2dd4bf"/>
+</svg>

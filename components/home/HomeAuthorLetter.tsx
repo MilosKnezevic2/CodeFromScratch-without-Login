@@ -39,12 +39,6 @@ export default function HomeAuthorLetter() {
           >
             Get the Sunday letter →
           </Link>
-          <Link
-            href="/about"
-            className="text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground transition-colors hover:text-foreground"
-          >
-            Read more about me
-          </Link>
         </div>
       </div>
     </section>
