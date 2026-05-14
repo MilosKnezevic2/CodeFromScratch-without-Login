@@ -3,17 +3,20 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import UserMenu from "./auth/UserMenu";
 import ThemeToggle from "./ThemeToggle";
 import SearchModal from "./blog/SearchModal";
 import Logo from "./Logo";
 
-// Public-facing nav. Ebooks, Courses, and the user menu are wired up in
-// code (routes still exist under app/*) but hidden from this list while
-// the backend for those features is being built. To re-enable: add the
-// link back here and restore <UserMenu /> in the desktop + mobile blocks.
+// DEV BRANCH — every SaaS surface exposed so the backend can be exercised
+// end-to-end. The public `main` branch trims this list to Home / Blog /
+// Contact and hides the user menu while the paywall and commerce code
+// finishes baking. Keep that list in sync when promoting features.
 const navLinks = [
   { href: "/", label: "Home" },
   { href: "/blog", label: "Blog" },
+  { href: "/ebooks", label: "Ebooks" },
+  { href: "/courses", label: "Courses" },
   { href: "/contact", label: "Contact" },
 ];
 
@@ -72,6 +75,7 @@ export default function Navbar() {
           </nav>
           <SearchModal />
           <ThemeToggle />
+          <UserMenu />
         </div>
 
         {/* Mobile hamburger */}
@@ -115,6 +119,9 @@ export default function Navbar() {
               );
             })}
           </nav>
+          <div className="mt-3 border-t border-border pt-3">
+            <UserMenu />
+          </div>
         </div>
       )}
     </header>

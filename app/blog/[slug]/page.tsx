@@ -19,25 +19,30 @@ import ShareButtons from "@/components/blog/ShareButtons";
 import BackToTop from "@/components/blog/BackToTop";
 import PostNavigation from "@/components/blog/PostNavigation";
 import AuthorCard from "@/components/blog/AuthorCard";
+import PostReactions from "@/components/blog/PostReactions";
 import Breadcrumbs from "@/components/blog/Breadcrumbs";
 import ArticleJsonLd from "@/components/blog/ArticleJsonLd";
 import JsonLd from "@/components/seo/JsonLd";
 import { breadcrumbJsonLd } from "@/lib/seo";
 import FontSizeToggle from "@/components/blog/FontSizeToggle";
+import ReadingTracker from "@/components/blog/ReadingTracker";
 import TextSelectionShare from "@/components/blog/TextSelectionShare";
 import KeyboardNav from "@/components/blog/KeyboardNav";
+import SavePostButton from "@/components/blog/SavePostButton";
 import MobileTocDrawer from "@/components/blog/MobileTocDrawer";
+import ViewCounter from "@/components/blog/ViewCounter";
 import PostSignoff from "@/components/blog/PostSignoff";
+import FloatingActionRail from "@/components/blog/FloatingActionRail";
+import CommentsCollapse from "@/components/blog/CommentsCollapse";
 import FadeUp from "@/components/animations/FadeUp";
 
+import PremiumGate from "@/components/blog/PremiumGate";
+import { getCurrentUser } from "@/lib/auth-helpers";
 import NewsletterCTA from "@/components/newsletter/NewsletterCTA";
 
-// User-account features (saves, reactions, reading tracker, view counter,
-// comments, premium gate, floating save rail) are hidden during the
-// content-first launch phase — their backend depends on Prisma + Supabase
-// which we are rebuilding. The imports stay removed from this page so the
-// public post render does not touch those code paths. Re-add when the
-// backend is ready.
+// DEV BRANCH — every reader-account widget mounted so the backend can be
+// exercised end-to-end. The public `main` branch strips these widgets
+// while the paywall + commerce flows finish baking.
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
@@ -106,14 +111,16 @@ export default async function PostPage({ params }: PageProps) {
       ? post.readingTime
       : calculateReadingTime(post.content ?? null);
 
-  const [{ prev, next }, suggestionGroups] = await Promise.all([
+  const [{ prev, next }, currentUser, suggestionGroups] = await Promise.all([
     getAdjacentPosts(post.publishedAt),
+    getCurrentUser(),
     getSidebarSuggestions(post._id, categorySlugs, tagSlugs, categoryTitle),
   ]);
 
-  // Premium gating is disabled while user accounts are hidden — every post
-  // renders in full. The isPremium flag in Sanity still works for editorial
-  // sorting, just doesn't lock the content.
+  const isPremiumPost = post.isPremium;
+  const userPlan = (currentUser as unknown as { plan?: string })?.plan || "FREE";
+  const canAccessPremium = userPlan === "PRO" || userPlan === "PRO_PLUS";
+  const showGate = isPremiumPost && !canAccessPremium;
 
   const featuredImageUrl = post.featuredImage?.asset
     ? urlFor(post.featuredImage).width(1200).url()
@@ -122,9 +129,11 @@ export default async function PostPage({ params }: PageProps) {
   return (
     <>
       <ReadingProgress />
+      <ReadingTracker slug={slug} />
       <BackToTop />
       <TextSelectionShare slug={slug} />
       <KeyboardNav headings={headings} />
+      <FloatingActionRail slug={slug} title={post.title} />
 
       <ArticleJsonLd
         title={post.title}
@@ -152,9 +161,12 @@ export default async function PostPage({ params }: PageProps) {
 
       {/* ══ MAIN LAYOUT ══ */}
       <div className="article-ambient mx-auto max-w-[1600px] px-0 pb-24 sm:px-6 sm:pt-8 lg:px-8">
-        {/* Mobile TOC — sticky bar (save button hidden during launch) */}
+        {/* Mobile TOC + Save — sticky bar */}
         <div className="sticky top-[64px] z-30 mb-4 flex gap-2 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md sm:static sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none 2xl:hidden">
           <MobileTocDrawer headings={headings} />
+          <div className="ml-auto flex items-center">
+            <SavePostButton postSlug={slug} />
+          </div>
         </div>
 
         <div className="relative flex justify-center gap-8 2xl:gap-20">
@@ -243,6 +255,9 @@ export default async function PostPage({ params }: PageProps) {
                       })}
                       {readingMinutes > 0 && <> · {readingMinutes} min read</>}
                     </span>
+                    <div className="ml-auto">
+                      <ViewCounter slug={slug} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -294,7 +309,21 @@ export default async function PostPage({ params }: PageProps) {
               id="article-content"
               className="prose-editorial px-4 sm:px-0"
             >
-              {post.content && <PortableTextRenderer content={post.content} />}
+              {showGate ? (
+                <>
+                  {post.content && (
+                    <div className="relative max-h-[600px] overflow-hidden">
+                      <PortableTextRenderer
+                        content={post.content.slice(0, 3)}
+                      />
+                      <div className="pointer-events-none absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background to-transparent" />
+                    </div>
+                  )}
+                  <PremiumGate />
+                </>
+              ) : (
+                post.content && <PortableTextRenderer content={post.content} />
+              )}
             </div>
 
             {/* ── End-of-read footer ── */}
@@ -335,9 +364,13 @@ export default async function PostPage({ params }: PageProps) {
                 </div>
               )}
 
-              {/* Share row — reactions + save hidden during launch */}
-              <div className="mt-10 flex flex-wrap items-center justify-end gap-6 border-t border-border pt-8">
-                <ShareButtons title={post.title} slug={slug} />
+              {/* Reactions + share row */}
+              <div className="mt-10 flex flex-wrap items-center justify-between gap-6 border-t border-border pt-8">
+                <PostReactions slug={slug} />
+                <div className="flex items-center gap-2">
+                  <ShareButtons title={post.title} slug={slug} />
+                  <SavePostButton postSlug={slug} />
+                </div>
               </div>
 
               {/* Author bio card */}
@@ -360,7 +393,8 @@ export default async function PostPage({ params }: PageProps) {
                 <NewsletterCTA />
               </div>
 
-              {/* Comments hidden during launch (DB-dependent). */}
+              {/* Comments — collapsed by default */}
+              <CommentsCollapse />
 
               {/* Prev/next */}
               <PostNavigation prev={prev} next={next} />
