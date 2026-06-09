@@ -24,8 +24,8 @@ export default function HomeAuthorLetter() {
           Hi — I&rsquo;m Miloš. I&rsquo;ve spent the last few years building
           production web apps from scratch and writing about everything I learn
           along the way. No editorial calendar, no listicles, no SEO churn —
-          just one carefully researched piece per week, on whatever I&rsquo;m
-          actually working on.
+          just carefully researched pieces on whatever I&rsquo;m actually
+          working on, published when they&rsquo;re ready.
         </p>
         <p className="editorial-body mt-6 text-muted">
           If you&rsquo;ve ever wished a tutorial would explain the why instead
@@ -37,7 +37,7 @@ export default function HomeAuthorLetter() {
             href="#newsletter"
             className="text-xs font-bold uppercase tracking-[0.2em] text-foreground transition-colors hover:text-accent"
           >
-            Get the Sunday letter →
+            Get the letter →
           </Link>
         </div>
       </div>

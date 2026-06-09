@@ -16,9 +16,9 @@ const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
 
 export const metadata: Metadata = {
-  title: "CodeFromScratch — A weekly journal for serious web developers",
+  title: "CodeFromScratch — A journal for serious web developers",
   description:
-    "Tutorials, guides, and deep dives on modern web development. One thoughtful piece a week, free, with code you can read in your own repo.",
+    "Tutorials, guides, and deep dives on modern web development. Thoughtful, carefully researched pieces — free, with code you can read in your own repo.",
   alternates: { canonical: SITE_URL },
 };
 
@@ -57,7 +57,7 @@ export default async function HomePage() {
           name: "CodeFromScratch",
           url: SITE_URL,
           description:
-            "A weekly journal for serious web developers. Tutorials, guides, and deep dives on modern web development.",
+            "A journal for serious web developers. Tutorials, guides, and deep dives on modern web development.",
           potentialAction: {
             "@type": "SearchAction",
             target: {

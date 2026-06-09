@@ -17,7 +17,6 @@ import ThemeProvider from "../components/ThemeProvider";
 import JsonLd from "../components/seo/JsonLd";
 import { organizationJsonLd } from "../lib/seo";
 import LayoutShell from "../components/LayoutShell";
-import CookieConsent from "../components/CookieConsent";
 import DraftModeIndicator from "../components/DraftModeIndicator";
 import VisualEditing from "../components/VisualEditing";
 
@@ -26,7 +25,7 @@ export const metadata: Metadata = {
     default: "CodeFromScratch",
     template: "%s | CodeFromScratch",
   },
-  description: "Master web development from scratch with hands-on tutorials, in-depth guides, and premium resources.",
+  description: "A journal for serious web developers — tutorials, guides, and deep dives on modern web development, with production-grade code you can read in your own repo.",
   metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
   openGraph: {
     siteName: "CodeFromScratch",
@@ -111,7 +110,10 @@ export default async function RootLayout({
             </LayoutShell>
           </div>
           <JsonLd data={organizationJsonLd()} />
-          <CookieConsent />
+          {/* CookieConsent intentionally unmounted for the content-first
+              launch: the public surface sets no auth or tracking cookies, and
+              essential cookies need no consent banner. Re-mount when the
+              SaaS surfaces (login, payments) relaunch. */}
           {isDraft && (
             <>
               <DraftModeIndicator />

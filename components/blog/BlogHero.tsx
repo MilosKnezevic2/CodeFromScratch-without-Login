@@ -85,7 +85,7 @@ export default function BlogHero({ stats }: { stats: BlogHeroStats }) {
               Editor&rsquo;s note
             </p>
             <p className="editorial-body text-xl text-foreground sm:text-2xl">
-              A weekly journal of practical web-development writing.
+              A journal of practical web-development writing.
               Shipped from a small studio in Graz to readers across the
               world. Just craft.
             </p>

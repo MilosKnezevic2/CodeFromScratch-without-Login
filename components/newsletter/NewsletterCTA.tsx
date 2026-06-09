@@ -7,7 +7,7 @@ export default function NewsletterCTA() {
         Stay up to date
       </h2>
       <p className="mt-1 text-sm text-muted">
-        Get the latest articles and tutorials delivered to your inbox weekly.
+        Get new articles and tutorials delivered straight to your inbox.
       </p>
       <div className="mx-auto mt-4 max-w-sm">
         <SubscribeForm />

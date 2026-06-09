@@ -65,11 +65,11 @@ export default function InlineNewsletterCard() {
             className="editorial-display mt-4 text-4xl leading-[0.95] text-foreground sm:text-5xl lg:text-6xl"
             style={{ fontStyle: "normal" }}
           >
-            Read tomorrow&rsquo;s issue today.
+            Never miss an issue.
           </h2>
           <p className="mt-5 max-w-md text-base leading-relaxed text-muted-foreground">
-            One short letter on a Sunday. A new piece of writing, what
-            we&rsquo;re reading, what we&rsquo;re building. Twenty seconds to
+            One short letter whenever a new piece ships — the article, what
+            I&rsquo;m reading, what I&rsquo;m building. Twenty seconds to
             skim. Unsubscribe in one click.
           </p>
         </div>
@@ -106,7 +106,7 @@ export default function InlineNewsletterCard() {
             </button>
           </div>
           <p className="editorial-meta mt-4 text-muted-foreground/70">
-            Once a week · No tracking pixels · Unsubscribe in one click
+            No spam, ever · No tracking pixels · Unsubscribe in one click
           </p>
           {status === "success" && (
             <p

@@ -4,7 +4,7 @@ import Link from "next/link";
 import EbookNotifyForm from "@/components/ebooks/EbookNotifyForm";
 
 export const metadata: Metadata = {
-  title: "Ebooks | CodeFromScratch",
+  title: "Ebooks",
   description: "Premium web development ebooks with practical examples and real-world projects.",
 };
 

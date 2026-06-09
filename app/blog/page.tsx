@@ -32,7 +32,7 @@ const SITE_URL =
 
 const PAGE_TITLE = "Journal";
 const PAGE_DESCRIPTION =
-  "Tutorials, guides, and deep dives — a weekly journal of practical web-development writing.";
+  "Tutorials, guides, and deep dives — a journal of practical web-development writing.";
 
 export const revalidate = 60;
 
@@ -60,7 +60,9 @@ export async function generateMetadata({
       ? `${SITE_URL}/blog?${canonicalParts.join("&")}`
       : `${SITE_URL}/blog`;
   return {
-    title: `${PAGE_TITLE} | CodeFromScratch`,
+    // Root layout template appends "| CodeFromScratch" — pass the bare name
+    // here or the brand doubles in the tab title.
+    title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,
     openGraph: {
       title: `${PAGE_TITLE} | CodeFromScratch`,

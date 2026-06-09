@@ -209,6 +209,12 @@ export default function SavePostButton({
     setCreatingCollection(false);
   }
 
+  // Content-first launch: accounts are not offered publicly, so a save
+  // button for a signed-out visitor is a dead end into a hidden /login.
+  // Render nothing without a session; signed-in users (dev branch and the
+  // future SaaS relaunch) get the full behaviour unchanged.
+  if (!session) return null;
+
   // --- Icon-only mode: simple save/unsave toggle, no popover ---
   // Visible chrome by default — solid pill background + subtle ring
   // so it reads as a real button at every state. Slight opacity dip

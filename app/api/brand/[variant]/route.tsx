@@ -252,7 +252,7 @@ export async function GET(
               letterSpacing: "0.02em",
             }}
           >
-            A weekly journal of practical web-development writing.
+            A journal of practical web-development writing.
           </div>
         </div>
       ),

@@ -42,7 +42,7 @@ export default function MobileSubscribeBar() {
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-foreground">
-            Sunday letter, every week.
+            New issues, straight to your inbox.
           </p>
           <p className="editorial-meta">No fluff. Unsubscribe in a click.</p>
         </div>

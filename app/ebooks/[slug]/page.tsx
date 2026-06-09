@@ -15,7 +15,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!ebook) return { title: "Ebook not found" };
 
   return {
-    title: `${ebook.title} | CodeFromScratch Ebooks`,
+    title: `${ebook.title}`,
     description: ebook.description,
   };
 }

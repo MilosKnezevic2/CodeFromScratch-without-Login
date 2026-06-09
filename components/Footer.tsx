@@ -118,7 +118,7 @@ export default function Footer() {
               Stay Updated
             </h4>
             <p className="mt-4 text-sm text-muted">
-              Get weekly tutorials and tips delivered straight to your inbox. No spam, unsubscribe anytime.
+              New tutorials and deep dives, straight to your inbox. No spam, unsubscribe anytime.
             </p>
             <div className="mt-4">
               <SubscribeForm />

@@ -50,9 +50,12 @@ export default function HomeHero({
       <div className="mx-auto max-w-7xl">
         {/* Edition rule line */}
         <div className="flex items-center gap-3 border-b border-border/60 py-4">
-          <span className="editorial-meta">{issueLine()}</span>
-          <span className="editorial-meta ml-auto">
+          <span className="editorial-meta whitespace-nowrap">{issueLine()}</span>
+          <span className="editorial-meta ml-auto hidden whitespace-nowrap sm:inline">
             CodeFromScratch / The Journal
+          </span>
+          <span className="editorial-meta ml-auto whitespace-nowrap sm:hidden">
+            The Journal
           </span>
         </div>
 
@@ -68,7 +71,7 @@ export default function HomeHero({
                   lineHeight: "1.02",
                 }}
               >
-                A weekly journal for{" "}
+                A journal for{" "}
                 <span style={{ color: "var(--color-accent)" }}>
                   serious web developers.
                 </span>
@@ -103,7 +106,7 @@ export default function HomeHero({
                   href="#newsletter"
                   className="inline-flex items-center gap-2 rounded-full bg-accent px-5 py-3 text-sm font-bold text-accent-foreground transition-opacity hover:opacity-90"
                 >
-                  Subscribe — Sunday letter
+                  Subscribe to the letter
                 </Link>
                 <Link
                   href="/blog"
@@ -122,7 +125,7 @@ export default function HomeHero({
               className="group block lg:col-span-5"
             >
               <p className="editorial-meta mb-3 flex items-center gap-3">
-                <span className="text-foreground">This week&rsquo;s issue</span>
+                <span className="text-foreground">Latest issue</span>
                 {lastPublished && (
                   <>
                     <span aria-hidden className="text-muted-foreground">/</span>

@@ -5,7 +5,7 @@ import Badge from "@/components/admin/Badge";
 import Link from "next/link";
 
 export const metadata = {
-  title: "Admin Dashboard | CodeFromScratch",
+  title: "Admin Dashboard",
 };
 
 export default async function AdminPage() {
