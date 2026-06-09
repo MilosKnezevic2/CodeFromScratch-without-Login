@@ -66,9 +66,9 @@ export default function Footer() {
           {/* Explore — public surfaces only (commerce + auth surfaces are
               hidden during the content-first launch phase). */}
           <div className="lg:col-span-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+            <p className="text-xs font-semibold uppercase tracking-wider text-foreground">
               Explore
-            </h4>
+            </p>
             <ul className="mt-4 space-y-3 text-sm">
               <li>
                 <Link href="/blog" className="text-muted transition hover:text-accent">
@@ -90,9 +90,9 @@ export default function Footer() {
 
           {/* Legal */}
           <div className="lg:col-span-2">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+            <p className="text-xs font-semibold uppercase tracking-wider text-foreground">
               Legal
-            </h4>
+            </p>
             <ul className="mt-4 space-y-3 text-sm">
               <li>
                 <Link href="/privacy" className="text-muted transition hover:text-accent">
@@ -114,9 +114,9 @@ export default function Footer() {
 
           {/* Newsletter */}
           <div className="lg:col-span-4">
-            <h4 className="text-xs font-semibold uppercase tracking-wider text-foreground">
+            <p className="text-xs font-semibold uppercase tracking-wider text-foreground">
               Stay Updated
-            </h4>
+            </p>
             <p className="mt-4 text-sm text-muted">
               New tutorials and deep dives, straight to your inbox. No spam, unsubscribe anytime.
             </p>

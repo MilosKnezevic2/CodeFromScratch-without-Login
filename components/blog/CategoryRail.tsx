@@ -64,7 +64,7 @@ export default function CategoryRail({
             <li className="shrink-0">
               <Link
                 href={buildHref({ category: null, tag: null, page: null })}
-                aria-pressed={allActive}
+                aria-current={allActive ? "page" : undefined}
                 className={itemClass(allActive)}
               >
                 All
@@ -81,7 +81,7 @@ export default function CategoryRail({
                       tag: null,
                       page: null,
                     })}
-                    aria-pressed={active}
+                    aria-current={active ? "page" : undefined}
                     className={itemClass(active)}
                   >
                     {cat.title}

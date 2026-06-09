@@ -104,7 +104,7 @@ export default function BlogToolbar({
               <span key={s} className="flex items-center gap-3">
                 <Link
                   href={href}
-                  aria-pressed={active}
+                  aria-current={active ? "page" : undefined}
                   className={`text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
                     active
                       ? "text-foreground"

@@ -53,7 +53,9 @@
   --theme-accent: #2dd4bf;
   --theme-accent-2: #22d3ee;
   --theme-muted: #cbd5e1;
-  --theme-muted-foreground: #64748b;
+  /* WCAG AA: 6.12:1 on --theme-background, 4.86:1 on --theme-surface-2.
+     The previous #64748b measured 3.63:1 - failed AA for body-size text. */
+  --theme-muted-foreground: #8b9bb3;
   --theme-border: rgba(51, 65, 85, 0.5);
 }
 

@@ -67,7 +67,7 @@ export default function ChipFilters({
               >
                 <Link
                   href={href}
-                  aria-pressed={isActive}
+                  aria-current={isActive ? "page" : undefined}
                   className={`font-bold uppercase tracking-[0.16em] transition-colors ${
                     isActive
                       ? "text-foreground underline underline-offset-4"

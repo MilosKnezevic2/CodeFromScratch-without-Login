@@ -560,7 +560,7 @@ export default async function BlogPage({
                   ) : (
                     <span
                       aria-hidden
-                      className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground/30"
+                      className="invisible flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em]"
                     >
                       <span>←</span>
                       <span className="hidden sm:inline">Previous</span>
@@ -583,7 +583,7 @@ export default async function BlogPage({
                           <Link
                             href={pageHref(item)}
                             aria-current={item === page ? "page" : undefined}
-                            aria-label={`Page ${item}`}
+                            aria-label={`Page ${String(item).padStart(2, "0")}`}
                             className={`flex h-11 min-w-[2.5rem] items-center justify-center border-b-2 px-1.5 text-base font-bold tabular-nums transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent sm:min-w-[2.75rem] sm:text-lg ${
                               item === page
                                 ? "border-foreground text-foreground"
@@ -614,7 +614,7 @@ export default async function BlogPage({
                   ) : (
                     <span
                       aria-hidden
-                      className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em] text-muted-foreground/30"
+                      className="invisible flex items-center gap-2 text-xs font-bold uppercase tracking-[0.2em]"
                     >
                       <span>Next</span>
                       <span>→</span>
