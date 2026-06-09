@@ -1,16 +1,16 @@
 import type { MetadataRoute } from "next";
 import { getAllPostSlugs } from "@/lib/sanity/queries";
-import { prisma } from "@/lib/prisma";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
+  // Content-first launch: the sitemap advertises only the public journal
+  // surface. Ebooks / courses / pricing are hidden from navigation until the
+  // commerce backend ships — re-add them here when those surfaces go public.
   const staticPages: MetadataRoute.Sitemap = [
     { url: `${baseUrl}/`, changeFrequency: "weekly", priority: 1.0 },
     { url: `${baseUrl}/blog`, changeFrequency: "daily", priority: 0.9 },
-    { url: `${baseUrl}/ebooks`, changeFrequency: "weekly", priority: 0.7 },
-    { url: `${baseUrl}/courses`, changeFrequency: "monthly", priority: 0.6 },
-    { url: `${baseUrl}/pricing`, changeFrequency: "monthly", priority: 0.7 },
+    { url: `${baseUrl}/newsletter`, changeFrequency: "monthly", priority: 0.6 },
     { url: `${baseUrl}/contact`, changeFrequency: "yearly", priority: 0.5 },
   ];
 
@@ -28,22 +28,5 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Sanity may not be configured yet
   }
 
-  // Ebooks
-  let ebookPages: MetadataRoute.Sitemap = [];
-  try {
-    const ebooks = await prisma.ebook.findMany({
-      where: { published: true },
-      select: { slug: true, updatedAt: true },
-    });
-    ebookPages = ebooks.map((e) => ({
-      url: `${baseUrl}/ebooks/${e.slug}`,
-      lastModified: e.updatedAt,
-      changeFrequency: "monthly" as const,
-      priority: 0.7,
-    }));
-  } catch {
-    // DB may not be connected
-  }
-
-  return [...staticPages, ...postPages, ...ebookPages];
+  return [...staticPages, ...postPages];
 }

@@ -1,6 +1,10 @@
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminMobileNav from "@/components/admin/AdminMobileNav";
 
+// Admin pages read live operational data per request; they must never be
+// prerendered at build time (the build environment has no database).
+export const dynamic = "force-dynamic";
+
 export default function AdminLayout({
   children,
 }: {

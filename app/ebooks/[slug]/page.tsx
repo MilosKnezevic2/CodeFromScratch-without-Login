@@ -5,9 +5,13 @@ import PurchaseButton from "@/components/ebooks/PurchaseButton";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
+// Catalogue data lives in Postgres; render per request so the build never
+// needs a database. An unreachable database reads as "not found".
+export const dynamic = "force-dynamic";
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const ebook = await prisma.ebook.findUnique({ where: { slug } });
+  const ebook = await prisma.ebook.findUnique({ where: { slug } }).catch(() => null);
   if (!ebook) return { title: "Ebook not found" };
 
   return {
@@ -18,7 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function EbookPage({ params }: PageProps) {
   const { slug } = await params;
-  const ebook = await prisma.ebook.findUnique({ where: { slug } });
+  const ebook = await prisma.ebook.findUnique({ where: { slug } }).catch(() => null);
 
   if (!ebook || !ebook.published) notFound();
 
@@ -26,6 +30,7 @@ export default async function EbookPage({ params }: PageProps) {
     <div className="mx-auto max-w-3xl space-y-8">
       <div className="flex flex-col gap-8 sm:flex-row">
         {ebook.coverImageUrl && (
+          // eslint-disable-next-line @next/next/no-img-element -- coverImageUrl is an admin-entered arbitrary host; next/image needs a remotePatterns whitelist (same documented exception as the ebook listing)
           <img
             src={ebook.coverImageUrl}
             alt={ebook.title}

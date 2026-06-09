@@ -8,11 +8,17 @@ export const metadata: Metadata = {
   description: "Premium web development ebooks with practical examples and real-world projects.",
 };
 
+// Catalogue data lives in Postgres; render per request so the build never
+// needs a database, and fall back to the empty state if it is unreachable.
+export const dynamic = "force-dynamic";
+
 export default async function EbooksPage() {
-  const ebooks = await prisma.ebook.findMany({
-    where: { published: true },
-    orderBy: { createdAt: "desc" },
-  });
+  const ebooks = await prisma.ebook
+    .findMany({
+      where: { published: true },
+      orderBy: { createdAt: "desc" },
+    })
+    .catch(() => []);
 
   const hasEbooks = ebooks.length > 0;
 

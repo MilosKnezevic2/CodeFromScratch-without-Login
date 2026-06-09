@@ -7,7 +7,27 @@ export default function robots(): MetadataRoute.Robots {
     rules: {
       userAgent: "*",
       allow: "/",
-      disallow: ["/portal-cfs-admin", "/portal-cfs-admin/*", "/api/*", "/dashboard", "/dashboard/*"],
+      disallow: [
+        "/portal-cfs-admin",
+        "/portal-cfs-admin/*",
+        "/api/*",
+        "/dashboard",
+        "/dashboard/*",
+        // Content-first launch: commerce + account surfaces are hidden from
+        // navigation until the backend ships. Keep crawlers off them so the
+        // index matches what the site actually offers. Remove on relaunch.
+        "/ebooks",
+        "/ebooks/*",
+        "/courses",
+        "/pricing",
+        "/checkout",
+        "/onboarding",
+        "/login",
+        "/register",
+        "/forgot-password",
+        "/reset-password",
+        "/verify-email",
+      ],
     },
     sitemap: `${baseUrl}/sitemap.xml`,
   };

@@ -1,6 +1,10 @@
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import MobileSidebarDrawer from "@/components/dashboard/MobileSidebarDrawer";
 
+// Every dashboard page is per-user; none may be prerendered at build time
+// (the build environment has no database).
+export const dynamic = "force-dynamic";
+
 export default function DashboardLayout({
   children,
 }: {
