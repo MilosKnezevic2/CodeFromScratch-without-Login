@@ -143,7 +143,12 @@ const components: PortableTextComponents = {
       );
     },
     code: ({ value }) => (
-      <CodeBlock code={value.code} language={value.language} filename={value.filename} />
+      <CodeBlock
+        code={value.code}
+        language={value.language}
+        filename={value.filename}
+        highlightedHtml={value.highlightedHtml}
+      />
     ),
     callout: ({ value }) => {
       const icons: Record<string, string> = {

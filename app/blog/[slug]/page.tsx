@@ -11,6 +11,7 @@ import {
 import { urlFor } from "@/lib/sanity/image";
 import PortableTextRenderer from "@/components/blog/PortableTextRenderer";
 import { extractHeadings } from "@/lib/portable-text-utils";
+import { highlightCodeBlocks } from "@/lib/shiki";
 import { calculateReadingTime } from "@/lib/reading-time";
 import TableOfContents from "@/components/blog/TableOfContents";
 import SmartSuggestions from "@/components/blog/SmartSuggestions";
@@ -96,6 +97,12 @@ export default async function PostPage({ params }: PageProps) {
   const post = await getPostBySlug(slug);
 
   if (!post) notFound();
+
+  // Syntax-highlight code blocks here, on the server — the client renderer
+  // receives ready-made HTML and Shiki's WASM engine never ships to readers.
+  if (post.content) {
+    post.content = await highlightCodeBlocks(post.content);
+  }
 
   const headings = post.content ? extractHeadings(post.content) : [];
   const categorySlugs = post.categories?.map((c) => c.slug.current) || [];

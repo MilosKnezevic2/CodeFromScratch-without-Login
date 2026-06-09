@@ -1,44 +1,21 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import CopyCodeButton from "./CopyCodeButton";
 
-function getTheme(): string {
-  if (typeof document === "undefined") return "dark";
-  return document.documentElement.getAttribute("data-theme") || "dark";
-}
-
+// Highlighting happens on the server (lib/shiki.ts highlightCodeBlocks) and
+// arrives here as ready-made HTML. Never import shiki in this file — it drags
+// a ~600 KB WASM engine into the client bundle of every article.
 export default function CodeBlock({
   code,
   language,
   filename,
+  highlightedHtml,
 }: {
   code: string;
   language?: string;
   filename?: string;
+  highlightedHtml?: string;
 }) {
-  const [html, setHtml] = useState<string>("");
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function highlight() {
-      try {
-        const { codeToHtml } = await import("shiki");
-        const result = await codeToHtml(code, {
-          lang: language || "text",
-          theme: "github-dark-default",
-        });
-        if (!cancelled) setHtml(result);
-      } catch {
-        // Fallback to plain text
-      }
-    }
-
-    highlight();
-    return () => { cancelled = true; };
-  }, [code, language]);
-
   return (
     <div className="my-6 overflow-hidden rounded-lg border border-[#334155] code-block-wrapper">
       <div className="flex items-center gap-2 bg-[#162032] px-4 py-2.5">
@@ -53,10 +30,10 @@ export default function CodeBlock({
         )}
         <CopyCodeButton code={code} />
       </div>
-      {html ? (
+      {highlightedHtml ? (
         <div
           className="overflow-x-auto bg-[#1e293b] [&>pre]:!bg-transparent [&>pre]:p-4 [&>pre]:text-sm [&_code]:!bg-transparent"
-          dangerouslySetInnerHTML={{ __html: html }}
+          dangerouslySetInnerHTML={{ __html: highlightedHtml }}
         />
       ) : (
         <pre className="overflow-x-auto bg-[#1e293b] p-4 text-sm">
