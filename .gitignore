@@ -45,3 +45,4 @@ next-env.d.ts
 
 # Transient authoring artifacts — Sanity is the source of truth for content
 content-drafts/
+PRODUCTION-SECRETS.local.txt
