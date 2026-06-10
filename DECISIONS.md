@@ -74,3 +74,19 @@ Mission R1–R5 captured (trusted full-stack platform / Lighthouse 100 /
 account-takeover-proof / CMS as good as Word / SEO first-class). Admin-auth
 bypass found and remediated with HMAC-signed sessions (PR #1). Honesty
 fixes on homepage and /courses (PR #2). Full April record in the archive.
+
+## 2026-06-10 — Content triage executed: 23 → 10 published articles
+
+Audit found one real article (the May cover story, ~2,300 words) and 22
+thin seeds (70–580 words, zero in-body images, mixed authors). Operator
+approved: 9 strongest skeletons rewritten to the flagship standard
+(1,500–2,200 words each, single voice, why-before-how, no schedule or
+hype claims), unified under the Milos Knezevic author; 13 stubs
+unpublished (off-stack Python/Go, superseded Next.js 15, stale "2025"
+titles, sub-200-word stubs — recoverable from Sanity history, topics
+return when written properly). "React State Management" retitled
+2025 → 2026 (slug kept). Two stale April Studio drafts deleted — they
+predated the May rewrite and would have reverted it if ever published.
+Authoring pipeline: scripts/apply-content-refresh.mjs converts draft
+JSON specs to Portable Text and patches Sanity; writer voice rules in
+content-drafts/WRITER-GUIDE.md pattern (gitignored, recreate per batch).
