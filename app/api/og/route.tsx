@@ -3,10 +3,41 @@ import { NextRequest } from "next/server";
 
 export const runtime = "edge";
 
+// Per-category accent palette. Covers double as featured images on the blog
+// grid — a single accent made ten cards read as one navy blur, so each
+// category gets its own hue from the brand family. Deterministic: same
+// category, same colour, forever.
+const ACCENTS: Record<string, [string, string]> = {
+  "web fundamentals": ["#2dd4bf", "#22d3ee"], // teal → cyan (brand default)
+  "javascript frameworks": ["#22d3ee", "#60a5fa"], // cyan → blue
+  "backend technologies": ["#8b5cf6", "#6366f1"], // violet → indigo
+  "apis & integrations": ["#f59e0b", "#fbbf24"], // amber
+  "css & design": ["#fb7185", "#f472b6"], // rose → pink
+  "tooling & workflow": ["#34d399", "#2dd4bf"], // emerald → teal
+  "web development": ["#2dd4bf", "#22d3ee"],
+  "testing & quality": ["#34d399", "#a3e635"], // emerald → lime
+};
+
+function hexToRgba(hex: string, alpha: number): string {
+  const n = parseInt(hex.slice(1), 16);
+  return `rgba(${(n >> 16) & 255},${(n >> 8) & 255},${n & 255},${alpha})`;
+}
+
+function pickAccent(category: string): [string, string] {
+  const key = category.trim().toLowerCase();
+  if (ACCENTS[key]) return ACCENTS[key];
+  // Unknown categories hash onto the palette so new topics stay on-brand.
+  const values = Object.values(ACCENTS);
+  let h = 0;
+  for (const ch of key) h = (h * 31 + ch.charCodeAt(0)) >>> 0;
+  return values[h % values.length];
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = req.nextUrl;
   const title = searchParams.get("title") || "CodeFromScratch";
   const category = searchParams.get("category") || "";
+  const [accent, accent2] = pickAccent(category);
 
   return new ImageResponse(
     (
@@ -31,7 +62,7 @@ export async function GET(req: NextRequest) {
             width: "400px",
             height: "400px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(45,212,191,0.3) 0%, transparent 70%)",
+            background: `radial-gradient(circle, ${hexToRgba(accent, 0.3)} 0%, transparent 70%)`,
             filter: "blur(60px)",
           }}
         />
@@ -43,7 +74,7 @@ export async function GET(req: NextRequest) {
             width: "300px",
             height: "300px",
             borderRadius: "50%",
-            background: "radial-gradient(circle, rgba(34,211,238,0.2) 0%, transparent 70%)",
+            background: `radial-gradient(circle, ${hexToRgba(accent2, 0.2)} 0%, transparent 70%)`,
             filter: "blur(50px)",
           }}
         />
@@ -56,7 +87,7 @@ export async function GET(req: NextRequest) {
             left: 0,
             right: 0,
             height: "4px",
-            background: "linear-gradient(90deg, #2dd4bf, #22d3ee)",
+            background: `linear-gradient(90deg, ${accent}, ${accent2})`,
           }}
         />
 
@@ -70,8 +101,8 @@ export async function GET(req: NextRequest) {
           >
             <span
               style={{
-                background: "rgba(45,212,191,0.15)",
-                color: "#2dd4bf",
+                background: hexToRgba(accent, 0.15),
+                color: accent,
                 padding: "6px 16px",
                 borderRadius: "20px",
                 fontSize: "20px",
@@ -109,7 +140,7 @@ export async function GET(req: NextRequest) {
           <span style={{ fontSize: "24px", fontWeight: 700, color: "#e2e8f0" }}>
             Code
           </span>
-          <span style={{ fontSize: "24px", fontWeight: 700, color: "#2dd4bf" }}>
+          <span style={{ fontSize: "24px", fontWeight: 700, color: accent }}>
             FromScratch
           </span>
         </div>
