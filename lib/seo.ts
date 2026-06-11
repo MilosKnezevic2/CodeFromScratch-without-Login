@@ -57,7 +57,10 @@ export function articleJsonLd({
     description,
     url,
     datePublished: publishedAt,
-    author: { "@type": "Person", name: author },
+    author:
+      author === "Milos Knezevic"
+        ? personJsonLd()
+        : { "@type": "Person", name: author },
     publisher: {
       "@type": "Organization",
       name: "CodeFromScratch",
@@ -73,7 +76,31 @@ export function organizationJsonLd() {
     "@type": "Organization",
     name: "CodeFromScratch",
     url: siteUrl,
-    description: "A world-class web development blog platform.",
+    logo: `${siteUrl}/brand/favicon-512.png`,
+    description:
+      "A journal for serious web developers — tutorials, guides, and deep dives on modern web development with production-grade code.",
+    founder: personJsonLd(),
+  };
+}
+
+// E-E-A-T: the whole brand is one named author, so tell Google who he is.
+// Extend sameAs as public profiles go live — each verified profile
+// strengthens the author entity.
+export function personJsonLd() {
+  return {
+    "@type": "Person",
+    name: "Milos Knezevic",
+    url: siteUrl,
+    jobTitle: "Full-stack web developer",
+    knowsAbout: [
+      "Web development",
+      "Next.js",
+      "React",
+      "TypeScript",
+      "PostgreSQL",
+      "Full-stack architecture",
+    ],
+    sameAs: ["https://github.com/MilosKnezevic2"],
   };
 }
 
