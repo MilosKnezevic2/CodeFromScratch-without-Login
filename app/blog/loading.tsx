@@ -58,7 +58,7 @@ export default function BlogLoading() {
               <div className="h-5 w-[60%] animate-pulse bg-surface-2" />
               <div className="h-5 w-[40%] animate-pulse bg-surface-2" />
             </div>
-            <div className="aspect-[5/4] animate-pulse bg-surface-2 lg:col-span-5" />
+            <div className="aspect-[1200/630] animate-pulse bg-surface-2 lg:col-span-5" />
           </div>
         </div>
 
@@ -103,7 +103,7 @@ export default function BlogLoading() {
           </div>
           <div className="grid gap-12 lg:grid-cols-12 lg:gap-16">
             <div className="space-y-6 lg:col-span-7">
-              <div className="aspect-[4/3] animate-pulse bg-surface-2" />
+              <div className="aspect-[1200/630] animate-pulse bg-surface-2" />
               <div className="space-y-3">
                 <div className="h-3 w-16 animate-pulse bg-surface-2" />
                 <div className="h-12 w-full animate-pulse bg-surface-2" />
@@ -113,7 +113,7 @@ export default function BlogLoading() {
             <div className="space-y-12 lg:col-span-5">
               {Array.from({ length: 2 }).map((_, i) => (
                 <div key={i} className="space-y-3">
-                  <div className="aspect-[5/3] animate-pulse bg-surface-2" />
+                  <div className="aspect-[1200/630] animate-pulse bg-surface-2" />
                   <div className="h-3 w-16 animate-pulse bg-surface-2" />
                   <div className="h-7 w-full animate-pulse bg-surface-2" />
                 </div>

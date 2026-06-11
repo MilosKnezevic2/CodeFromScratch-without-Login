@@ -22,7 +22,7 @@ export default function PostFeaturedImage({
   const url = urlFor(image).width(1600).quality(88).url();
   return (
     <figure className="my-12 sm:my-16">
-      <div className="relative aspect-[16/9] w-full overflow-hidden">
+      <div className="relative aspect-[1200/630] w-full overflow-hidden">
         <Image
           src={url}
           alt={image.alt || fallbackAlt}

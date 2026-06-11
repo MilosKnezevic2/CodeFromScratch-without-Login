@@ -41,7 +41,7 @@ export default function HomeHero({
   stats: HomeStats;
 }) {
   const imageUrl = featured?.featuredImage?.asset
-    ? urlFor(featured.featuredImage).width(1200).height(900).quality(85).url()
+    ? urlFor(featured.featuredImage).width(1200).quality(85).url()
     : null;
   const lastPublished = relativeTime(stats.lastPublishedAt);
 
@@ -134,7 +134,7 @@ export default function HomeHero({
                 )}
               </p>
               {imageUrl ? (
-                <div className="relative aspect-[5/4] overflow-hidden">
+                <div className="relative aspect-[1200/630] overflow-hidden">
                   <Image
                     src={imageUrl}
                     alt={
@@ -147,7 +147,7 @@ export default function HomeHero({
                   />
                 </div>
               ) : (
-                <div className="flex aspect-[5/4] items-center justify-center bg-surface-2">
+                <div className="flex aspect-[1200/630] items-center justify-center bg-surface-2">
                   <span aria-hidden className="text-6xl text-accent/30">✦</span>
                 </div>
               )}

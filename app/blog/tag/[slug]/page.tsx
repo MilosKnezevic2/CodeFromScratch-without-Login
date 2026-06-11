@@ -77,10 +77,10 @@ export default async function TagPage({ params }: PageProps) {
                   style={{ borderRadius: "1rem", overflow: "hidden" }}
                 >
                   {/* Image */}
-                  <div className="img-shine relative aspect-[16/10] w-full overflow-hidden" style={{ borderTopLeftRadius: "1rem", borderTopRightRadius: "1rem" }}>
+                  <div className="img-shine relative aspect-[1200/630] w-full overflow-hidden" style={{ borderTopLeftRadius: "1rem", borderTopRightRadius: "1rem" }}>
                     {post.featuredImage?.asset ? (
                       <Image
-                        src={urlFor(post.featuredImage).width(600).height(375).quality(80).url()}
+                        src={urlFor(post.featuredImage).width(800).quality(80).url()}
                         alt={post.featuredImage.alt || post.title}
                         fill
                         sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"

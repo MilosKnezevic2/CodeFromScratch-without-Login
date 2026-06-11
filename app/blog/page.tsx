@@ -380,12 +380,11 @@ export default async function BlogPage({
                         </span>
                       </div>
                     </div>
-                    <div className="relative aspect-[5/4] overflow-hidden lg:col-span-5">
+                    <div className="relative aspect-[1200/630] overflow-hidden lg:col-span-5">
                       {featured.featuredImage?.asset ? (
                         <Image
                           src={urlFor(featured.featuredImage)
-                            .width(900)
-                            .height(720)
+                            .width(1100)
                             .quality(90)
                             .url()}
                           alt={featured.featuredImage.alt || featured.title}
@@ -491,12 +490,11 @@ export default async function BlogPage({
                             </div>
                           </div>
 
-                          <div className="relative aspect-[4/3] self-start overflow-hidden">
+                          <div className="relative aspect-[1200/630] self-start overflow-hidden">
                             {post.featuredImage?.asset ? (
                               <Image
                                 src={urlFor(post.featuredImage)
-                                  .width(420)
-                                  .height(315)
+                                  .width(640)
                                   .quality(82)
                                   .url()}
                                 alt={post.featuredImage.alt || post.title}
