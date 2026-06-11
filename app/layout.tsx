@@ -19,6 +19,11 @@ import { organizationJsonLd } from "../lib/seo";
 import LayoutShell from "../components/LayoutShell";
 import DraftModeIndicator from "../components/DraftModeIndicator";
 import VisualEditing from "../components/VisualEditing";
+// Cookieless first-party analytics + real-user Core Web Vitals. Both load
+// from this origin (/_vercel/*), so the strict CSP needs no third-party
+// exception and no consent banner is required.
+import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 export const metadata: Metadata = {
   title: {
@@ -120,6 +125,8 @@ export default async function RootLayout({
               <VisualEditing />
             </>
           )}
+          <Analytics />
+          <SpeedInsights />
         </SavedPostsProvider>
         </SessionProvider>
         </ThemeProvider>
