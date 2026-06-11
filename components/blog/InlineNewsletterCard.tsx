@@ -58,7 +58,7 @@ export default function InlineNewsletterCard() {
       />
 
       <div className="relative mx-auto grid max-w-5xl items-end gap-8 lg:grid-cols-12">
-        <div className="lg:col-span-7">
+        <div className="min-w-0 lg:col-span-7">
           <p className="editorial-meta text-muted-foreground">Subscription</p>
           <h2
             id="inline-newsletter-heading"
@@ -73,7 +73,7 @@ export default function InlineNewsletterCard() {
             skim. Unsubscribe in one click.
           </p>
         </div>
-        <form onSubmit={onSubmit} className="lg:col-span-5">
+        <form onSubmit={onSubmit} className="min-w-0 lg:col-span-5">
           <label
             className="editorial-meta block text-muted-foreground"
             htmlFor="inline-newsletter-email"
@@ -85,11 +85,12 @@ export default function InlineNewsletterCard() {
               id="inline-newsletter-email"
               type="email"
               required
+              autoComplete="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               disabled={status === "loading" || status === "success"}
-              className="flex-1 appearance-none bg-transparent px-0 pb-2 text-lg text-foreground placeholder:text-muted-foreground/60 !outline-none !ring-0 !shadow-none focus:!outline-none focus:!ring-0 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:![outline-offset:0] [&:invalid]:!shadow-none disabled:opacity-60"
+              className="w-0 min-w-0 flex-1 appearance-none bg-transparent px-0 pb-2 text-lg text-foreground placeholder:text-muted-foreground/60 !outline-none !ring-0 !shadow-none focus:!outline-none focus:!ring-0 focus-visible:!outline-none focus-visible:!ring-0 focus-visible:![outline-offset:0] [&:invalid]:!shadow-none disabled:opacity-60"
               suppressHydrationWarning
             />
             <button

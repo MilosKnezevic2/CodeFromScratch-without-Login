@@ -77,7 +77,7 @@ export default function Navbar() {
         {/* Mobile hamburger */}
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="flex h-9 w-9 items-center justify-center rounded-lg text-muted hover:bg-surface md:hidden"
+          className="flex h-11 w-11 items-center justify-center rounded-lg text-muted hover:bg-surface md:hidden"
           aria-label="Toggle menu"
         >
           {mobileOpen ? (

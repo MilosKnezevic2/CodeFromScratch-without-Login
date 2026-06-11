@@ -99,7 +99,7 @@ export default function ContactPage() {
         ) : (
           <div className="animate-fade-up -mt-8 grid gap-8 lg:grid-cols-5">
             {/* Contact form — takes 3 cols */}
-            <div className="lg:col-span-3">
+            <div className="min-w-0 lg:col-span-3">
               <div className="rounded-2xl border border-border bg-surface p-6 sm:p-8" style={{ boxShadow: "0 0 60px rgba(45, 212, 191, 0.04)" }}>
                 <h2 className="text-xl font-bold text-foreground">Send a Message</h2>
                 <p className="mt-1 text-sm text-muted-foreground">Fill out the form below and we&apos;ll respond as soon as possible.</p>
@@ -111,6 +111,8 @@ export default function ContactPage() {
                       Website
                       <input
                         type="text"
+                        tabIndex={-1}
+                        autoComplete="off"
                         value={honeypot}
                         onChange={(e) => setHoneypot(e.target.value)}
                       />
@@ -132,11 +134,12 @@ export default function ContactPage() {
                         <input
                           id="name"
                           type="text"
+                          autoComplete="name"
                           value={name}
                           onChange={(e) => setName(e.target.value)}
                           required
                           placeholder="Your name"
-                          className="w-full rounded-xl border border-border bg-surface-2/50 py-3 pl-10 pr-4 text-sm text-foreground placeholder-muted-foreground transition focus:border-accent focus:bg-surface-2 focus:ring-1 focus:ring-accent focus:outline-none"
+                          className="w-full rounded-xl border border-border bg-surface-2/50 py-3 pl-10 pr-4 text-base text-foreground placeholder-muted-foreground transition focus:border-accent focus:bg-surface-2 focus:ring-1 focus:ring-accent focus:outline-none"
                         />
                       </div>
                     </div>
@@ -153,11 +156,12 @@ export default function ContactPage() {
                         <input
                           id="email"
                           type="email"
+                          autoComplete="email"
                           value={email}
                           onChange={(e) => setEmail(e.target.value)}
                           required
                           placeholder="you@example.com"
-                          className="w-full rounded-xl border border-border bg-surface-2/50 py-3 pl-10 pr-4 text-sm text-foreground placeholder-muted-foreground transition focus:border-accent focus:bg-surface-2 focus:ring-1 focus:ring-accent focus:outline-none"
+                          className="w-full rounded-xl border border-border bg-surface-2/50 py-3 pl-10 pr-4 text-base text-foreground placeholder-muted-foreground transition focus:border-accent focus:bg-surface-2 focus:ring-1 focus:ring-accent focus:outline-none"
                         />
                       </div>
                     </div>
@@ -180,7 +184,7 @@ export default function ContactPage() {
                         value={subject}
                         onChange={(e) => setSubject(e.target.value)}
                         placeholder="What's this about?"
-                        className="w-full rounded-xl border border-border bg-surface-2/50 py-3 pl-10 pr-4 text-sm text-foreground placeholder-muted-foreground transition focus:border-accent focus:bg-surface-2 focus:ring-1 focus:ring-accent focus:outline-none"
+                        className="w-full rounded-xl border border-border bg-surface-2/50 py-3 pl-10 pr-4 text-base text-foreground placeholder-muted-foreground transition focus:border-accent focus:bg-surface-2 focus:ring-1 focus:ring-accent focus:outline-none"
                       />
                     </div>
                   </div>
@@ -237,7 +241,7 @@ export default function ContactPage() {
             </div>
 
             {/* Sidebar — takes 2 cols */}
-            <div className="space-y-6 lg:col-span-2">
+            <div className="min-w-0 space-y-6 lg:col-span-2">
               {/* Contact info cards */}
               <div className="rounded-2xl border border-border bg-surface p-6" style={{ boxShadow: "0 0 60px rgba(45, 212, 191, 0.04)" }}>
                 <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">Contact Info</h3>

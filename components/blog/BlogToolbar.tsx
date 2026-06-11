@@ -105,7 +105,7 @@ export default function BlogToolbar({
                 <Link
                   href={href}
                   aria-current={active ? "page" : undefined}
-                  className={`text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
+                  className={`-my-2.5 inline-flex min-h-11 items-center py-2.5 text-xs font-bold uppercase tracking-[0.18em] transition-colors ${
                     active
                       ? "text-foreground"
                       : "text-muted-foreground hover:text-foreground"

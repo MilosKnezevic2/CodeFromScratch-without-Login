@@ -73,6 +73,14 @@
   --theme-border: rgba(148, 163, 184, 0.35);
 }
 
+/* Hard stop for horizontal pan on touch devices: even if some element
+   regresses past the viewport, the page itself can never scroll or be
+   swiped sideways. clip (not hidden) so no scroll container is created. */
+html,
+body {
+  overflow-x: clip;
+}
+
 body {
   font-family: var(--font-sans);
   background-color: var(--color-background);

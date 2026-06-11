@@ -49,7 +49,7 @@ export default function HomeHero({
     <section className="border-b border-border/60 bg-background px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl">
         {/* Edition rule line */}
-        <div className="flex items-center gap-3 border-b border-border/60 py-4">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-b border-border/60 py-4">
           <span className="editorial-meta whitespace-nowrap">{issueLine()}</span>
           <span className="editorial-meta ml-auto hidden whitespace-nowrap sm:inline">
             CodeFromScratch / The Journal

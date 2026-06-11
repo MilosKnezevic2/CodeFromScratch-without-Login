@@ -42,7 +42,7 @@ export default function CategoryRail({
   const allActive = !activeCategory;
 
   const itemClass = (active: boolean) =>
-    `group inline-flex items-baseline gap-1.5 whitespace-nowrap border-b-2 pb-1 text-[13px] font-bold uppercase tracking-[0.16em] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
+    `group inline-flex min-h-11 items-center gap-1.5 whitespace-nowrap border-b-2 pb-1 text-[13px] font-bold uppercase tracking-[0.16em] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent ${
       active
         ? "border-foreground text-foreground"
         : "border-transparent text-muted-foreground hover:text-foreground"
