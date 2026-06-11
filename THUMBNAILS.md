@@ -68,6 +68,23 @@ for a code article.
 
 ---
 
+## Diagram covers (the flagship treatment)
+
+The three pillar articles use bespoke *diagram* covers that teach at a
+glance instead of repeating the title — the typed-contract stack chain,
+the production checklist, the deploy pipeline. They live in
+`app/api/cover-diagram/route.tsx` and render at:
+
+```
+https://codefromscratch.org/api/cover-diagram?key=fullstack|production|ship
+```
+
+Attach one the same way as any cover (upload in Studio, or adapt
+`set-cover.mjs`). This is the "hybrid" model: branded text covers for the
+many cluster articles (zero effort, consistent), hand-made diagram covers
+for the few flagship pieces that carry the brand. To add a diagram cover
+for a new flagship, add a `key` + its diagram to that route.
+
 ## Changing the cover designs themselves
 
 The 4 layouts, colours, and fonts live in `app/api/og/route.tsx`. Edit
