@@ -9,13 +9,20 @@ export const runtime = "edge";
 // category, same colour, forever.
 const ACCENTS: Record<string, [string, string]> = {
   "web fundamentals": ["#2dd4bf", "#22d3ee"], // teal → cyan (brand default)
+  "web development": ["#2dd4bf", "#22d3ee"],
   "javascript frameworks": ["#22d3ee", "#60a5fa"], // cyan → blue
   "backend technologies": ["#8b5cf6", "#6366f1"], // violet → indigo
+  databases: ["#8b5cf6", "#a78bfa"], // violet
   "apis & integrations": ["#f59e0b", "#fbbf24"], // amber
-  "css & design": ["#fb7185", "#f472b6"], // rose → pink
-  "tooling & workflow": ["#34d399", "#2dd4bf"], // emerald → teal
-  "web development": ["#2dd4bf", "#22d3ee"],
-  "testing & quality": ["#34d399", "#a3e635"], // emerald → lime
+  security: ["#fb7185", "#f43f5e"], // rose
+  "architecture & patterns": ["#60a5fa", "#818cf8"], // blue → indigo
+  "devops & infrastructure": ["#34d399", "#2dd4bf"], // emerald → teal
+  "cloud & hosting": ["#38bdf8", "#22d3ee"], // sky → cyan
+  "css ecosystem": ["#fb7185", "#f472b6"], // rose → pink
+  "css & design": ["#fb7185", "#f472b6"],
+  testing: ["#34d399", "#a3e635"], // emerald → lime
+  "testing & quality": ["#34d399", "#a3e635"],
+  "tooling & workflow": ["#34d399", "#2dd4bf"],
 };
 
 function hexToRgba(hex: string, alpha: number): string {
