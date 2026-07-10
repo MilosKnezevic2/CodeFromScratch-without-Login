@@ -84,9 +84,11 @@ production-grade code, end-to-end journeys across the modern web stack.
 - **`styled-components` is a required peer dependency** of
   `@sanity/visual-editing` — it is intentionally in `package.json`.
   Do not remove it again (PR #8 removed it; the build broke in PR #11).
-- **Middleware runs on Edge** — use Web Crypto (`crypto.subtle`), not
-  `node:crypto`, for anything middleware-reachable. `lib/admin-session.ts`
-  is the reference implementation (HMAC-SHA256 signed admin sessions).
+- **The edge request hook lives in `proxy.ts`** (Next 16 renamed the
+  `middleware` convention to `proxy`) and runs on Edge — use Web Crypto
+  (`crypto.subtle`), not `node:crypto`, for anything it can reach.
+  `lib/admin-session.ts` is the reference implementation (HMAC-SHA256
+  signed admin sessions).
 - **Database may be asleep.** Never let a public page, the sitemap, or
   the build fail because Postgres is unreachable. Admin/dashboard are
   `force-dynamic`; public ebook routes degrade gracefully.

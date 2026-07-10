@@ -1,11 +1,17 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyAdminSession } from "@/lib/admin-session";
+import { isTrustedOrigin } from "@/lib/csrf";
 
-export async function middleware(request: NextRequest) {
+// Next 16 name for the edge request hook (the `middleware` file convention
+// is deprecated). Runs on Edge — Web Crypto only, no node:crypto.
+export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // CSRF protection: verify Origin on mutating requests to API routes
+  // CSRF protection: verify Origin on mutating requests to API routes.
+  // Trusts the deployment's own origin (previews included) plus the
+  // configured public site URL; requests without an Origin header pass —
+  // they are not browser form/fetch submissions.
   if (
     request.method !== "GET" &&
     request.method !== "HEAD" &&
@@ -13,8 +19,7 @@ export async function middleware(request: NextRequest) {
     !pathname.startsWith("/api/stripe/webhooks")
   ) {
     const origin = request.headers.get("origin");
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-    if (origin && siteUrl && origin !== siteUrl) {
+    if (!isTrustedOrigin(origin, request.url, process.env.NEXT_PUBLIC_SITE_URL)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
   }
