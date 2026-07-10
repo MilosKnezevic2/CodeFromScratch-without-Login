@@ -31,11 +31,14 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://giscus.app",
+              // plausible.io is allowlisted so the optional cookieless
+              // analytics script isn't silently CSP-blocked the day
+              // NEXT_PUBLIC_PLAUSIBLE_DOMAIN gets set.
+              "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://giscus.app https://plausible.io",
               "style-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https://cdn.sanity.io https://lh3.googleusercontent.com https://avatars.githubusercontent.com",
               "font-src 'self'",
-              "connect-src 'self' https://*.sanity.io https://api.stripe.com https://giscus.app https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io",
+              "connect-src 'self' https://*.sanity.io https://api.stripe.com https://giscus.app https://plausible.io https://*.ingest.sentry.io https://*.ingest.us.sentry.io https://*.ingest.de.sentry.io",
               "frame-src https://giscus.app https://js.stripe.com https://www.google.com",
               "frame-ancestors 'none'",
               "base-uri 'self'",

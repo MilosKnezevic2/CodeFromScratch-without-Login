@@ -42,6 +42,8 @@ Supabase dashboard → project → if paused, **Restore/Resume**. Then locally:
    - `CFS_ADMIN_USERNAME`, `CFS_ADMIN_PASSWORD` (strong, fresh),
      `CFS_ADMIN_MFA_SECRET` (recommended)
    - `CRON_SECRET` — any long random string
+   - `SANITY_REVALIDATE_SECRET` — any long random string
+     (`openssl rand -hex 32`); §6a wires the same value into Sanity
    - Skip for now: Stripe keys (commerce hidden), OAuth IDs (login
      hidden), Sentry (optional post-launch)
 4. Deploy. Verify the `*.vercel.app` preview URL renders /, /blog, a post.
@@ -63,6 +65,16 @@ confirmations land in spam.
 
 sanity.io → project → API → CORS origins → add `https://<your-domain>`
 (with credentials) so the Studio at `/portal-cfs-admin/studio` works.
+
+## 6a. Sanity publish webhook (operator, 5 min)
+
+sanity.io → project → API → Webhooks → create:
+- URL: `https://<your-domain>/api/revalidate`, method POST, dataset
+  `production`, trigger on create/update/delete.
+- Projection: `{ _type, "slug": slug }`
+- HTTP header: `x-revalidate-secret: <same value as SANITY_REVALIDATE_SECRET>`
+  — the endpoint rejects calls without it, so publishing won't refresh the
+  site cache until this header is set.
 
 ## 7. Post-deploy smoke test (AI-assisted, 15 min)
 

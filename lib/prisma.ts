@@ -7,7 +7,15 @@ const globalForPrisma = globalThis as unknown as {
 };
 
 function createPrismaClient() {
-  const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+  // Fail fast when Postgres is paused or unreachable (free-tier Supabase
+  // auto-pauses): without these bounds a render that opportunistically reads
+  // stats would hang on the OS TCP timeout instead of hitting its catch
+  // block within a few seconds.
+  const pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    connectionTimeoutMillis: 3_000,
+    query_timeout: 5_000,
+  });
   const adapter = new PrismaPg(pool);
   return new PrismaClient({ adapter });
 }

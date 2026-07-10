@@ -3,20 +3,26 @@ import { NextRequest } from "next/server";
 
 export const runtime = "edge";
 
-// Brand display + mono, loaded as binaries for edge ImageResponse (same
-// source the wordmark route uses). Fraunces is the masthead face; Geist
-// Mono carries the category kicker and editor-chrome variant.
-const FRAUNCES_BOLD =
-  "https://cdn.jsdelivr.net/npm/@fontsource/fraunces@5/files/fraunces-latin-700-normal.woff";
-const FRAUNCES_ITALIC =
-  "https://cdn.jsdelivr.net/npm/@fontsource/fraunces@5/files/fraunces-latin-400-italic.woff";
-const GEIST_MONO =
-  "https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5/files/geist-mono-latin-500-normal.woff";
+// Brand display + mono, bundled with the route (extracted from the same
+// @fontsource packages the site uses). Fraunces is the masthead face;
+// Geist Mono carries the category kicker and editor-chrome variant.
+// Bundled assets replace the old jsdelivr fetch — a third-party CDN outage
+// must not take every social-share image down with it.
+const FRAUNCES_BOLD = new URL("./fonts/fraunces-latin-700-normal.woff", import.meta.url);
+const FRAUNCES_ITALIC = new URL("./fonts/fraunces-latin-400-italic.woff", import.meta.url);
+const GEIST_MONO = new URL("./fonts/geist-mono-latin-500-normal.woff", import.meta.url);
 
-async function loadFont(url: string): Promise<ArrayBuffer> {
+// Loaded once per edge instance, then reused.
+const fontCache = new Map<string, ArrayBuffer>();
+
+async function loadFont(url: URL): Promise<ArrayBuffer> {
+  const cached = fontCache.get(url.href);
+  if (cached) return cached;
   const res = await fetch(url);
   if (!res.ok) throw new Error(`font ${url} → ${res.status}`);
-  return res.arrayBuffer();
+  const data = await res.arrayBuffer();
+  fontCache.set(url.href, data);
+  return data;
 }
 
 // Per-category accent pair, deterministic, from the brand family.
@@ -92,11 +98,18 @@ export async function GET(req: NextRequest) {
   const [accent, accent2] = pickAccent(category);
   const kicker = (category || "Journal").toUpperCase();
 
-  const fonts = [
-    { name: "Fraunces", data: await loadFont(FRAUNCES_BOLD), weight: 700 as const, style: "normal" as const },
-    { name: "Fraunces", data: await loadFont(FRAUNCES_ITALIC), weight: 400 as const, style: "italic" as const },
-    { name: "Geist Mono", data: await loadFont(GEIST_MONO), weight: 500 as const, style: "normal" as const },
-  ];
+  let fonts: { name: string; data: ArrayBuffer; weight: 400 | 500 | 700; style: "normal" | "italic" }[];
+  try {
+    fonts = [
+      { name: "Fraunces", data: await loadFont(FRAUNCES_BOLD), weight: 700, style: "normal" },
+      { name: "Fraunces", data: await loadFont(FRAUNCES_ITALIC), weight: 400, style: "italic" },
+      { name: "Geist Mono", data: await loadFont(GEIST_MONO), weight: 500, style: "normal" },
+    ];
+  } catch {
+    // Font CDN unreachable — fall back to the static brand cover so link
+    // previews degrade to a real image instead of a 500 with no image.
+    return Response.redirect(new URL("/brand/og-default.png", req.nextUrl.origin), 302);
+  }
   const size = { width: 1200, height: 630 } as const;
 
   // ── Variant A — Editorial Dark (masthead) ────────────────────────────

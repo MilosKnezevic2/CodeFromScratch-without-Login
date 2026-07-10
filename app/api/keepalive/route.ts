@@ -7,9 +7,10 @@ export const dynamic = "force-dynamic";
  * Database keepalive, hit by a daily Vercel cron (see vercel.json).
  *
  * The free-tier Postgres pauses after 7 days without activity. Public pages
- * never touch the database, so a quiet week would otherwise put it to sleep
- * and silently break the two public write paths that do need it: newsletter
- * sign-ups and the contact form. One trivial query a day keeps it awake.
+ * only read Postgres opportunistically (home/blog stats degrade to zeros
+ * when it is down), so a quiet week would otherwise put it to sleep and
+ * silently break the paths that do need it: newsletter sign-ups, the
+ * contact form, and those stats. One trivial query a day keeps it awake.
  *
  * When CRON_SECRET is set, Vercel sends it as a bearer token and we reject
  * everything else; without it the route is open but harmless (no data out,
