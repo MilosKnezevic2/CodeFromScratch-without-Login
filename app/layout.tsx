@@ -31,7 +31,7 @@ export const metadata: Metadata = {
     template: "%s | CodeFromScratch",
   },
   description: "A journal for serious web developers — tutorials, guides, and deep dives on modern web development, with production-grade code you can read in your own repo.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"),
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://codefromscratch.org"),
   openGraph: {
     siteName: "CodeFromScratch",
     type: "website",

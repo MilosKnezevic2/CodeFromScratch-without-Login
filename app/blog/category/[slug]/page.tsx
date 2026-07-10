@@ -2,26 +2,42 @@ import { getPostsByCategory, getCategories } from "@/lib/sanity/queries";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { urlFor } from "@/lib/sanity/image";
 import FadeUp from "@/components/animations/FadeUp";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const categories = await getCategories();
+  // A metadata-phase throw bypasses error.tsx — swallow it so the page
+  // render throws instead and readers get the branded error boundary.
+  let categories: Awaited<ReturnType<typeof getCategories>>;
+  try {
+    categories = await getCategories();
+  } catch {
+    return { title: "Category temporarily unavailable" };
+  }
   const category = categories.find((c) => c.slug.current === slug);
+  if (!category) return { title: "Category not found" };
   return {
-    title: `${category?.title || slug} | CodeFromScratch`,
-    description: category?.description || `Browse all ${category?.title || slug} articles.`,
+    // Bare title — the root layout template appends "| CodeFromScratch".
+    title: category.title,
+    description: category.description || `Browse all ${category.title} articles.`,
+    alternates: { canonical: `${SITE_URL}/blog/category/${slug}` },
   };
 }
 
 export default async function CategoryPage({ params }: PageProps) {
   const { slug } = await params;
-  const { posts } = await getPostsByCategory(slug);
   const categories = await getCategories();
   const category = categories.find((c) => c.slug.current === slug);
+  // A real 404 for made-up slugs — an empty "0 posts" page with HTTP 200
+  // reads as a soft-404 and invites unlimited thin URLs into the index.
+  if (!category) notFound();
+  const { posts } = await getPostsByCategory(slug);
 
   return (
     <div>

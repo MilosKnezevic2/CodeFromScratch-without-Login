@@ -1,6 +1,6 @@
 import { client } from "@/lib/sanity/client";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://codefromscratch.org";
 
 type FeedPost = {
   _id: string;
@@ -14,11 +14,21 @@ type FeedPost = {
 };
 
 export async function GET() {
-  const posts = await client.fetch<FeedPost[]>(
-    `*[_type == "post" && status == "published"] | order(publishedAt desc) [0...50] {
-      _id, title, slug, excerpt, publishedAt, _updatedAt, author->{ name }, categories[]->{ title }
-    }`,
-  );
+  let posts: FeedPost[];
+  try {
+    posts = await client.fetch<FeedPost[]>(
+      `*[_type == "post" && status == "published"] | order(publishedAt desc) [0...50] {
+        _id, title, slug, excerpt, publishedAt, _updatedAt, author->{ name }, categories[]->{ title }
+      }`,
+    );
+  } catch {
+    // Sanity unreachable — a 503 tells feed readers to keep their cached
+    // items and retry, where an empty 200 feed would wipe them.
+    return new Response("Feed temporarily unavailable", {
+      status: 503,
+      headers: { "Retry-After": "300" },
+    });
+  }
 
   const feed = {
     version: "https://jsonfeed.org/version/1.1",

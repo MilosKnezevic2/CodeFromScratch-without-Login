@@ -19,6 +19,7 @@ export interface SanityPost {
   seoTitle?: string;
   seoDescription?: string;
   publishedAt: string;
+  _updatedAt?: string;
   readingTime?: number;
 }
 
@@ -54,6 +55,7 @@ const postFields = `
   seoTitle,
   seoDescription,
   publishedAt,
+  _updatedAt,
   readingTime
 `;
 

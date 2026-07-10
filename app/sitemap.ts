@@ -1,8 +1,12 @@
 import type { MetadataRoute } from "next";
-import { getAllPostSlugs } from "@/lib/sanity/queries";
+import {
+  getAllPostSlugs,
+  getCategoriesWithCounts,
+  getTagsWithCategory,
+} from "@/lib/sanity/queries";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://codefromscratch.org";
 
   // Content-first launch: the sitemap advertises only the public journal
   // surface. Ebooks / courses / pricing are hidden from navigation until the
@@ -11,9 +15,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/`, changeFrequency: "weekly", priority: 1.0 },
     { url: `${baseUrl}/blog`, changeFrequency: "daily", priority: 0.9 },
     { url: `${baseUrl}/contact`, changeFrequency: "yearly", priority: 0.5 },
+    { url: `${baseUrl}/privacy`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${baseUrl}/terms`, changeFrequency: "yearly", priority: 0.2 },
+    { url: `${baseUrl}/impressum`, changeFrequency: "yearly", priority: 0.2 },
   ];
 
-  // Sanity blog posts
+  // Sanity-backed URLs — each group degrades to empty when Sanity is
+  // unreachable so the sitemap itself never 500s.
   let postPages: MetadataRoute.Sitemap = [];
   try {
     const slugs = await getAllPostSlugs();
@@ -27,5 +35,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Sanity may not be configured yet
   }
 
-  return [...staticPages, ...postPages];
+  let categoryPages: MetadataRoute.Sitemap = [];
+  try {
+    const categories = await getCategoriesWithCounts();
+    categoryPages = categories
+      .filter((c) => c.postCount > 0)
+      .map((c) => ({
+        url: `${baseUrl}/blog/category/${c.slug.current}`,
+        changeFrequency: "weekly" as const,
+        priority: 0.6,
+      }));
+  } catch {
+    // Sanity may not be configured yet
+  }
+
+  let tagPages: MetadataRoute.Sitemap = [];
+  try {
+    const tags = await getTagsWithCategory();
+    tagPages = tags.map((t) => ({
+      url: `${baseUrl}/blog/tag/${t.slug.current}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.4,
+    }));
+  } catch {
+    // Sanity may not be configured yet
+  }
+
+  return [...staticPages, ...postPages, ...categoryPages, ...tagPages];
 }

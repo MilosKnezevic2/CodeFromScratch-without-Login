@@ -3,6 +3,7 @@ import Link from "next/link";
 import {
   getPostsAdvanced,
 } from "@/lib/sanity/queries";
+import { buildSafe } from "@/lib/sanity/build-safe";
 import { getEditorPicks } from "@/lib/sanity/discovery";
 import { getHomeStats } from "@/lib/sanity/home-stats";
 import HomeHero from "@/components/home/HomeHero";
@@ -16,7 +17,9 @@ const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
 
 export const metadata: Metadata = {
-  title: "CodeFromScratch — A journal for serious web developers",
+  // `absolute` opts out of the root "%s | CodeFromScratch" template — the
+  // brand is already in this title, the template would double it.
+  title: { absolute: "CodeFromScratch — A journal for serious web developers" },
   description:
     "Tutorials, guides, and deep dives on modern web development. Thoughtful, carefully researched pieces — free, with code you can read in your own repo.",
   alternates: { canonical: SITE_URL },
@@ -38,8 +41,14 @@ export default async function HomePage() {
    *  - "Now" block (signals the journal is alive).
    * Everything else points at /blog.
    */
+  // getHomeStats/getEditorPicks degrade internally; the posts read is
+  // build-safe so a Sanity outage during deploy can't fail the build.
   const [latestResult, stats, editorPicks] = await Promise.all([
-    getPostsAdvanced({ page: 1, limit: 1, sort: "newest" }),
+    buildSafe(getPostsAdvanced({ page: 1, limit: 1, sort: "newest" }), {
+      posts: [],
+      total: 0,
+      pages: 0,
+    }),
     getHomeStats(),
     getEditorPicks(5),
   ]);

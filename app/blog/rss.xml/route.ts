@@ -1,6 +1,6 @@
 import { client } from "@/lib/sanity/client";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://codefromscratch.org";
 
 /** Escape XML special characters in attribute / text contexts. */
 function xmlEscape(s: string): string {
@@ -19,19 +19,27 @@ function cdataSafe(s: string): string {
 }
 
 export async function GET() {
-  const posts = await client.fetch<
-    {
-      title: string;
-      slug: { current: string };
-      excerpt?: string;
-      publishedAt: string;
-      categories?: { title: string }[];
-    }[]
-  >(
-    `*[_type == "post" && status == "published"] | order(publishedAt desc) [0...100] {
-      title, slug, excerpt, publishedAt, categories[]->{ title }
-    }`,
-  );
+  let posts: {
+    title: string;
+    slug: { current: string };
+    excerpt?: string;
+    publishedAt: string;
+    categories?: { title: string }[];
+  }[];
+  try {
+    posts = await client.fetch(
+      `*[_type == "post" && status == "published"] | order(publishedAt desc) [0...100] {
+        title, slug, excerpt, publishedAt, categories[]->{ title }
+      }`,
+    );
+  } catch {
+    // Sanity unreachable — a 503 tells feed readers to keep their cached
+    // items and retry, where an empty 200 feed would wipe them.
+    return new Response("Feed temporarily unavailable", {
+      status: 503,
+      headers: { "Retry-After": "300" },
+    });
+  }
 
   const lastBuildDate =
     posts.length > 0

@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
+
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "How CodeFromScratch collects, uses, and protects your personal data.",
+  alternates: { canonical: `${SITE_URL}/privacy` },
 };
 
 export default function PrivacyPage() {

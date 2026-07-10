@@ -40,7 +40,7 @@ import NewsletterCTA from "@/components/newsletter/NewsletterCTA";
 // public post render does not touch those code paths. Re-add when the
 // backend is ready.
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://codefromscratch.org";
 
 type PageProps = {
   params: Promise<{ slug: string }>;
@@ -49,15 +49,30 @@ type PageProps = {
 export const revalidate = 3600;
 
 export async function generateStaticParams() {
-  const slugs = await getAllPostSlugs();
-  return slugs.map((s) => ({ slug: s.slug.current }));
+  try {
+    const slugs = await getAllPostSlugs();
+    return slugs.map((s) => ({ slug: s.slug.current }));
+  } catch {
+    // Sanity unreachable at build time must not fail the whole deploy —
+    // with no prebuilt params every post renders on first request instead
+    // (dynamicParams), and ISR fills the cache once Sanity is back.
+    return [];
+  }
 }
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+  // A metadata-phase throw bypasses error.tsx and serves a bare-text 500;
+  // swallow it here so the page render (same cached read) throws instead
+  // and readers get the branded error boundary.
+  let post: Awaited<ReturnType<typeof getPostBySlug>>;
+  try {
+    post = await getPostBySlug(slug);
+  } catch {
+    return { title: "Article temporarily unavailable" };
+  }
 
   if (!post) return { title: "Post not found" };
 
@@ -75,6 +90,7 @@ export async function generateMetadata({
       description: post.seoDescription || post.excerpt,
       type: "article",
       publishedTime: post.publishedAt,
+      modifiedTime: post._updatedAt || post.publishedAt,
       authors: post.author ? [post.author.name] : undefined,
       images: [{ url: ogImage, width: 1200, height: 630 }],
     },
@@ -85,6 +101,9 @@ export async function generateMetadata({
       images: [ogImage],
     },
     alternates: {
+      // Articles are the primary SEO surface and get cross-posted (dev.to
+      // etc.) — the canonical is what keeps this domain the original.
+      canonical: `${SITE_URL}/blog/${slug}`,
       types: {
         "application/rss+xml": "/blog/rss.xml",
       },
@@ -138,6 +157,7 @@ export default async function PostPage({ params }: PageProps) {
         slug={slug}
         excerpt={post.excerpt}
         publishedAt={post.publishedAt}
+        updatedAt={post._updatedAt}
         authorName={post.author?.name}
         imageUrl={featuredImageUrl}
       />
@@ -149,7 +169,9 @@ export default async function PostPage({ params }: PageProps) {
             ? [
                 {
                   name: post.categories[0].title,
-                  url: `${SITE_URL}/blog?category=${post.categories[0].slug.current}`,
+                  // Must match the visible category link below — the path
+                  // URL is the canonical home of a category listing.
+                  url: `${SITE_URL}/blog/category/${post.categories[0].slug.current}`,
                 },
               ]
             : []),

@@ -1,22 +1,43 @@
-import { getPostsByTag } from "@/lib/sanity/queries";
+import { getPostsByTag, getTagsWithCategory } from "@/lib/sanity/queries";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
+import { notFound } from "next/navigation";
 import { urlFor } from "@/lib/sanity/image";
 import FadeUp from "@/components/animations/FadeUp";
+
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
 
 type PageProps = { params: Promise<{ slug: string }> };
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
+  // A metadata-phase throw bypasses error.tsx — swallow it so the page
+  // render throws instead and readers get the branded error boundary.
+  let tags: Awaited<ReturnType<typeof getTagsWithCategory>>;
+  try {
+    tags = await getTagsWithCategory();
+  } catch {
+    return { title: "Tag temporarily unavailable" };
+  }
+  const tag = tags.find((t) => t.slug.current === slug);
+  if (!tag) return { title: "Tag not found" };
   return {
-    title: `#${slug} | CodeFromScratch`,
-    description: `Browse all articles tagged with #${slug}.`,
+    // Bare title — the root layout template appends "| CodeFromScratch";
+    // the tag's real title, not the raw slug.
+    title: `#${tag.title}`,
+    description: `Browse all articles tagged with #${tag.title}.`,
+    alternates: { canonical: `${SITE_URL}/blog/tag/${slug}` },
   };
 }
 
 export default async function TagPage({ params }: PageProps) {
   const { slug } = await params;
+  const tags = await getTagsWithCategory();
+  const tag = tags.find((t) => t.slug.current === slug);
+  // A real 404 for made-up slugs — an empty "0 posts" page with HTTP 200
+  // reads as a soft-404 and invites unlimited thin URLs into the index.
+  if (!tag) notFound();
   const { posts } = await getPostsByTag(slug);
 
   return (
@@ -43,7 +64,7 @@ export default async function TagPage({ params }: PageProps) {
                 </svg>
               </div>
               <h1 className="text-3xl font-extrabold tracking-tight text-foreground sm:text-4xl">
-                <span className="gradient-text">#</span>{slug.replace(/-/g, " ")}
+                <span className="gradient-text">#</span>{tag.title}
               </h1>
               <span className="rounded-full bg-accent/10 px-3 py-1 text-sm font-semibold text-accent">
                 {posts.length} {posts.length === 1 ? "post" : "posts"}

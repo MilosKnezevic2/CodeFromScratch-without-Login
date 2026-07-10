@@ -6,6 +6,7 @@ import {
   getCategoriesWithCounts,
   getTagsWithCategory,
 } from "@/lib/sanity/queries";
+import { buildSafe } from "@/lib/sanity/build-safe";
 import { getBlogHeroStats } from "@/lib/sanity/hero-stats";
 import { getEditorPicks } from "@/lib/sanity/discovery";
 import { urlFor } from "@/lib/sanity/image";
@@ -36,19 +37,36 @@ const PAGE_DESCRIPTION =
 
 export const revalidate = 60;
 
-export async function generateMetadata({
-  searchParams,
-}: {
-  searchParams: Promise<{
-    page?: string;
-    category?: string;
-    tag?: string;
-    q?: string;
-    sort?: string;
-  }>;
-}): Promise<Metadata> {
-  const params = await searchParams;
+type BlogSearchParams = {
+  page?: string;
+  category?: string;
+  tag?: string;
+  q?: string;
+  sort?: string;
+};
+
+/**
+ * One canonical home per listing. A category or tag filter on the index
+ * shows the same content as its dedicated /blog/category/* or /blog/tag/*
+ * page, so those query-URL variants canonicalise to the path URL instead of
+ * competing with it. Search results, re-sorts, and combined filters are
+ * infinite thin variations — they stay out of the index entirely.
+ */
+function resolveBlogIndexSeo(params: BlogSearchParams): {
+  canonical: string;
+  noindex: boolean;
+} {
   const page = Number(params.page) || 1;
+  const noindex =
+    !!params.q || params.sort === "oldest" || !!(params.category && params.tag);
+
+  if (!noindex && params.category) {
+    return { canonical: `${SITE_URL}/blog/category/${params.category}`, noindex };
+  }
+  if (!noindex && params.tag) {
+    return { canonical: `${SITE_URL}/blog/tag/${params.tag}`, noindex };
+  }
+
   const canonicalParts: string[] = [];
   if (params.category) canonicalParts.push(`category=${params.category}`);
   if (params.tag) canonicalParts.push(`tag=${params.tag}`);
@@ -59,11 +77,22 @@ export async function generateMetadata({
     canonicalParts.length > 0
       ? `${SITE_URL}/blog?${canonicalParts.join("&")}`
       : `${SITE_URL}/blog`;
+  return { canonical, noindex };
+}
+
+export async function generateMetadata({
+  searchParams,
+}: {
+  searchParams: Promise<BlogSearchParams>;
+}): Promise<Metadata> {
+  const params = await searchParams;
+  const { canonical, noindex } = resolveBlogIndexSeo(params);
   return {
     // Root layout template appends "| CodeFromScratch" — pass the bare name
     // here or the brand doubles in the tab title.
     title: PAGE_TITLE,
     description: PAGE_DESCRIPTION,
+    ...(noindex && { robots: { index: false, follow: true } }),
     openGraph: {
       title: `${PAGE_TITLE} | CodeFromScratch`,
       description: PAGE_DESCRIPTION,
@@ -101,13 +130,7 @@ function getPageWindow(current: number, total: number): (number | "...")[] {
 export default async function BlogPage({
   searchParams,
 }: {
-  searchParams: Promise<{
-    page?: string;
-    category?: string;
-    tag?: string;
-    q?: string;
-    sort?: string;
-  }>;
+  searchParams: Promise<BlogSearchParams>;
 }) {
   const params = await searchParams;
   const page = Number(params.page) || 1;
@@ -122,18 +145,23 @@ export default async function BlogPage({
   const isHomeState =
     page === 1 && !activeCategory && !activeTag && !searchQuery;
 
+  // Build-safe reads: a Sanity outage during deploy ships an empty index
+  // that heals on the first ISR revalidation instead of failing the build.
   const [result, categories, allTags, heroStats, editorPicks] =
     await Promise.all([
-      getPostsAdvanced({
-        page,
-        limit: LIMIT,
-        sort: activeSort,
-        ...(activeCategory ? { category: activeCategory } : {}),
-        ...(activeTag ? { tag: activeTag } : {}),
-        ...(searchQuery ? { search: searchQuery } : {}),
-      }),
-      getCategoriesWithCounts(),
-      getTagsWithCategory(),
+      buildSafe(
+        getPostsAdvanced({
+          page,
+          limit: LIMIT,
+          sort: activeSort,
+          ...(activeCategory ? { category: activeCategory } : {}),
+          ...(activeTag ? { tag: activeTag } : {}),
+          ...(searchQuery ? { search: searchQuery } : {}),
+        }),
+        { posts: [], total: 0, pages: 0 },
+      ),
+      buildSafe(getCategoriesWithCounts(), []),
+      buildSafe(getTagsWithCategory(), []),
       getBlogHeroStats(),
       isHomeState ? getEditorPicks(3) : Promise.resolve([]),
     ]);
@@ -211,7 +239,8 @@ export default async function BlogPage({
   if (activeCatObj) {
     breadcrumbItems.push({
       label: activeCatObj.title,
-      href: activeTagObj ? `/blog?category=${activeCategory}` : undefined,
+      // Path URL — the canonical home of a category listing.
+      href: activeTagObj ? `/blog/category/${activeCategory}` : undefined,
     });
   }
   if (activeTagObj) {
@@ -226,7 +255,9 @@ export default async function BlogPage({
     url: `${SITE_URL}/blog/${p.slug.current}`,
   }));
 
-  const canonicalUrl = `${SITE_URL}${pageHref(page)}`;
+  // Same resolution as generateMetadata, so the JSON-LD @id matches the
+  // <link rel="canonical"> the page emits.
+  const { canonical: canonicalUrl } = resolveBlogIndexSeo(params);
   const collectionName =
     activeCatObj?.title ?? activeTagObj?.title ?? "Journal";
 

@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
+
 export const metadata: Metadata = {
   title: "Impressum",
   description: "Legal information about CodeFromScratch as required by Austrian law.",
+  alternates: { canonical: `${SITE_URL}/impressum` },
 };
 
 export default function ImpressumPage() {
