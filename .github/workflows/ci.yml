@@ -34,16 +34,17 @@ jobs:
         env:
           NEXTAUTH_SECRET: "ci-test-secret-0123456789abcdef0123456789abcdef"
 
-      # Non-blocking — build requires real Sanity dataset (static pages fetch
-      # content at build time). Until a CI-dedicated Sanity project + token
-      # are added as repository secrets, build signal is advisory only.
-      # Lint + type-check + test remain blocking.
+      # Blocking since the 2026-07 resilience work: the build no longer
+      # needs a reachable Sanity (build-safe reads degrade to fallbacks),
+      # a database, or a real Resend key — so a red build here is a real
+      # regression, not missing credentials. The project id is the public
+      # one already committed in sanity.cli.ts; published content needs no
+      # token to read.
       - name: Build
-        continue-on-error: true
         run: npm run build
         env:
           NEXT_PUBLIC_SITE_URL: "https://codefromscratch.org"
-          NEXT_PUBLIC_SANITY_PROJECT_ID: "placeholder"
+          NEXT_PUBLIC_SANITY_PROJECT_ID: "jkgmggst"
           NEXT_PUBLIC_SANITY_DATASET: "production"
           NEXTAUTH_SECRET: "ci-placeholder-0123456789abcdef0123456789abcdef"
           NEXTAUTH_URL: "https://codefromscratch.org"

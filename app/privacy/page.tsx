@@ -48,7 +48,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-bold text-foreground">4. Third-Party Services</h2>
           <ul className="mt-2 list-disc space-y-1 pl-5">
-            <li><strong>Stripe</strong> — Payment processing (<a href="https://stripe.com/privacy" className="text-accent hover:underline" target="_blank" rel="noopener noreferrer">Stripe Privacy Policy</a>)</li>
+            <li><strong>Stripe</strong> — Payment processing (<a href="https://stripe.com/privacy" className="text-accent underline underline-offset-2" target="_blank" rel="noopener noreferrer">Stripe Privacy Policy</a>)</li>
             <li><strong>Supabase</strong> — Database hosting (PostgreSQL)</li>
             <li><strong>Sanity</strong> — Content management system</li>
             <li><strong>Resend</strong> — Email delivery service</li>
@@ -82,7 +82,7 @@ export default function PrivacyPage() {
             <li>Lodge a complaint with a supervisory authority</li>
           </ul>
           <p className="mt-2">
-            To exercise any of these rights, contact us at <a href="mailto:office@codefromscratch.org" className="text-accent hover:underline">office@codefromscratch.org</a>.
+            To exercise any of these rights, contact us at <a href="mailto:office@codefromscratch.org" className="text-accent underline underline-offset-2">office@codefromscratch.org</a>.
           </p>
         </section>
 
@@ -110,7 +110,7 @@ export default function PrivacyPage() {
         <section>
           <h2 className="text-lg font-bold text-foreground">10. Contact</h2>
           <p className="mt-2">
-            For questions about this policy or your data, email <a href="mailto:office@codefromscratch.org" className="text-accent hover:underline">office@codefromscratch.org</a>.
+            For questions about this policy or your data, email <a href="mailto:office@codefromscratch.org" className="text-accent underline underline-offset-2">office@codefromscratch.org</a>.
           </p>
         </section>
       </div>

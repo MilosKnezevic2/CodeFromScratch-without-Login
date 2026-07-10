@@ -90,7 +90,7 @@ export default function TermsPage() {
         <section>
           <h2 className="text-lg font-bold text-foreground">9. Contact</h2>
           <p className="mt-2">
-            Questions? Email <a href="mailto:office@codefromscratch.org" className="text-accent hover:underline">office@codefromscratch.org</a>.
+            Questions? Email <a href="mailto:office@codefromscratch.org" className="text-accent underline underline-offset-2">office@codefromscratch.org</a>.
           </p>
         </section>
       </div>

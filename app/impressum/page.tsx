@@ -21,7 +21,7 @@ export default function ImpressumPage() {
             <p>Milos Knezevic</p>
             <p>Graz, Austria</p>
             <p>
-              Email: <a href="mailto:office@codefromscratch.org" className="text-accent hover:underline">office@codefromscratch.org</a>
+              Email: <a href="mailto:office@codefromscratch.org" className="text-accent underline underline-offset-2">office@codefromscratch.org</a>
             </p>
           </div>
         </section>

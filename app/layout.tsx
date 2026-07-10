@@ -1,15 +1,15 @@
 import type { Metadata, Viewport } from "next";
 import Script from "next/script";
 import { draftMode } from "next/headers";
-import "@fontsource-variable/plus-jakarta-sans";
-import "@fontsource-variable/inter";
-import "@fontsource-variable/jetbrains-mono";
-// Display + body type — Sen variable. Humanist sans by Kosal Sen
-// (Google Fonts), warm soft-terminal letterforms, distinctive a + g.
-// Premium feel with personality, less geometric than Space Grotesk.
-// Geist Mono kept for tabular meta lines.
+// Exactly three families ship: Sen (display + body — humanist sans by
+// Kosal Sen, warm soft-terminal letterforms, distinctive a + g), Geist
+// Mono (tabular meta lines, code chrome), and Fraunces (the wordmark in
+// Navbar/Footer — without this import the logo silently fell back to
+// Georgia). Jakarta/Inter/JetBrains were declared but could never render
+// (they sat below Sen/Geist in every stack), so they were removed.
 import "@fontsource-variable/sen";
 import "@fontsource-variable/geist-mono";
+import "@fontsource-variable/fraunces";
 import "./globals.css";
 import SessionProvider from "../components/auth/SessionProvider";
 import SavedPostsProvider from "../components/blog/SavedPostsProvider";

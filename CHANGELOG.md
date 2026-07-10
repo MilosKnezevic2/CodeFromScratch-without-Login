@@ -6,6 +6,31 @@ Project versioning: semver (applied once first production release ships).
 
 ## [Unreleased]
 
+### Fixed (2026-07 quality round: fonts, a11y, CI)
+- The wordmark in Navbar/Footer silently rendered in Georgia — its
+  'Fraunces Variable' face was referenced but never imported. Fraunces
+  now ships; three font families that could never render (Plus Jakarta
+  Sans, Inter, JetBrains Mono sat below Sen/Geist in every stack) were
+  removed from imports, CSS stacks, and package.json (with Space
+  Grotesk, also unused).
+- WCAG AA (axe, both themes, 8 public pages → 0 violations):
+  `text-accent-foreground` was an undefined token, so accent-filled CTA
+  buttons inherited white on light teal (1.86:1); it is now defined per
+  theme (7.77:1 dark). The light theme accent moves #0d9488 → #0f766e
+  (teal-700) so accent link text passes on the page background (3.32:1 →
+  4.86:1) and white button ink measures 5.47:1. In-text links on legal
+  pages gained permanent underlines (color was their only distinction).
+- RSS channel `<image>` now points at a PNG (spec-compliant; SVG is
+  ignored by readers), and five unused create-next-app template SVGs
+  were deleted from `public/`.
+
+### Changed (2026-07 quality round: fonts, a11y, CI)
+- CI build step is now blocking: since the resilience work the build
+  needs no reachable Sanity, database, or Resend key, so a red build is
+  a real regression (was advisory with a placeholder project id).
+- Contact API gained a regression suite (validation, honeypot, rate
+  limit, DB-down, email-failure degradation, entity-escaping fix).
+
 ### Security (2026-07 site audit remediation)
 - `/api/revalidate` now requires the `SANITY_REVALIDATE_SECRET` shared
   secret (constant-time compare; fails closed when unset). Previously any

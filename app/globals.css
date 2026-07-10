@@ -30,12 +30,16 @@
   --color-surface-3: var(--theme-surface-3);
   --color-accent: var(--theme-accent);
   --color-accent-2: var(--theme-accent-2);
+  /* Ink for text sitting ON an accent-filled surface (CTA buttons). This
+     token was referenced by text-accent-foreground but never defined, so
+     buttons inherited white on light teal — 1.86:1, a serious WCAG fail. */
+  --color-accent-foreground: var(--theme-accent-foreground);
   --color-muted: var(--theme-muted);
   --color-muted-foreground: var(--theme-muted-foreground);
   --color-border: var(--theme-border);
-  --font-heading: 'Sen Variable', 'Sen', 'Inter Variable', system-ui, sans-serif;
-  --font-sans: 'Sen Variable', 'Sen', 'Inter Variable', system-ui, sans-serif;
-  --font-mono: 'Geist Mono Variable', 'Geist Mono', 'JetBrains Mono Variable', ui-monospace, monospace;
+  --font-heading: 'Sen Variable', 'Sen', system-ui, sans-serif;
+  --font-sans: 'Sen Variable', 'Sen', system-ui, sans-serif;
+  --font-mono: 'Geist Mono Variable', 'Geist Mono', ui-monospace, monospace;
   /* Editorial body fallback — preserved for any legacy callers that
      still set fontFamily: var(--font-serif). The /blog redesign no
      longer uses serif by default; this is just a defensive token. */
@@ -52,6 +56,8 @@
   --theme-surface-3: #2a3a5c;
   --theme-accent: #2dd4bf;
   --theme-accent-2: #22d3ee;
+  /* Deep teal ink on the #2dd4bf accent: 7.77:1 (AA needs 4.5). */
+  --theme-accent-foreground: #042f2e;
   --theme-muted: #cbd5e1;
   /* WCAG AA: 6.12:1 on --theme-background, 4.86:1 on --theme-surface-2.
      The previous #64748b measured 3.63:1 - failed AA for body-size text. */
@@ -66,8 +72,12 @@
   --theme-surface: #ffffff;
   --theme-surface-2: #f0f4f8;
   --theme-surface-3: #e2e8f0;
-  --theme-accent: #0d9488;
+  /* teal-700, one step darker than the previous #0d9488: accent link text
+     on the page background moves from 3.32:1 (AA fail) to 4.86:1, and
+     white button ink on the accent fill measures 5.47:1. */
+  --theme-accent: #0f766e;
   --theme-accent-2: #0e7490;
+  --theme-accent-foreground: #ffffff;
   --theme-muted: #475569;
   --theme-muted-foreground: #4b5e73;
   --theme-border: rgba(148, 163, 184, 0.35);

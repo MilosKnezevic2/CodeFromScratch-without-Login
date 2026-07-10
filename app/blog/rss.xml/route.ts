@@ -86,7 +86,7 @@ export async function GET() {
     <ttl>60</ttl>
     <atom:link href="${xmlEscape(`${SITE_URL}/blog/rss.xml`)}" rel="self" type="application/rss+xml"/>
     <image>
-      <url>${xmlEscape(`${SITE_URL}/icon.svg`)}</url>
+      <url>${xmlEscape(`${SITE_URL}/brand/favicon-192.png`)}</url>
       <title>CodeFromScratch Blog</title>
       <link>${xmlEscape(`${SITE_URL}/blog`)}</link>
     </image>
