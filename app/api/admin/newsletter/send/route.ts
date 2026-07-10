@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { resend, EMAIL_FROM } from "@/lib/resend";
+import { getResend, getEmailFrom } from "@/lib/resend";
 import { NewsletterCampaignEmail } from "@/lib/emails/newsletter-campaign";
 
 export async function POST(request: Request) {
@@ -20,17 +20,27 @@ export async function POST(request: Request) {
     where: { confirmed: true },
   });
 
+  const resend = getResend();
+  const emailFrom = getEmailFrom();
   let sentCount = 0;
 
   for (const sub of subscribers) {
-    const unsubscribeUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/newsletter/unsubscribe?token=${sub.unsubscribeToken}`;
+    // Footer link goes to the interstitial page (mutation happens on the
+    // button press); the one-click POST target serves Gmail/Outlook's
+    // built-in unsubscribe (RFC 8058).
+    const unsubscribeUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/newsletter/unsubscribe?token=${sub.unsubscribeToken}`;
+    const oneClickUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/api/newsletter/unsubscribe?token=${sub.unsubscribeToken}`;
 
     try {
       await resend.emails.send({
-        from: EMAIL_FROM,
+        from: emailFrom,
         to: sub.email,
         subject,
         html: NewsletterCampaignEmail({ htmlBody, unsubscribeUrl }),
+        headers: {
+          "List-Unsubscribe": `<${oneClickUrl}>`,
+          "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+        },
       });
       sentCount++;
     } catch (error) {

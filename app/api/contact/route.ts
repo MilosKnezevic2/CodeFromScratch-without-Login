@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
 import { rateLimit } from "@/lib/rate-limit";
-import { validateEmail, validateName, validateMessage, sanitizeInput, sanitizeHtml } from "@/lib/sanitize";
-import { resend, EMAIL_FROM } from "@/lib/resend";
+import { validateEmail, validateName, validateMessage, sanitizeInput } from "@/lib/sanitize";
+import { getResend, getEmailFrom } from "@/lib/resend";
 
 export async function POST(request: NextRequest) {
   try {
@@ -23,10 +23,14 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: true }, { status: 200 });
     }
 
-    const name = sanitizeHtml(sanitizeInput(body.name ?? "", 100));
+    // Stored and emailed as plain text — no HTML-entity escaping here. The
+    // admin portal renders these through React (auto-escaped) and the
+    // notification email is a text body, so escaping would only corrupt
+    // apostrophes and ampersands for the reader.
+    const name = sanitizeInput(body.name ?? "", 100);
     const email = sanitizeInput(body.email ?? "", 254).toLowerCase();
-    const subject = sanitizeHtml(sanitizeInput(body.subject ?? "", 200));
-    const message = sanitizeHtml(sanitizeInput(body.message ?? "", 5000));
+    const subject = sanitizeInput(body.subject ?? "", 200);
+    const message = sanitizeInput(body.message ?? "", 5000);
 
     if (!name || !email || !message) {
       return NextResponse.json(
@@ -70,8 +74,8 @@ export async function POST(request: NextRequest) {
 
     // Send email notification
     try {
-      await resend.emails.send({
-        from: EMAIL_FROM,
+      await getResend().emails.send({
+        from: getEmailFrom(),
         to: "office@codefromscratch.org",
         subject: `New contact: ${subject || "No subject"}`,
         text: `Name: ${name}\nEmail: ${email}\nSubject: ${subject || "N/A"}\n\nMessage:\n${message}`,

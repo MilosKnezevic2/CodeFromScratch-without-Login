@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { resend, EMAIL_FROM } from "@/lib/resend";
+import { getResend, getEmailFrom } from "@/lib/resend";
 import { PasswordResetEmail } from "@/lib/emails/password-reset";
 import { rateLimit } from "@/lib/rate-limit";
 import crypto from "crypto";
@@ -48,8 +48,8 @@ export async function POST(request: Request) {
 
     const resetUrl = `${process.env.NEXT_PUBLIC_SITE_URL}/reset-password?token=${rawToken}&email=${encodeURIComponent(email)}`;
 
-    await resend.emails.send({
-      from: EMAIL_FROM,
+    await getResend().emails.send({
+      from: getEmailFrom(),
       to: email,
       subject: "Reset your password",
       html: PasswordResetEmail({ name: user.name || "there", resetUrl }),

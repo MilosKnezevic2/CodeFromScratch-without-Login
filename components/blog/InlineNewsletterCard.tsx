@@ -4,6 +4,7 @@ import { useState } from "react";
 
 export default function InlineNewsletterCard() {
   const [email, setEmail] = useState("");
+  const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState<
     "idle" | "loading" | "success" | "error"
   >("idle");
@@ -17,7 +18,7 @@ export default function InlineNewsletterCard() {
       const res = await fetch("/api/newsletter/subscribe", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, honeypot }),
       });
       if (res.ok) {
         setStatus("success");
@@ -74,6 +75,17 @@ export default function InlineNewsletterCard() {
           </p>
         </div>
         <form onSubmit={onSubmit} className="min-w-0 lg:col-span-5">
+          {/* Honeypot — invisible to humans, bots fill it and get a fake success. */}
+          <input
+            type="text"
+            name="website"
+            value={honeypot}
+            onChange={(e) => setHoneypot(e.target.value)}
+            tabIndex={-1}
+            autoComplete="off"
+            aria-hidden="true"
+            className="absolute -left-[9999px] h-0 w-0 opacity-0"
+          />
           <label
             className="editorial-meta block text-muted-foreground"
             htmlFor="inline-newsletter-email"
