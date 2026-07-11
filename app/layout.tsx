@@ -72,6 +72,13 @@ export const metadata: Metadata = {
     ],
   },
   manifest: "/site.webmanifest",
+  // Search Console ownership proof without touching DNS: create a
+  // "URL prefix" property in GSC, pick the "HTML tag" method, and paste
+  // the content="..." value into this env var on Vercel. The tag renders
+  // only while the variable is set.
+  ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION && {
+    verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION },
+  }),
 };
 
 // themeColor lives on the viewport export in Next 13.4+ — controls the
