@@ -28,7 +28,7 @@ export async function GET() {
   }[];
   try {
     posts = await client.fetch(
-      `*[_type == "post" && status == "published"] | order(publishedAt desc) [0...100] {
+      `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] | order(publishedAt desc) [0...100] {
         title, slug, excerpt, publishedAt, categories[]->{ title }
       }`,
     );

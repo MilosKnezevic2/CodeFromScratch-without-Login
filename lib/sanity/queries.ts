@@ -84,7 +84,7 @@ export async function getPostsAdvanced(q: PostsAdvancedQuery) {
 
   const clauses: string[] = [
     `_type == "post"`,
-    `status == "published"`,
+    `status == "published" && (!defined(publishedAt) || publishedAt <= now())`,
   ];
   const params: Record<string, string | number> = {};
   if (q.category) {
@@ -129,10 +129,10 @@ export async function getPosts(page = 1, limit = 10, sort: "newest" | "oldest" =
   const start = (page - 1) * limit;
   const orderClause = sort === "oldest" ? "order(publishedAt asc)" : "order(publishedAt desc)";
   const posts = await client.fetch<SanityPost[]>(
-    `*[_type == "post" && status == "published"] | ${orderClause} [${start}...${start + limit}] { ${postFields} }`
+    `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] | ${orderClause} [${start}...${start + limit}] { ${postFields} }`
   );
   const total = await client.fetch<number>(
-    `count(*[_type == "post" && status == "published"])`
+    `count(*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())])`
   );
   return { posts, total, pages: Math.ceil(total / limit) };
 }
@@ -140,7 +140,7 @@ export async function getPosts(page = 1, limit = 10, sort: "newest" | "oldest" =
 export const getPostBySlug = cache(async (slug: string) => {
   if (!isSanityConfigured) return null;
   return client.fetch<SanityPost | null>(
-    `*[_type == "post" && slug.current == $slug && status == "published"][0] { ${postFields} }`,
+    `*[_type == "post" && slug.current == $slug && status == "published" && (!defined(publishedAt) || publishedAt <= now())][0] { ${postFields} }`,
     { slug }
   );
 });
@@ -150,11 +150,11 @@ export async function getPostsByCategory(categorySlug: string, page = 1, limit =
   const start = (page - 1) * limit;
   const [posts, total] = await Promise.all([
     client.fetch<SanityPost[]>(
-      `*[_type == "post" && status == "published" && $categorySlug in categories[]->slug.current] | order(publishedAt desc) [${start}...${start + limit}] { ${postFields} }`,
+      `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && $categorySlug in categories[]->slug.current] | order(publishedAt desc) [${start}...${start + limit}] { ${postFields} }`,
       { categorySlug }
     ),
     client.fetch<number>(
-      `count(*[_type == "post" && status == "published" && $categorySlug in categories[]->slug.current])`,
+      `count(*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && $categorySlug in categories[]->slug.current])`,
       { categorySlug }
     ),
   ]);
@@ -166,11 +166,11 @@ export async function getPostsByTag(tagSlug: string, page = 1, limit = 10) {
   const start = (page - 1) * limit;
   const [posts, total] = await Promise.all([
     client.fetch<SanityPost[]>(
-      `*[_type == "post" && status == "published" && $tagSlug in tags[]->slug.current] | order(publishedAt desc) [${start}...${start + limit}] { ${postFields} }`,
+      `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && $tagSlug in tags[]->slug.current] | order(publishedAt desc) [${start}...${start + limit}] { ${postFields} }`,
       { tagSlug }
     ),
     client.fetch<number>(
-      `count(*[_type == "post" && status == "published" && $tagSlug in tags[]->slug.current])`,
+      `count(*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && $tagSlug in tags[]->slug.current])`,
       { tagSlug }
     ),
   ]);
@@ -191,7 +191,7 @@ export async function instantSearch(
   limit = 8,
 ): Promise<InstantSearchPost[]> {
   if (!isSanityConfigured || query.length < 2) return [];
-  const filter = `_type == "post" && status == "published" && (title match $q || excerpt match $q)`;
+  const filter = `_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && (title match $q || excerpt match $q)`;
   return client.fetch<InstantSearchPost[]>(
     `*[${filter}] | order(publishedAt desc) [0...${limit}] {
       _id, title, slug, excerpt, readingTime,
@@ -217,7 +217,7 @@ export async function getFeaturedAuthors(
   return client.fetch<AuthorWithPostCount[]>(
     `*[_type == "author"]{
       _id, name, slug, image, bio,
-      "postCount": count(*[_type == "post" && status == "published" && references(^._id)])
+      "postCount": count(*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && references(^._id)])
     } | order(postCount desc) [0...$limit][postCount > 0]`,
     { limit },
   );
@@ -226,7 +226,7 @@ export async function getFeaturedAuthors(
 export async function searchPosts(query: string, page = 1, limit = 10) {
   if (!isSanityConfigured || query.length < 2) return { posts: [], total: 0, pages: 0 };
   const start = (page - 1) * limit;
-  const filter = `_type == "post" && status == "published" && (title match $q || excerpt match $q)`;
+  const filter = `_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && (title match $q || excerpt match $q)`;
   const [posts, total] = await Promise.all([
     client.fetch<SanityPost[]>(
       `*[${filter}] | order(publishedAt desc) [${start}...${start + limit}] { ${postFields} }`,
@@ -260,7 +260,7 @@ export async function getTagsWithCategory() {
 export async function getRelatedPosts(postId: string, categories: string[], limit = 3) {
   if (!isSanityConfigured) return [];
   return client.fetch<SanityPost[]>(
-    `*[_type == "post" && status == "published" && _id != $postId && count((categories[]->slug.current)[@ in $categories]) > 0] | order(publishedAt desc) [0...$limit] { ${postFields} }`,
+    `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && _id != $postId && count((categories[]->slug.current)[@ in $categories]) > 0] | order(publishedAt desc) [0...$limit] { ${postFields} }`,
     { postId, categories, limit }
   );
 }
@@ -284,7 +284,7 @@ export async function getCategoriesWithCounts() {
   return client.fetch<CategoryWithCount[]>(
     `*[_type == "category"] {
       _id, title, slug,
-      "postCount": count(*[_type == "post" && status == "published" && references(^._id)])
+      "postCount": count(*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && references(^._id)])
     } | order(postCount desc, title asc)`
   );
 }
@@ -314,11 +314,11 @@ export async function getAdjacentPosts(publishedAt: string) {
 
   const [prev, next] = await Promise.all([
     client.fetch<AdjacentPost | null>(
-      `*[_type == "post" && status == "published" && publishedAt < $publishedAt] | order(publishedAt desc) [0] { title, slug }`,
+      `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && publishedAt < $publishedAt] | order(publishedAt desc) [0] { title, slug }`,
       { publishedAt }
     ),
     client.fetch<AdjacentPost | null>(
-      `*[_type == "post" && status == "published" && publishedAt > $publishedAt] | order(publishedAt asc) [0] { title, slug }`,
+      `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && publishedAt > $publishedAt] | order(publishedAt asc) [0] { title, slug }`,
       { publishedAt }
     ),
   ]);
@@ -329,7 +329,7 @@ export async function getAdjacentPosts(publishedAt: string) {
 export async function getAllPostSlugs() {
   if (!isSanityConfigured) return [];
   return client.fetch<{ slug: { current: string }; publishedAt?: string }[]>(
-    `*[_type == "post" && status == "published"] { slug, publishedAt }`
+    `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] { slug, publishedAt }`
   );
 }
 
@@ -349,7 +349,7 @@ export async function getSuggestedPosts(
   const posts = await client.fetch<
     { _id: string; title: string; slug: { current: string }; publishedAt: string; categories: { title: string; slug: { current: string } }[] }[]
   >(
-    `*[_type == "post" && status == "published" && _id != $postId] | order(publishedAt desc) [0...15] {
+    `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && _id != $postId] | order(publishedAt desc) [0...15] {
       _id, title, slug, publishedAt,
       categories[]->{ title, slug }
     }`,
@@ -422,7 +422,7 @@ export async function getSidebarSuggestions(
   const allPosts = await client.fetch<
     { _id: string; title: string; slug: { current: string }; categories: { title: string; slug: { current: string } }[]; tags: { slug: { current: string } }[] | null }[]
   >(
-    `*[_type == "post" && status == "published" && _id != $postId] | order(publishedAt desc) {
+    `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && _id != $postId] | order(publishedAt desc) {
       _id, title, slug,
       categories[]->{ title, slug },
       tags[]->{ slug }

@@ -66,7 +66,7 @@ export async function getTrendingPosts(
   try {
     const slugs = topSlugs.map((s) => s.slug);
     const posts = await client.fetch<DiscoveryPost[]>(
-      `*[_type == "post" && status == "published" && slug.current in $slugs] { ${compactPostFields} }`,
+      `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && slug.current in $slugs] { ${compactPostFields} }`,
       { slugs },
     );
     // Sort to match the views ranking and attach the view count.
@@ -88,7 +88,7 @@ export async function getEditorPicks(limit = 3): Promise<DiscoveryPost[]> {
   if (!isSanityConfigured) return [];
   try {
     return await client.fetch<DiscoveryPost[]>(
-      `*[_type == "post" && status == "published" && editorPick == true]
+      `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && editorPick == true]
         | order(publishedAt desc) [0...$limit] { ${compactPostFields} }`,
       { limit },
     );
@@ -112,7 +112,7 @@ export async function getRecentlyUpdatedPosts(
     const rows = await client.fetch<(DiscoveryPost & { _updatedAt: string })[]>(
       `*[
         _type == "post"
-        && status == "published"
+        && status == "published" && (!defined(publishedAt) || publishedAt <= now())
         && _updatedAt > $since
         && _updatedAt > dateTime(publishedAt) + 60*60*24
       ] | order(_updatedAt desc) [0...$limit] {

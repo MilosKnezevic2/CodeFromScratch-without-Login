@@ -33,13 +33,13 @@ export async function getHomeStats(): Promise<HomeStats> {
     try {
       const [count, firstPub, lastPub] = await Promise.all([
         client.fetch<number>(
-          `count(*[_type == "post" && status == "published"])`,
+          `count(*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())])`,
         ),
         client.fetch<string | null>(
-          `*[_type == "post" && status == "published"] | order(publishedAt asc) [0].publishedAt`,
+          `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] | order(publishedAt asc) [0].publishedAt`,
         ),
         client.fetch<string | null>(
-          `*[_type == "post" && status == "published"] | order(publishedAt desc) [0].publishedAt`,
+          `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] | order(publishedAt desc) [0].publishedAt`,
         ),
       ]);
       totalPosts = count ?? 0;

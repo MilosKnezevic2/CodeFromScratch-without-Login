@@ -26,7 +26,7 @@ export async function GET() {
   let posts: FeedPost[];
   try {
     posts = await client.fetch<FeedPost[]>(
-      `*[_type == "post" && status == "published"] | order(publishedAt desc) [0...50] {
+      `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] | order(publishedAt desc) [0...50] {
         _id, title, slug, excerpt, publishedAt, _updatedAt, author->{ name }, categories[]->{ title }
       }`,
     );

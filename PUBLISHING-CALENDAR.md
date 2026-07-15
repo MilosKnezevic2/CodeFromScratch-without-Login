@@ -39,3 +39,31 @@ siblings / the 10 already-published articles.
 
 After publishing each article: share it once (X/LinkedIn/Reddit where
 relevant), and check Search Console a week later for the target query.
+
+---
+
+## The 2026-07 content wave (110 articles, self-publishing)
+
+On top of the calendar above, `docs/CONTENT-PLAN.md` defines 110 new
+articles (10 per category) authored in `scripts/content/` and imported
+with **one command**:
+
+```
+node scripts/seed-content.mjs        # import (safe to re-run anytime)
+node scripts/seed-content.mjs --dry  # preview only, writes nothing
+```
+
+They import as `status: published` with future dates — **Mon/Wed/Fri at
+07:00 UTC, 2026-07-20 → 2027-03-31** — and the site's queries only show a
+post once its date passes, so each one goes live by itself. No clicks.
+The 18 drafts above keep their dates and publish exactly as before (their
+manual Studio flow is unchanged).
+
+Zero-effort option: do nothing after the import — everything publishes on
+schedule. Optional polish per post (anytime before its date, in Studio):
+swap the stock cover for a branded one, and skim the text. If you ever
+want to hold one back, open it in Studio and set status to draft.
+
+Fallback manual checklist (only if you prefer hand-publishing): the exact
+order and dates live in `docs/CONTENT-PLAN.md` → "Publish schedule";
+publish top-to-bottom, one Mon/Wed/Fri each, ticking the Batch tracker.

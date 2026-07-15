@@ -36,13 +36,13 @@ export async function getBlogHeroStats(): Promise<BlogHeroStats> {
   try {
     const [count, latestPublish, latestUpdate] = await Promise.all([
       client.fetch<number>(
-        `count(*[_type == "post" && status == "published"])`,
+        `count(*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())])`,
       ),
       client.fetch<string | null>(
-        `*[_type == "post" && status == "published"] | order(publishedAt desc) [0].publishedAt`,
+        `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] | order(publishedAt desc) [0].publishedAt`,
       ),
       client.fetch<string | null>(
-        `*[_type == "post" && status == "published"] | order(_updatedAt desc) [0]._updatedAt`,
+        `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] | order(_updatedAt desc) [0]._updatedAt`,
       ),
     ]);
     totalPosts = count ?? 0;
