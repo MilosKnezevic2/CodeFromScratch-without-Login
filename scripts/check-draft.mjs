@@ -53,7 +53,9 @@ const warn = (m) => warns.push(m);
 
 if (draft.slug !== slug) err(`slug in file ("${draft.slug}") differs from "${slug}"`);
 if (!draft.title) err("missing title");
-else if (draft.title.length > 60) warn(`title is ${draft.title.length} chars (target <= 60)`);
+else if ((draft.seoTitle ?? draft.title).length > 42) {
+  warn(`seoTitle is ${(draft.seoTitle ?? draft.title).length} chars; the site adds " | CodeFromScratch", so keep it <= 42 (add "seoTitle" to the draft JSON)`);
+}
 if (!draft.excerpt) err("missing excerpt");
 else if (draft.excerpt.length < 140 || draft.excerpt.length > 165) {
   warn(`excerpt is ${draft.excerpt.length} chars (target 150-160)`);

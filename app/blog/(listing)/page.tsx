@@ -98,6 +98,7 @@ export async function generateMetadata({
       description: PAGE_DESCRIPTION,
       url: canonical,
       type: "website",
+      images: [{ url: `${SITE_URL}/brand/og-default.png`, width: 1200, height: 630 }],
     },
     alternates: {
       canonical,
@@ -311,6 +312,9 @@ export default async function BlogPage({
         id="latest"
         className="mx-auto max-w-7xl px-4 pb-32 sm:px-6 lg:px-8"
       >
+        <h1 className="sr-only">
+          {isFiltered ? "CodeFromScratch journal: filtered articles" : "The CodeFromScratch journal"}
+        </h1>
         <div className="pt-10">
           {isFiltered && (
             <div className="mb-4">
