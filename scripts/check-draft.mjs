@@ -85,9 +85,9 @@ for (const b of blocks) {
 
 const text = prose.join("\n");
 const words = text.split(/\s+/).filter(Boolean).length;
-if (words < 1500 || words > 2200) warn(`prose is ${words} words (target 1500-2200)`);
-if (h2 < 4 || h2 > 7) warn(`${h2} h2 sections (target 4-7)`);
-if (callouts < 1 || callouts > 3) warn(`${callouts} callouts (target 1-3)`);
+if (words < 1800) warn(`prose is ${words} words (minimum 1800; no upper limit)`);
+if (h2 < 4) warn(`${h2} h2 sections (at least 4)`);
+if (callouts < 1) warn("no callout (at least one tip/warning/info)");
 
 const lower = text.toLowerCase();
 for (const w of BANNED) if (lower.includes(w)) err(`banned phrase: "${w}"`);
