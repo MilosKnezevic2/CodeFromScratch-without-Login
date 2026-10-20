@@ -83,10 +83,40 @@ async function uploadCover(slug, title, categoryName) {
   return asset._id;
 }
 
+const INDEXNOW_KEY = "dd671c2ccc673598cd70b9f8b2a9ff2c";
+
+/**
+ * Tells Bing (and other IndexNow engines) about new URLs immediately.
+ * Google does not support IndexNow; it learns from sitemap.xml. A failure
+ * here is reported but never blocks a publish.
+ */
+async function pingIndexNow(urls) {
+  try {
+    const res = await fetch("https://api.indexnow.org/indexnow", {
+      method: "POST",
+      headers: { "content-type": "application/json; charset=utf-8" },
+      body: JSON.stringify({
+        host: new URL(SITE).host,
+        key: INDEXNOW_KEY,
+        keyLocation: `${SITE}/${INDEXNOW_KEY}.txt`,
+        urlList: urls,
+      }),
+    });
+    console.log(`indexnow: ${res.status}`);
+  } catch (e) {
+    console.log(`indexnow failed (publish unaffected): ${e.message}`);
+  }
+}
+
 async function verifyLive(slug) {
   await fetch(`${SITE}/api/revalidate`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      ...(process.env.SANITY_REVALIDATE_SECRET
+        ? { "x-revalidate-secret": process.env.SANITY_REVALIDATE_SECRET }
+        : {}),
+    },
     body: JSON.stringify({ _type: "post", slug: { current: slug } }),
   });
   const res = await fetch(`${SITE}/blog/${slug}`, { redirect: "follow" });
@@ -175,7 +205,10 @@ async function main() {
       });
     }
   }
-  if (APPLY) for (const j of todo) await verifyLive(j.slug);
+  if (APPLY) {
+    for (const j of todo) await verifyLive(j.slug);
+    if (todo.length > 0) await pingIndexNow(todo.map((j) => `${SITE}/blog/${j.slug}`));
+  }
 }
 
 main().catch((e) => {
