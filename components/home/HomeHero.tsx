@@ -78,8 +78,8 @@ export default function HomeHero({
               </h1>
               <p className="post-standfirst mt-8 max-w-xl">
                 Tutorials, guides, and deep dives on modern web development —
-                shipped from a small studio in Graz, free, with code you can
-                read in your own repo.
+                written by one developer who had to figure it out the hard
+                way, free, with code you can read in your own repo.
               </p>
             </div>
 

@@ -86,8 +86,8 @@ export default function BlogHero({ stats }: { stats: BlogHeroStats }) {
             </p>
             <p className="editorial-body text-xl text-foreground sm:text-2xl">
               A journal of practical web-development writing.
-              Shipped from a small studio in Graz to readers across the
-              world. Just craft.
+              Written by one developer who had to figure it out the hard
+              way. Just craft.
             </p>
             <a
               href="#latest"
