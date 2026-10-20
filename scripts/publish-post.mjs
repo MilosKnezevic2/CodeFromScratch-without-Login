@@ -192,7 +192,7 @@ async function main() {
         publishedAt,
         readingTime: j.draft.readingTime,
         excerpt: j.draft.excerpt,
-        seoTitle: j.draft.title,
+        seoTitle: j.draft.seoTitle ?? j.draft.title,
         seoDescription: j.draft.excerpt,
         author: { _type: "reference", _ref: MILOS_AUTHOR_ID },
         categories: [{ _type: "reference", _ref: categoryId, _key: k() }],
