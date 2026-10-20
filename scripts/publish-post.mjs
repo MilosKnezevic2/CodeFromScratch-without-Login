@@ -111,7 +111,12 @@ async function pingIndexNow(urls) {
 async function verifyLive(slug) {
   await fetch(`${SITE}/api/revalidate`, {
     method: "POST",
-    headers: { "content-type": "application/json" },
+    headers: {
+      "content-type": "application/json",
+      ...(process.env.SANITY_REVALIDATE_SECRET
+        ? { "x-revalidate-secret": process.env.SANITY_REVALIDATE_SECRET }
+        : {}),
+    },
     body: JSON.stringify({ _type: "post", slug: { current: slug } }),
   });
   const res = await fetch(`${SITE}/blog/${slug}`, { redirect: "follow" });
