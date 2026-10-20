@@ -8,6 +8,14 @@ repository (`../ai-holding-os/`) is an **archive** — its documents
 citable reference, but its process machinery (exceptions, L-levels,
 lifecycle logs, agents) is retired. Do not produce governance artifacts.
 
+## 0. Brand brain — read before any content, marketing or newsletter work
+
+`brand-brain/` is the working memory of the brand (positioning, voice,
+content plan, funnel, metrics, learnings). Start with
+`brand-brain/README.md`. Update `brand-brain/STATE.md` at the end of every
+session. The folder is gitignored because the remote is public; do not
+move personal finance or legal material into it.
+
 ## 1. What this project is
 
 **CodeFromScratch** — a production-grade web/software-development learning
