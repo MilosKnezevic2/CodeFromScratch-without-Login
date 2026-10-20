@@ -19,7 +19,22 @@ type CodePortableBlock = {
   code?: string;
   language?: string;
   highlightedHtml?: string;
+  html?: string;
+  css?: string;
+  js?: string;
+  highlighted?: Partial<Record<"html" | "css" | "js", string>>;
 };
+
+const PREVIEW_LANGUAGES = { html: "html", css: "css", js: "js" } as const;
+
+async function highlightPreviewSources<T extends CodePortableBlock>(block: T): Promise<T> {
+  const entries = await Promise.all(
+    (Object.keys(PREVIEW_LANGUAGES) as (keyof typeof PREVIEW_LANGUAGES)[])
+      .filter((key) => typeof block[key] === "string" && block[key]!.trim() !== "")
+      .map(async (key) => [key, await highlightCode(block[key]!, PREVIEW_LANGUAGES[key])] as const),
+  );
+  return { ...block, highlighted: Object.fromEntries(entries) };
+}
 
 /**
  * Pre-highlight every `code` block in a Portable Text array on the server.
@@ -32,16 +47,15 @@ export async function highlightCodeBlocks<T extends CodePortableBlock>(
   blocks: T[],
 ): Promise<T[]> {
   return Promise.all(
-    blocks.map(async (block) =>
-      block?._type === "code" && typeof block.code === "string"
-        ? {
-            ...block,
-            highlightedHtml: await highlightCode(
-              block.code,
-              block.language || "text",
-            ),
-          }
-        : block,
-    ),
+    blocks.map(async (block) => {
+      if (block?._type === "livePreview") return highlightPreviewSources(block);
+      if (block?._type === "code" && typeof block.code === "string") {
+        return {
+          ...block,
+          highlightedHtml: await highlightCode(block.code, block.language || "text"),
+        };
+      }
+      return block;
+    }),
   );
 }

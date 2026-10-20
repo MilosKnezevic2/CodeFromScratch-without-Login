@@ -5,6 +5,7 @@ import { urlFor } from "@/lib/sanity/image";
 import { slugify } from "@/lib/portable-text-utils";
 import ImageLightbox from "./ImageLightbox";
 import CodeBlock from "./CodeBlock";
+import LivePreview from "./LivePreview";
 import HeadingAnchor from "./HeadingAnchor";
 import { useRef } from "react";
 
@@ -148,6 +149,16 @@ const components: PortableTextComponents = {
         language={value.language}
         filename={value.filename}
         highlightedHtml={value.highlightedHtml}
+      />
+    ),
+    livePreview: ({ value }) => (
+      <LivePreview
+        title={value.title}
+        html={value.html}
+        css={value.css}
+        js={value.js}
+        height={value.height}
+        highlighted={value.highlighted}
       />
     ),
     callout: ({ value }) => {
