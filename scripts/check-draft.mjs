@@ -38,7 +38,7 @@ const BANNED = [
   "furthermore",
   "in conclusion",
 ];
-const BLOCK_TYPES = new Set(["lead", "p", "h2", "h3", "code", "callout", "bullet", "divider"]);
+const BLOCK_TYPES = new Set(["lead", "p", "h2", "h3", "code", "callout", "bullet", "divider", "preview"]);
 const LANGUAGES = new Set(["html", "css", "js", "jsx", "ts", "tsx", "bash", "json", "sql", "prisma"]);
 const EMOJI = /\p{Extended_Pictographic}/u;
 
@@ -71,6 +71,15 @@ for (const b of blocks) {
   if (!BLOCK_TYPES.has(b.t)) err(`unknown block type "${b.t}"`);
   if (b.t === "h2") h2++;
   if (b.t === "callout") callouts++;
+  if (b.t === "preview") {
+    if (!b.html?.trim() && !b.js?.trim()) err("preview block needs html or js");
+    const source = `${b.html ?? ""}
+${b.css ?? ""}
+${b.js ?? ""}`;
+    if (/https?:\/\//i.test(source)) warn("preview uses an external URL; the sandbox blocks network requests, so it will not load");
+    if (/<form/i.test(b.html ?? "") && !/preventDefault/.test(b.js ?? "")) warn("preview has a form but no preventDefault in the js; submitting would reload the frame");
+    continue;
+  }
   if (b.t === "code") {
     if (!LANGUAGES.has(b.language)) err(`code block with invalid language "${b.language}"`);
     continue;

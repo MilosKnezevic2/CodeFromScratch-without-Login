@@ -73,6 +73,17 @@ export function toPortableText(blocks) {
           });
         }
         break;
+      case "preview":
+        out.push({
+          _type: "livePreview",
+          _key: k(),
+          ...(b.title ? { title: b.title } : {}),
+          ...(b.html ? { html: b.html } : {}),
+          ...(b.css ? { css: b.css } : {}),
+          ...(b.js ? { js: b.js } : {}),
+          ...(b.height ? { height: b.height } : {}),
+        });
+        break;
       case "divider":
         out.push({ _type: "divider", _key: k(), style: "plain" });
         break;
