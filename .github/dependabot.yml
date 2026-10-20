@@ -1,0 +1,19 @@
+version: 2
+updates:
+  # Weekly pull requests for dependency updates. Security fixes arrive as
+  # their own PRs; every PR still has to pass CI (lint, tsc, tests, build)
+  # before it can be merged.
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 5
+    groups:
+      minor-and-patch:
+        update-types: ["minor", "patch"]
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
