@@ -173,6 +173,45 @@ export const blockContent = defineType({
       },
     }),
     defineArrayMember({
+      name: "livePreview",
+      title: "Live Preview",
+      type: "object",
+      description:
+        "A runnable example. Readers see the working result and the HTML, CSS and JavaScript behind it. Runs in a sandbox; it cannot reach the site or the network.",
+      fields: [
+        defineField({
+          name: "title",
+          title: "Title",
+          type: "string",
+          description: "Shown above the example, e.g. Login form with validation.",
+        }),
+        defineField({ name: "html", title: "HTML", type: "text", rows: 10 }),
+        defineField({ name: "css", title: "CSS", type: "text", rows: 8 }),
+        defineField({ name: "js", title: "JavaScript", type: "text", rows: 10 }),
+        defineField({
+          name: "height",
+          title: "Height (px)",
+          type: "number",
+          initialValue: 320,
+          validation: (Rule) => Rule.min(120).max(900).integer(),
+        }),
+      ],
+      validation: (Rule) =>
+        Rule.custom((value) => {
+          const v = value as { html?: string; js?: string } | undefined;
+          return v?.html?.trim() || v?.js?.trim() ? true : "Add HTML or JavaScript.";
+        }),
+      preview: {
+        select: { title: "title", html: "html" },
+        prepare({ title, html }) {
+          return {
+            title: title || "Live preview",
+            subtitle: typeof html === "string" ? html.slice(0, 60) : "",
+          };
+        },
+      },
+    }),
+    defineArrayMember({
       name: "callout",
       title: "Callout",
       type: "object",
