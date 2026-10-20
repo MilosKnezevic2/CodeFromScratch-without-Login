@@ -5,6 +5,9 @@ import {
   getTagsWithCategory,
 } from "@/lib/sanity/queries";
 
+// Re-generate hourly so newly published posts reach crawlers without a redeploy.
+export const revalidate = 3600;
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://codefromscratch.org";
 

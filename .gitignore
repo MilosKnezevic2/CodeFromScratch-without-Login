@@ -46,3 +46,8 @@ next-env.d.ts
 # Transient authoring artifacts — Sanity is the source of truth for content
 content-drafts/
 PRODUCTION-SECRETS.local.txt
+
+# Brand brain: internal strategy, metrics and funnel notes. The repo's
+# remote is public, so keep these local until a private home is chosen.
+brand-brain/
+resend-dns-records.local.json
