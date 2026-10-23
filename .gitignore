@@ -51,3 +51,8 @@ PRODUCTION-SECRETS.local.txt
 # remote is public, so keep these local until a private home is chosen.
 brand-brain/
 resend-dns-records.local.json
+
+# Local credentials and machine-specific files: never commit
+.secrets/
+*.local.json
+*.local.txt
