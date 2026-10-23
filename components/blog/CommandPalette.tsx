@@ -40,12 +40,33 @@ export default function CommandPalette() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
-  const [results, setResults] = useState<InstantSearchPost[]>([]);
+  // The last finished search, tagged with the query it answers. Results and
+  // the loading flag are derived from it, so no effect has to set state just
+  // to mirror the query.
+  const [settled, setSettled] = useState<{ query: string; posts: InstantSearchPost[] }>({
+    query: "",
+    posts: [],
+  });
   const [recent, setRecent] = useState<string[]>([]);
-  const [loading, setLoading] = useState(false);
   const [highlight, setHighlight] = useState(0);
+  const [prevOpen, setPrevOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+
+  const trimmed = query.trim();
+  const searching = open && trimmed.length >= 2;
+  const results = searching ? settled.posts : [];
+  const loading = searching && settled.query !== trimmed;
+
+  // Reset per-open state while rendering (React's documented alternative to
+  // an effect that sets state when a value changes).
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (open) {
+      setRecent(loadRecent());
+      setHighlight(0);
+    }
+  }
 
   // Open with ⌘K / Ctrl+K, close with Escape
   useEffect(() => {
@@ -62,51 +83,41 @@ export default function CommandPalette() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Focus input + load recent searches on open
+  // Focus the input when the palette opens
   useEffect(() => {
     if (!open) return;
-    setRecent(loadRecent());
-    setHighlight(0);
     const t = window.setTimeout(() => inputRef.current?.focus(), 30);
     return () => window.clearTimeout(t);
   }, [open]);
 
   // Live fetch with abort + 150ms debounce
   useEffect(() => {
-    if (!open) return;
-    if (query.trim().length < 2) {
-      setResults([]);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
+    if (!searching) return;
     const ctl = new AbortController();
     abortRef.current?.abort();
     abortRef.current = ctl;
     const t = window.setTimeout(async () => {
       try {
         const res = await fetch(
-          `/api/blog/search-instant?q=${encodeURIComponent(query.trim())}`,
+          `/api/blog/search-instant?q=${encodeURIComponent(trimmed)}`,
           { signal: ctl.signal },
         );
         if (!res.ok) {
-          setResults([]);
-          setLoading(false);
+          setSettled({ query: trimmed, posts: [] });
           return;
         }
         const body = (await res.json()) as { posts: InstantSearchPost[] };
-        setResults(body.posts ?? []);
+        setSettled({ query: trimmed, posts: body.posts ?? [] });
       } catch {
-        // aborted or network error — no-op
-      } finally {
-        if (!ctl.signal.aborted) setLoading(false);
+        // Aborted: a newer query owns the state. Network error: show no results.
+        if (!ctl.signal.aborted) setSettled({ query: trimmed, posts: [] });
       }
     }, 150);
     return () => {
       window.clearTimeout(t);
       ctl.abort();
     };
-  }, [query, open]);
+  }, [trimmed, searching]);
 
   function navigate(url: string, savedQuery?: string) {
     if (savedQuery) pushRecent(savedQuery);
