@@ -9,6 +9,13 @@ updates:
       interval: "weekly"
       day: "monday"
     open-pull-requests-limit: 5
+    ignore:
+      # Sanity 6 is a planned migration (Studio, schemas, next-sanity), not
+      # something to land through an automatic version bump.
+      - dependency-name: "sanity"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@sanity/vision"
+        update-types: ["version-update:semver-major"]
     groups:
       minor-and-patch:
         update-types: ["minor", "patch"]
