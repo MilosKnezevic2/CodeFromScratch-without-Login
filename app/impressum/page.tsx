@@ -29,7 +29,10 @@ export default function ImpressumPage() {
         <section>
           <h2 className="text-lg font-bold text-foreground">Purpose</h2>
           <p className="mt-2">
-            CodeFromScratch is an educational platform for web development, offering blog articles, ebooks, and courses.
+            CodeFromScratch is a free, non-commercial educational website about web development. It publishes articles and tutorials for people who are learning to program.
+          </p>
+          <p className="mt-2">
+            Basic editorial line (Grundlegende Richtung): practical, honest articles that explain web development concepts and show how to apply them.
           </p>
         </section>
 
