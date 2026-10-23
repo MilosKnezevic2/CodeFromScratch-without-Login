@@ -33,13 +33,21 @@ export default function SearchModal() {
     return () => window.removeEventListener("keydown", onKeyDown);
   }, []);
 
-  useEffect(() => {
-    if (open) {
-      setTimeout(() => inputRef.current?.focus(), 100);
-    } else {
+  // Clear the search when the modal closes (adjusted while rendering instead
+  // of in an effect that sets state).
+  const [prevOpen, setPrevOpen] = useState(false);
+  if (prevOpen !== open) {
+    setPrevOpen(open);
+    if (!open) {
       setQuery("");
       setResults([]);
     }
+  }
+
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => inputRef.current?.focus(), 100);
+    return () => clearTimeout(t);
   }, [open]);
 
   const search = useCallback(async (q: string) => {
