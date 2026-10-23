@@ -27,7 +27,7 @@ jobs:
         run: |
           mkdir -p lh
           i=0
-          for path in "/" "/blog" "/blog/why-courses-leave-you-feeling-like-you-know-nothing" "/blog/zod-at-trust-boundaries" "/newsletter" "/contact"; do
+          for path in "/" "/blog" "/blog/why-courses-leave-you-feeling-like-you-know-nothing" "/blog/zod-at-trust-boundaries" "/privacy" "/contact"; do
             i=$((i+1))
             npx --yes lighthouse@12 "https://codefromscratch.org${path}" \
               --quiet --output=json --output-path="lh/page-${i}.json" \
