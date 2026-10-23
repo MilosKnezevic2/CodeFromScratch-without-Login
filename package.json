@@ -77,5 +77,16 @@
     "*.{ts,tsx,mjs,js,jsx}": [
       "eslint --max-warnings=0 --no-warn-ignored"
     ]
+  },
+  "overrides": {
+    "@sanity/runtime-cli": {
+      "adm-zip": "0.6.1"
+    },
+    "@vercel/frameworks": {
+      "js-yaml": "3.15.2"
+    },
+    "typeid-js": {
+      "uuid": "11.1.1"
+    }
   }
 }
