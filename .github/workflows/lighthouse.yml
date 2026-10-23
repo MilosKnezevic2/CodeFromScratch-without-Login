@@ -1,0 +1,59 @@
+name: Lighthouse (live site)
+
+# Weekly quality gate on the real site: performance, accessibility, best
+# practices and SEO for the pages readers actually land on. A category below
+# its floor fails the run, so GitHub emails the owner. Floors follow
+# CLAUDE.md (95 on accessibility, best practices and SEO; performance 90
+# because mobile lab scores are noisy).
+
+on:
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: "lts/*"
+      - name: Run Lighthouse on key pages (mobile)
+        run: |
+          mkdir -p lh
+          i=0
+          for path in "/" "/blog" "/blog/why-courses-leave-you-feeling-like-you-know-nothing" "/blog/zod-at-trust-boundaries" "/newsletter" "/contact"; do
+            i=$((i+1))
+            npx --yes lighthouse@12 "https://codefromscratch.org${path}" \
+              --quiet --output=json --output-path="lh/page-${i}.json" \
+              --only-categories=performance,accessibility,best-practices,seo \
+              --chrome-flags="--headless=new --no-sandbox"
+          done
+      - name: Check scores against the floors
+        run: |
+          node -e '
+            const fs = require("fs");
+            const floors = { performance: 90, accessibility: 95, "best-practices": 95, seo: 95 };
+            let failed = false;
+            for (const f of fs.readdirSync("lh").sort()) {
+              const r = JSON.parse(fs.readFileSync("lh/" + f, "utf8"));
+              const path = new URL(r.finalUrl).pathname;
+              const row = Object.entries(floors).map(([k, floor]) => {
+                const s = Math.round(r.categories[k].score * 100);
+                if (s < floor) failed = true;
+                return k + " " + s + (s < floor ? " (below " + floor + ")" : "");
+              });
+              console.log(path.padEnd(60), row.join(" | "));
+            }
+            process.exit(failed ? 1 : 0);
+          '
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lighthouse-reports
+          path: lh/
