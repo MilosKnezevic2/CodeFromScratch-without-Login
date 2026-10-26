@@ -37,7 +37,7 @@
     "@vercel/speed-insights": "^2.0.0",
     "bcryptjs": "^3.0.3",
     "date-fns": "^4.1.0",
-    "dotenv": "^17.3.1",
+    "dotenv": "^18.0.9",
     "framer-motion": "^12.35.1",
     "lucide-react": "^1.60.0",
     "next": "^16.0.10",
