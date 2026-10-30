@@ -14,6 +14,13 @@ const nextConfig: NextConfig = {
   async headers() {
     return [
       {
+        // The site also answers on its vercel.app address, which would be a
+        // full duplicate in search. Only codefromscratch.org may be indexed.
+        source: "/(.*)",
+        missing: [{ type: "host", value: "codefromscratch.org" }],
+        headers: [{ key: "X-Robots-Tag", value: "noindex, nofollow" }],
+      },
+      {
         source: "/(.*)",
         headers: [
           { key: "X-Frame-Options", value: "DENY" },

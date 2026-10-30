@@ -16,8 +16,7 @@ import ThemeProvider from "../components/ThemeProvider";
 import JsonLd from "../components/seo/JsonLd";
 import { organizationJsonLd } from "../lib/seo";
 import LayoutShell from "../components/LayoutShell";
-import DraftModeIndicator from "../components/DraftModeIndicator";
-import VisualEditing from "../components/VisualEditing";
+import DraftTools from "../components/DraftTools";
 // Cookieless first-party analytics + real-user Core Web Vitals. Both load
 // from this origin (/_vercel/*), so the strict CSP needs no third-party
 // exception and no consent banner is required.
@@ -158,12 +157,7 @@ export default async function RootLayout({
               launch: the public surface sets no auth or tracking cookies, and
               essential cookies need no consent banner. Re-mount when the
               SaaS surfaces (login, payments) relaunch. */}
-          {isDraft && (
-            <>
-              <DraftModeIndicator />
-              <VisualEditing />
-            </>
-          )}
+          {isDraft && <DraftTools />}
           <Analytics />
           <SpeedInsights />
           <SiteTracker />
