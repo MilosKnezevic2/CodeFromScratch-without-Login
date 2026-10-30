@@ -1,67 +1,16 @@
-import { NextRequest, NextResponse } from "next/server";
-import { randomUUID } from "crypto";
-import { prisma } from "@/lib/prisma";
-import { getResend, getEmailFrom } from "@/lib/resend";
+import { NextResponse } from "next/server";
 
-export async function POST(request: NextRequest) {
-  try {
-    const { email, source } = await request.json();
-
-    if (!email || !source) {
-      return NextResponse.json(
-        { error: "Email and source are required" },
-        { status: 400 }
-      );
-    }
-
-    // Reuse the newsletter subscriber table with source in preferences
-    const existing = await prisma.newsletterSubscriber.findUnique({
-      where: { email },
-    });
-
-    if (existing) {
-      // Update preferences to include the interest source
-      const currentPrefs = (existing.preferences as Record<string, unknown>) || {};
-      const interests = (currentPrefs.interests as string[]) || [];
-      if (!interests.includes(source)) {
-        interests.push(source);
-      }
-
-      await prisma.newsletterSubscriber.update({
-        where: { email },
-        data: {
-          preferences: { ...currentPrefs, interests },
-        },
-      });
-    } else {
-      await prisma.newsletterSubscriber.create({
-        data: {
-          email,
-          confirmed: true,
-          unsubscribeToken: randomUUID(),
-          preferences: { interests: [source] },
-        },
-      });
-    }
-
-    // Notify admin
-    try {
-      await getResend().emails.send({
-        from: getEmailFrom(),
-        to: "office@codefromscratch.org",
-        subject: `New ebook interest: ${source}`,
-        text: `Someone signed up for ebook notifications.\n\nEmail: ${email}\nSource: ${source}`,
-      });
-    } catch {
-      // Don't fail if email fails
-    }
-
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Interest signup error:", error);
-    return NextResponse.json(
-      { error: "Failed to save interest" },
-      { status: 500 }
-    );
-  }
+/**
+ * Retired. This endpoint used to write any posted address straight into the
+ * newsletter table as already confirmed, with no consent check and no rate
+ * limit, so anyone could subscribe someone else and trigger an admin email.
+ * Sign-ups now go through double opt-in: /api/newsletter/subscribe and
+ * /api/waitlist/subscribe. The hidden ebook and course pages that still call
+ * this route will show their error state until they are rebuilt for relaunch.
+ */
+export function POST() {
+  return NextResponse.json(
+    { error: "This sign-up is closed. Use /newsletter or /course-waitlist." },
+    { status: 410 },
+  );
 }
