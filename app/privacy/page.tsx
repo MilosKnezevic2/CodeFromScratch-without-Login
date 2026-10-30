@@ -14,7 +14,7 @@ export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-extrabold text-foreground">Privacy Policy</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Last updated: October 2026</p>
+      <p className="mt-2 text-sm text-muted-foreground">Last updated: 30 October 2026</p>
 
       <div className="mt-10 space-y-8 text-sm leading-relaxed text-muted">
         <section>
@@ -52,6 +52,16 @@ export default function PrivacyPage() {
               subscription status. We first send one confirmation email and only add you to the list after you click the
               link (double opt-in). Legal basis: your consent (Art. 6(1)(a) GDPR). You can withdraw it at any time with
               the unsubscribe link in every email; unsubscribing deletes your address from our list.
+            </li>
+            <li>
+              <strong>Course waitlist.</strong> If you join the waitlist for a possible future course, we store your
+              email address, the level you pick (beginner, intermediate or advanced), an optional free-text note about
+              what you want to learn, a confirmation token and the confirmation status. We send one confirmation email
+              and add you only after you click the link (double opt-in). We use the data only to email you once when
+              the course opens and to decide what to build first. Legal basis: your consent (Art. 6(1)(a) GDPR). The
+              waitlist is separate from the newsletter: joining it does not subscribe you to the newsletter. You can
+              withdraw at any time with the link in the confirmation email; doing so deletes your entry completely.
+              The same service providers as for the newsletter (Supabase, Resend) process this data.
             </li>
             <li>
               <strong>Contact form.</strong> If you write to us, we store your name, email address, subject and message
