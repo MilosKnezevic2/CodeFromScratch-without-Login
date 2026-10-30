@@ -35,6 +35,15 @@ async function accessToken(key) {
   return body.access_token;
 }
 
+/** A bearer token for any Search Console endpoint, or exits with code 2 when the key file is missing. */
+export async function gscToken(keyPath) {
+  if (!existsSync(keyPath)) {
+    console.error("missing .secrets/gsc-key.json");
+    process.exit(2);
+  }
+  return accessToken(JSON.parse(readFileSync(keyPath, "utf8")));
+}
+
 /** Returns an authenticated API caller, or exits with code 2 when the key file is missing. */
 export async function gscApi(keyPath) {
   if (!existsSync(keyPath)) {
