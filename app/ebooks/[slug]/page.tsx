@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { requireCommerce } from "@/lib/surfaces";
 import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import PurchaseButton from "@/components/ebooks/PurchaseButton";
@@ -21,6 +22,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 }
 
 export default async function EbookPage({ params }: PageProps) {
+  await requireCommerce();
   const { slug } = await params;
   const ebook = await prisma.ebook.findUnique({ where: { slug } }).catch(() => null);
 

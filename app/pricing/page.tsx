@@ -3,6 +3,7 @@ import FadeUp from "@/components/animations/FadeUp";
 import PricingToggle from "@/components/stripe/PricingToggle";
 import JsonLd from "@/components/seo/JsonLd";
 import { faqJsonLd } from "@/lib/seo";
+import { requireCommerce } from "@/lib/surfaces";
 
 export const metadata: Metadata = {
   title: "Pricing",
@@ -36,7 +37,8 @@ const faqs = [
   },
 ];
 
-export default function PricingPage() {
+export default async function PricingPage() {
+  await requireCommerce();
   return (
     <div>
       <JsonLd data={faqJsonLd(faqs)} />

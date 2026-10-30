@@ -1,15 +1,17 @@
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import MobileSidebarDrawer from "@/components/dashboard/MobileSidebarDrawer";
+import { requireAccounts } from "@/lib/surfaces";
 
 // Every dashboard page is per-user; none may be prerendered at build time
 // (the build environment has no database).
 export const dynamic = "force-dynamic";
 
-export default function DashboardLayout({
+export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  await requireAccounts();
   return (
     <div className="min-h-screen">
       {/* Top gradient bar */}
