@@ -22,6 +22,7 @@ export default function DailyBars({
   const max = Math.max(...points.map((p) => p.value), 0);
   const total = points.reduce((sum, p) => sum + p.value, 0);
   const shown = active === null ? null : points[active];
+  const unitFor = (value: number) => (value === 1 ? unit.replace(/s$/, "") : unit);
 
   return (
     <section className="glow-border rounded-xl bg-surface p-5" aria-label={title}>
@@ -30,11 +31,11 @@ export default function DailyBars({
         <p className="min-h-5 text-sm text-muted-foreground" aria-live="polite">
           {shown ? (
             <>
-              <strong className="text-foreground">{shown.value.toLocaleString()}</strong> {unit}, {dayLabel(shown.day)}
+              <strong className="text-foreground">{shown.value.toLocaleString()}</strong> {unitFor(shown.value)}, {dayLabel(shown.day)}
             </>
           ) : (
             <>
-              <strong className="text-foreground">{total.toLocaleString()}</strong> {unit} in total
+              <strong className="text-foreground">{total.toLocaleString()}</strong> {unitFor(total)} in total
             </>
           )}
         </p>
@@ -53,7 +54,7 @@ export default function DailyBars({
                 <button
                   key={point.day}
                   type="button"
-                  aria-label={`${dayLabel(point.day)}: ${point.value} ${unit}`}
+                  aria-label={`${dayLabel(point.day)}: ${point.value} ${unitFor(point.value)}`}
                   onPointerEnter={() => setActive(index)}
                   onFocus={() => setActive(index)}
                   onBlur={() => setActive(null)}
