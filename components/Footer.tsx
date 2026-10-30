@@ -48,6 +48,21 @@ export default function Footer({
                 </Link>
               </li>
               <li>
+                <Link href="/newsletter" className="text-muted transition hover:text-accent">
+                  Newsletter
+                </Link>
+              </li>
+              <li>
+                <Link href="/production-checklist" className="text-muted transition hover:text-accent">
+                  Production checklist
+                </Link>
+              </li>
+              <li>
+                <Link href="/course-waitlist" className="text-muted transition hover:text-accent">
+                  Course waitlist
+                </Link>
+              </li>
+              <li>
                 <Link href="/contact" className="text-muted transition hover:text-accent">
                   Contact
                 </Link>
