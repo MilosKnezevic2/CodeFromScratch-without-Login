@@ -89,8 +89,12 @@ export default function NewsletterAction({
         </h1>
         <p className="mt-2 max-w-md text-muted">
           {isConfirm
-            ? "One click and the newsletter is yours — this extra step keeps bots off the list."
-            : "Press the button below and you won't receive the newsletter anymore."}
+            ? kind === "waitlist"
+              ? "One click and you are on the waitlist. This extra step keeps bots off the list."
+              : "One click and the newsletter is yours — this extra step keeps bots off the list."
+            : kind === "waitlist"
+              ? "Press the button below and your entry is deleted."
+              : "Press the button below and you won't receive the newsletter anymore."}
         </p>
         <button
           type="button"
@@ -101,8 +105,12 @@ export default function NewsletterAction({
           {state === "working"
             ? "Just a moment…"
             : isConfirm
-              ? "Confirm subscription"
-              : "Unsubscribe"}
+              ? kind === "waitlist"
+                ? "Confirm my place"
+                : "Confirm subscription"
+              : kind === "waitlist"
+                ? "Remove me"
+                : "Unsubscribe"}
         </button>
       </>
     );
