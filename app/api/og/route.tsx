@@ -3,6 +3,11 @@ import { NextRequest } from "next/server";
 
 export const runtime = "edge";
 
+// A share image never changes for a given title, and crawlers from every
+// network fetch it. A day at the edge turns each fetch into a cache hit
+// instead of a render.
+const CACHE_HEADERS = { "Cache-Control": "public, s-maxage=86400, stale-while-revalidate=604800" };
+
 // Brand display + mono, bundled with the route (extracted from the same
 // @fontsource packages the site uses). Fraunces is the masthead face;
 // Geist Mono carries the category kicker and editor-chrome variant.
@@ -190,7 +195,7 @@ export async function GET(req: NextRequest) {
           </div>
         </div>
       ),
-      { ...size, fonts },
+      { ...size, fonts, headers: CACHE_HEADERS },
     );
   }
 
@@ -271,7 +276,7 @@ export async function GET(req: NextRequest) {
           </div>
         </div>
       ),
-      { ...size, fonts },
+      { ...size, fonts, headers: CACHE_HEADERS },
     );
   }
 
@@ -341,7 +346,7 @@ export async function GET(req: NextRequest) {
           </div>
         </div>
       ),
-      { ...size, fonts },
+      { ...size, fonts, headers: CACHE_HEADERS },
     );
   }
 
@@ -415,7 +420,7 @@ export async function GET(req: NextRequest) {
           </div>
         </div>
       ),
-      { ...size, fonts },
+      { ...size, fonts, headers: CACHE_HEADERS },
     );
   }
 
@@ -503,6 +508,6 @@ export async function GET(req: NextRequest) {
         </div>
       </div>
     ),
-    { ...size, fonts },
+    { ...size, fonts, headers: CACHE_HEADERS },
   );
 }

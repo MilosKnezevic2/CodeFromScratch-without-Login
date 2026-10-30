@@ -182,7 +182,7 @@ export default async function BlogListing({
       <CommandPalette />
       <BackToTop />
 
-      <main id="latest" className="mx-auto max-w-7xl px-4 pb-32 sm:px-6 lg:px-8">
+      <div id="latest" className="mx-auto max-w-7xl px-4 pb-32 sm:px-6 lg:px-8">
         <h1 className="sr-only">
           {isFiltered ? "CodeFromScratch journal: filtered articles" : "The CodeFromScratch journal"}
         </h1>
@@ -461,7 +461,7 @@ export default async function BlogListing({
             )}
           </>
         )}
-      </main>
+      </div>
     </div>
   );
 }

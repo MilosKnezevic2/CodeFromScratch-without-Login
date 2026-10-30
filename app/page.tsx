@@ -67,20 +67,12 @@ export default async function HomePage() {
           url: SITE_URL,
           description:
             "A journal for serious web developers. Tutorials, guides, and deep dives on modern web development.",
-          potentialAction: {
-            "@type": "SearchAction",
-            target: {
-              "@type": "EntryPoint",
-              urlTemplate: `${SITE_URL}/blog/search?q={search_term_string}`,
-            },
-            "query-input": "required name=search_term_string",
-          },
         }}
       />
 
       <HomeHero featured={featured} stats={stats} />
 
-      <main className="mx-auto max-w-7xl px-4 pb-32 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 pb-32 sm:px-6 lg:px-8">
         {/* Newsletter — high-priority capture */}
         <div id="newsletter" className="mt-20 scroll-mt-24">
           <InlineNewsletterCard />
@@ -119,7 +111,7 @@ export default async function HomePage() {
             Browse the journal →
           </Link>
         </section>
-      </main>
+      </div>
 
       <MobileSubscribeBar />
     </div>

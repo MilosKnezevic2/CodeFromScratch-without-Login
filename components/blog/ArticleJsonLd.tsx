@@ -23,9 +23,10 @@ export default function ArticleJsonLd({
 }: ArticleJsonLdProps) {
   const data = {
     "@context": "https://schema.org",
-    "@type": "Article",
+    "@type": "BlogPosting",
     headline: title,
     url: `${SITE_URL}/blog/${slug}`,
+    mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE_URL}/blog/${slug}` },
     datePublished: publishedAt,
     dateModified: updatedAt || publishedAt,
     ...(excerpt && { description: excerpt }),

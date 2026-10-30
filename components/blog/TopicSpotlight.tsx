@@ -33,7 +33,7 @@ export default function TopicSpotlight({
         {visible.map((cat) => (
           <li key={cat._id} className="border-t border-border">
             <Link
-              href={`/blog?category=${cat.slug.current}`}
+              href={`/blog/category/${cat.slug.current}`}
               className="group flex items-baseline justify-between gap-4 py-4 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent"
             >
               <span

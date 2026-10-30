@@ -20,7 +20,9 @@ const api = await gscApi(join(root, ".secrets", "gsc-key.json"));
 // Search Analytics data lags about two days; end there.
 const end = new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10);
 const start = new Date(Date.now() - (days + 2) * 864e5).toISOString().slice(0, 10);
-const query = (dimensions, rowLimit = 10) =>
+// With almost no clicks the API returns rows in key order, so "top 10" was an
+// alphabetical slice. Fetch everything and rank by impressions ourselves.
+const query = (dimensions, rowLimit = 25000) =>
   api("/searchAnalytics/query", {
     method: "POST",
     body: JSON.stringify({ startDate: start, endDate: end, dimensions, rowLimit }),
@@ -40,10 +42,11 @@ const fmt = (r) =>
 console.log(`Search Console ${SITE}  ${start} to ${end} (${days} days)`);
 console.log(`TOTAL  ${fmt(t)}  ctr ${(t.ctr * 100).toFixed(1)}%\n`);
 console.log("Top queries");
-for (const r of queries.rows ?? []) console.log(`  ${fmt(r)}  ${r.keys[0]}`);
+const top = (rows) => [...(rows ?? [])].sort((a, b) => b.impressions - a.impressions).slice(0, 10);
+for (const r of top(queries.rows)) console.log(`  ${fmt(r)}  ${r.keys[0]}`);
 if (!queries.rows?.length) console.log("  (none yet)");
 console.log("\nTop pages");
-for (const r of pages.rows ?? []) console.log(`  ${fmt(r)}  ${r.keys[0].replace("https://codefromscratch.org", "")}`);
+for (const r of top(pages.rows)) console.log(`  ${fmt(r)}  ${r.keys[0].replace("https://codefromscratch.org", "")}`);
 if (!pages.rows?.length) console.log("  (none yet)");
 console.log("\nSitemaps");
 for (const s of sitemaps.sitemap ?? []) {
