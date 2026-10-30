@@ -122,6 +122,14 @@ export default function NewsletterAction({
           Try again
         </button>
       )}
+      {(state === "confirmed" || state === "already") && (
+        <Link
+          href="/production-checklist"
+          className="mt-6 rounded-lg gradient-btn px-6 py-2.5 text-sm font-medium transition"
+        >
+          Open your free Production Checklist
+        </Link>
+      )}
       <Link href="/" className="mt-6 text-sm text-accent hover:underline">
         Back to home
       </Link>
