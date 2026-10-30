@@ -80,9 +80,19 @@ export async function createAdminSession(ttlMs: number = DEFAULT_TTL_MS): Promis
 }
 
 export async function verifyAdminSession(token: string | undefined | null): Promise<boolean> {
-  if (!token || typeof token !== "string") return false;
+  return (await readAdminSession(token)) !== null;
+}
+
+/** The session's timestamps when the token is genuine and current, else null. */
+export async function readAdminSession(token: string | undefined | null): Promise<{ issuedAt: Date; expiresAt: Date } | null> {
+  const payload = await verifiedPayload(token);
+  return payload ? { issuedAt: new Date(payload.iat), expiresAt: new Date(payload.exp) } : null;
+}
+
+async function verifiedPayload(token: string | undefined | null): Promise<Payload | null> {
+  if (!token || typeof token !== "string") return null;
   const dot = token.indexOf(".");
-  if (dot <= 0 || dot === token.length - 1) return false;
+  if (dot <= 0 || dot === token.length - 1) return null;
 
   const payloadEncoded = token.slice(0, dot);
   const signatureEncoded = token.slice(dot + 1);
@@ -91,22 +101,22 @@ export async function verifyAdminSession(token: string | undefined | null): Prom
   try {
     secret = getSecret();
   } catch {
-    return false;
+    return null;
   }
 
   const expected = await sign(payloadEncoded, secret);
   const expectedBytes = new TextEncoder().encode(expected);
   const receivedBytes = new TextEncoder().encode(signatureEncoded);
-  if (!constantTimeEquals(expectedBytes, receivedBytes)) return false;
+  if (!constantTimeEquals(expectedBytes, receivedBytes)) return null;
 
   let payload: unknown;
   try {
     payload = JSON.parse(new TextDecoder().decode(base64urlDecode(payloadEncoded)));
   } catch {
-    return false;
+    return null;
   }
 
-  if (!isPayload(payload)) return false;
-  if (payload.exp <= Date.now()) return false;
-  return true;
+  if (!isPayload(payload)) return null;
+  if (payload.exp <= Date.now()) return null;
+  return payload;
 }

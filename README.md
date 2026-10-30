@@ -53,7 +53,7 @@ See `.env.example` for the full list with inline descriptions. Minimum to boot:
 | `NEXT_PUBLIC_SANITY_PROJECT_ID` + `NEXT_PUBLIC_SANITY_DATASET` | Sanity connection |
 | `STRIPE_SECRET_KEY` + `STRIPE_WEBHOOK_SECRET` + price IDs | Stripe — test keys for dev |
 | `RESEND_API_KEY` + `EMAIL_FROM` | Transactional email |
-| `CFS_ADMIN_USERNAME` + `CFS_ADMIN_PASSWORD` | Admin-portal credentials (separate from NextAuth) |
+| `CFS_ADMIN_USERNAME` + `CFS_ADMIN_PASSWORD` | Admin-portal start credentials; replaced by the database account once a password is set in Settings > Security |
 
 OAuth providers (`GOOGLE_CLIENT_ID`, `GITHUB_ID`, etc.) are optional — credentials-based login works without them.
 

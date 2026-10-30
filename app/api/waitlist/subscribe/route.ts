@@ -6,6 +6,7 @@ import { WaitlistConfirmEmail } from "@/lib/emails/waitlist-confirm";
 import { AlreadySubscribedEmail } from "@/lib/emails/already-subscribed";
 import { rateLimit } from "@/lib/rate-limit";
 import { WAITLIST_NOTE_MAX, isWaitlistLevel } from "@/lib/course-waitlist";
+import { getSettings } from "@/lib/settings/store";
 
 // One neutral reply for every valid address, so nobody can probe who is on
 // the list.
@@ -27,6 +28,10 @@ export async function POST(request: Request) {
     const honeypot = (body.honeypot ?? "").toString().trim();
     if (honeypot) {
       return NextResponse.json({ message: NEUTRAL_MESSAGE });
+    }
+
+    if (!(await getSettings()).features.courseWaitlistOpen) {
+      return NextResponse.json({ error: "The waitlist is closed for now." }, { status: 403 });
     }
 
     if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {

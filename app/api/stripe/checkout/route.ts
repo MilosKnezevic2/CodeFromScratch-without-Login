@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { stripe } from "@/lib/stripe";
 import { getOrCreateStripeCustomer } from "@/lib/stripe-helpers";
+import { getSettings } from "@/lib/settings/store";
 
 export async function POST(request: Request) {
   try {
@@ -10,6 +11,9 @@ export async function POST(request: Request) {
         { error: "Stripe is not configured" },
         { status: 503 }
       );
+    }
+    if (!(await getSettings()).payments.enabled) {
+      return NextResponse.json({ error: "Payments are not open yet." }, { status: 503 });
     }
 
     const session = await auth();

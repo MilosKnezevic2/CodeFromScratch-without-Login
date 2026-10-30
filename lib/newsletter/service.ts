@@ -2,13 +2,14 @@ import { prisma } from "@/lib/prisma";
 import { getEmailFrom, getResend } from "@/lib/resend";
 import { sendEmail } from "@/lib/send-email";
 import {
-  REPLY_TO,
   SITE_URL,
   renderLetter,
   renderLetterText,
   type LetterCard,
   type LetterContent,
+  type LetterIdentity,
 } from "@/lib/emails/newsletter-letter";
+import { getSettings } from "@/lib/settings/store";
 import { getPostBySlug } from "@/lib/sanity/queries";
 import { urlFor } from "@/lib/sanity/image";
 import type { LetterInput } from "@/lib/newsletter/input";
@@ -18,6 +19,16 @@ export const SEND_BATCH_SIZE = 100;
 
 /** Unconfirmed sign-ups are personal data with no consent behind them. */
 export const PENDING_RETENTION_DAYS = 30;
+
+/** Sender name, reply address and footer identity, as set in the portal. */
+export async function letterSender(): Promise<{ from: string; replyTo: string; identity: LetterIdentity }> {
+  const { general, newsletter } = await getSettings();
+  return {
+    from: getEmailFrom(newsletter.senderName),
+    replyTo: newsletter.replyTo,
+    identity: { siteName: general.siteName, ownerName: general.ownerName, ownerCity: general.ownerCity, replyTo: newsletter.replyTo },
+  };
+}
 
 export function unsubscribeLinks(token: string) {
   const site = SITE_URL();
@@ -79,7 +90,7 @@ export async function sendLetterToRecipients(
   campaignId: string,
 ): Promise<{ sent: number; failed: number }> {
   const resend = getResend();
-  const from = getEmailFrom();
+  const { from, replyTo, identity } = await letterSender();
   let sent = 0;
   let failed = 0;
 
@@ -90,10 +101,10 @@ export async function sendLetterToRecipients(
       return {
         from,
         to: recipient.email,
-        replyTo: REPLY_TO,
+        replyTo,
         subject: content.subject,
-        html: renderLetter(content, page),
-        text: renderLetterText(content, page),
+        html: renderLetter(content, page, identity),
+        text: renderLetterText(content, page, identity),
         headers: unsubscribeHeaders(recipient.unsubscribeToken),
       };
     });
@@ -129,13 +140,15 @@ export async function sendLetterToRecipients(
 /** One letter to one person, with their real unsubscribe link and headers. */
 export async function sendLetterToOne(content: LetterContent, recipient: LetterRecipient) {
   const { page } = unsubscribeLinks(recipient.unsubscribeToken);
+  const { from, replyTo, identity } = await letterSender();
   await sendEmail({
+    from,
     to: recipient.email,
     subject: content.subject,
-    html: renderLetter(content, page),
-    text: renderLetterText(content, page),
+    html: renderLetter(content, page, identity),
+    text: renderLetterText(content, page, identity),
     headers: unsubscribeHeaders(recipient.unsubscribeToken),
-    replyTo: REPLY_TO,
+    replyTo,
   });
 }
 
@@ -158,7 +171,8 @@ export function welcomeLetter(): LetterContent {
 
 /** Deletes sign-ups nobody confirmed. Their consent window closed long ago. */
 export async function purgeExpiredPending(now = new Date()): Promise<number> {
-  const cutoff = new Date(now.getTime() - PENDING_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+  const days = Math.min((await getSettings()).newsletter.pendingRetentionDays, PENDING_RETENTION_DAYS);
+  const cutoff = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
   const { count } = await prisma.newsletterSubscriber.deleteMany({
     where: { confirmed: false, updatedAt: { lt: cutoff } },
   });

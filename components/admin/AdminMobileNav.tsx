@@ -4,6 +4,7 @@ import { useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import SignOutButton from "./SignOutButton";
 
 const links = [
   { href: "/portal-cfs-admin", label: "Overview" },
@@ -54,10 +55,11 @@ export default function AdminMobileNav() {
             );
           })}
         </nav>
-        <div className="mt-6 border-t border-border pt-4">
-          <Link href="/" className="text-xs text-muted-foreground hover:text-foreground transition">
+        <div className="mt-6 flex items-center justify-between border-t border-border pt-4">
+          <Link href="/" className="inline-flex min-h-11 items-center text-xs text-muted-foreground hover:text-foreground transition">
             Back to site
           </Link>
+          <SignOutButton className="inline-flex min-h-11 items-center text-xs text-muted-foreground hover:text-foreground transition" />
         </div>
       </div>
     </>,

@@ -32,6 +32,8 @@ import PostSignoff from "@/components/blog/PostSignoff";
 import FadeUp from "@/components/animations/FadeUp";
 
 import NewsletterCTA from "@/components/newsletter/NewsletterCTA";
+import Comments from "@/components/blog/Comments";
+import { getSettings } from "@/lib/settings/store";
 
 // User-account features (saves, reactions, reading tracker, view counter,
 // comments, premium gate, floating save rail) are hidden during the
@@ -112,6 +114,7 @@ export async function generateMetadata({
 }
 
 export default async function PostPage({ params }: PageProps) {
+  const { features } = await getSettings();
   const { slug } = await params;
   const post = await getPostBySlug(slug);
 
@@ -384,12 +387,17 @@ export default async function PostPage({ params }: PageProps) {
                 </div>
               )}
 
-              {/* Newsletter CTA */}
-              <div className="mt-12">
-                <NewsletterCTA />
-              </div>
-
-              {/* Comments hidden during launch (DB-dependent). */}
+              {/* Newsletter CTA and comments: switched in the portal (Settings, Features). */}
+              {features.articleNewsletterCard && (
+                <div className="mt-12">
+                  <NewsletterCTA />
+                </div>
+              )}
+              {features.commentsEnabled && (
+                <div className="mt-12">
+                  <Comments />
+                </div>
+              )}
 
               {/* Prev/next */}
               <PostNavigation prev={prev} next={next} />

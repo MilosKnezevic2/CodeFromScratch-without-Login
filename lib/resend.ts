@@ -20,10 +20,16 @@ export function getResend(): Resend {
   return client;
 }
 
-export function getEmailFrom(): string {
+/**
+ * The verified sender. The address is fixed by the environment; the display
+ * name can be replaced with the one set in the portal.
+ */
+export function getEmailFrom(displayName?: string): string {
   const from = process.env.EMAIL_FROM;
   if (!from) {
     throw new Error("EMAIL_FROM is not set — configure the verified sender address (e.g. \"CodeFromScratch <hello@codefromscratch.org>\").");
   }
-  return from;
+  if (!displayName) return from;
+  const address = /<([^>]+)>/.exec(from)?.[1] ?? from;
+  return `${displayName.replace(/["<>]/g, "").trim()} <${address}>`;
 }

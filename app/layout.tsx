@@ -24,6 +24,9 @@ import VisualEditing from "../components/VisualEditing";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import SiteTracker from "@/components/analytics/SiteTracker";
+import AnnouncementBanner from "@/components/AnnouncementBanner";
+import Footer from "@/components/Footer";
+import { getSettings } from "@/lib/settings/store";
 
 // next/font self-hosts the files (no request to Google at runtime) and emits
 // a size-adjusted fallback face, so the swap from system font to Sen does not
@@ -39,29 +42,36 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
 });
 
-export const metadata: Metadata = {
-  title: {
-    default: "CodeFromScratch",
-    template: "%s | CodeFromScratch",
-  },
-  description: "A journal for serious web developers — tutorials, guides, and deep dives on modern web development, with production-grade code you can read in your own repo.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://codefromscratch.org"),
-  openGraph: {
-    siteName: "CodeFromScratch",
-    type: "website",
-    images: [
-      {
-        url: "/brand/og-default.png",
-        width: 1200,
-        height: 630,
-        alt: "CodeFromScratch",
-      },
-    ],
-  },
-  twitter: {
-    card: "summary_large_image",
-    images: ["/brand/og-default.png"],
-  },
+/** Site-wide metadata. The name, description and share image are set in the portal. */
+export async function generateMetadata(): Promise<Metadata> {
+  const { general, seo } = await getSettings();
+  const verification = seo.googleVerification || process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION;
+  return {
+    title: {
+      default: general.siteName,
+      template: `%s | ${general.siteName}`,
+    },
+    description: seo.defaultDescription,
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL || "https://codefromscratch.org"),
+    openGraph: {
+      siteName: general.siteName,
+      type: "website",
+      images: [{ url: seo.ogImageUrl, width: 1200, height: 630, alt: general.siteName }],
+    },
+    twitter: {
+      card: "summary_large_image",
+      images: [seo.ogImageUrl],
+      ...(seo.xHandle ? { site: seo.xHandle.startsWith("@") ? seo.xHandle : `@${seo.xHandle}` } : {}),
+    },
+    ...STATIC_METADATA,
+    // Search Console ownership proof without touching DNS: paste the
+    // content="..." value in the portal (SEO tab) or the env var. The tag
+    // renders only while one of them is set.
+    ...(verification && { verification: { google: verification } }),
+  };
+}
+
+const STATIC_METADATA: Metadata = {
   icons: {
     // Order matters — browsers pick the first compatible match.
     icon: [
@@ -86,13 +96,6 @@ export const metadata: Metadata = {
     ],
   },
   manifest: "/site.webmanifest",
-  // Search Console ownership proof without touching DNS: create a
-  // "URL prefix" property in GSC, pick the "HTML tag" method, and paste
-  // the content="..." value into this env var on Vercel. The tag renders
-  // only while the variable is set.
-  ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION && {
-    verification: { google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION },
-  }),
 };
 
 // themeColor lives on the viewport export in Next 13.4+ — controls the
@@ -110,6 +113,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   const { isEnabled: isDraft } = await draftMode();
+  const { general, features } = await getSettings();
 
   return (
     <html
@@ -135,7 +139,17 @@ export default async function RootLayout({
         <SessionProvider>
         <SavedPostsProvider>
           <div className="min-h-screen flex flex-col">
-            <LayoutShell>
+            <LayoutShell
+              banner={<AnnouncementBanner announcement={general.announcement} />}
+              footer={
+                <Footer
+                  siteName={general.siteName}
+                  tagline={general.tagline}
+                  contactEmail={general.contactEmail}
+                  social={features.showSocialLinks ? general.social : null}
+                />
+              }
+            >
               {children}
             </LayoutShell>
           </div>

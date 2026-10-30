@@ -240,6 +240,42 @@ model ContactSubmission {
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 
+/// One JSON document per settings section, edited from the admin portal.
+model SiteSetting {
+  key       String   @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}
+
+/// The single administrator account. Takes over from the environment
+/// credentials once the operator sets a password of their own.
+model AdminAccount {
+  id                String    @id @default("admin")
+  username          String
+  passwordHash      String
+  passwordChangedAt DateTime  @default(now())
+  mfaSecret         String?
+  mfaPendingSecret  String?
+  mfaBackupCodes    String[]  @default([])
+  mfaEnabledAt      DateTime?
+  failedLogins      Int       @default(0)
+  lockedUntil       DateTime?
+  lastLoginAt       DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+}
+
+/// What the administrator did in the portal, and every login attempt.
+model AdminAuditLog {
+  id        String   @id @default(cuid())
+  action    String
+  detail    Json?
+  ip        String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 /// Daily totals from the site's own anonymous counting. One row per day, metric
 /// and key; nothing in here identifies or connects visitors.
 model AnalyticsCounter {
