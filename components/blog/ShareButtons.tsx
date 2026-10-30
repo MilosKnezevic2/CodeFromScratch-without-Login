@@ -5,7 +5,9 @@ import { useState } from "react";
 export default function ShareButtons({ title, slug }: { title: string; slug: string }) {
   const [copied, setCopied] = useState(false);
 
-  const baseUrl = typeof window !== "undefined" ? window.location.origin : (process.env.NEXT_PUBLIC_SITE_URL || "https://codefromscratch.org");
+  // Same value on server and client: reading window.location here made the
+  // first client render differ from the server HTML (hydration mismatch).
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://codefromscratch.org";
   const url = `${baseUrl}/blog/${slug}`;
   const utmUrl = (platform: string) =>
     `${url}?utm_source=share&utm_medium=${platform}&utm_campaign=blog_post`;
