@@ -18,8 +18,8 @@ import { POST } from "./route";
 const BROWSER = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/120.0 Safari/537.36";
 const view = { type: "view", path: "/", entry: true, referrer: "www.google.com" };
 
-function request(body: unknown, headers: Record<string, string> = {}) {
-  return new Request("https://codefromscratch.org/api/analytics/collect", {
+function request(body: unknown, headers: Record<string, string> = {}, origin = "https://codefromscratch.org") {
+  return new Request(`${origin}/api/analytics/collect`, {
     method: "POST",
     body: typeof body === "string" ? body : JSON.stringify(body),
     headers: {
@@ -76,6 +76,11 @@ describe("POST /api/analytics/collect", () => {
     const res = await POST(request(view, headers));
     expect(res.status).toBe(204);
     expect(increment).not.toHaveBeenCalled();
+  });
+
+  it("counts readers on the www address", async () => {
+    await POST(request(view, { origin: "https://www.codefromscratch.org" }, "https://www.codefromscratch.org"));
+    expect(increment).toHaveBeenCalledTimes(1);
   });
 
   it("ignores preview deployments", async () => {
