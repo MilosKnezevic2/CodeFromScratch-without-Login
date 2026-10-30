@@ -2,13 +2,14 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getResend, getEmailFrom } from "@/lib/resend";
 import { NewsletterConfirmEmail } from "@/lib/emails/newsletter-confirm";
+import { AlreadySubscribedEmail } from "@/lib/emails/already-subscribed";
 import { rateLimit } from "@/lib/rate-limit";
 import crypto from "crypto";
 
 // One neutral reply for every valid address — new, pending, or already
 // subscribed. Distinct replies would let anyone probe who is on the list.
 const NEUTRAL_MESSAGE =
-  "Check your inbox — if this address isn't already subscribed, a confirmation email is on its way.";
+  "Check your inbox. You will get one email either way: a confirmation link, or a note that you are already subscribed. If it does not arrive within a few minutes, look in your spam folder.";
 
 export async function POST(request: Request) {
   try {
@@ -35,8 +36,20 @@ export async function POST(request: Request) {
       where: { email },
     });
 
+    const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+
     if (existing?.confirmed) {
-      // Already on the list — same reply, no email, no information leaked.
+      // Already on the list: the page reply stays identical, and the owner of
+      // the address is told by email instead of getting silence.
+      await getResend().emails.send({
+        from: getEmailFrom(),
+        to: email,
+        subject: "You are already subscribed",
+        html: AlreadySubscribedEmail({
+          what: "the CodeFromScratch newsletter",
+          unsubscribeUrl: `${origin}/newsletter/unsubscribe?token=${existing.unsubscribeToken}`,
+        }),
+      });
       return NextResponse.json({ message: NEUTRAL_MESSAGE });
     }
 
@@ -60,7 +73,6 @@ export async function POST(request: Request) {
       },
     });
 
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
     const confirmUrl = `${origin}/newsletter/confirm?token=${rawConfirmToken}`;
 
     await getResend().emails.send({
