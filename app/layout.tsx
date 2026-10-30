@@ -55,8 +55,11 @@ export async function generateMetadata(): Promise<Metadata> {
     openGraph: {
       siteName: general.siteName,
       type: "website",
+      locale: "en_US",
       images: [{ url: seo.ogImageUrl, width: 1200, height: 630, alt: general.siteName }],
     },
+    // Lets Google show the full share image in results and discover feeds.
+    robots: { index: true, follow: true, "max-image-preview": "large", "max-snippet": -1, "max-video-preview": -1 },
     twitter: {
       card: "summary_large_image",
       images: [seo.ogImageUrl],

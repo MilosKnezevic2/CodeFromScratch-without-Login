@@ -34,6 +34,8 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
       description: LISTING_DESCRIPTION,
       url: `${SITE_URL}/blog/page/${page}`,
       type: "website",
+      siteName: "CodeFromScratch",
+      locale: "en_US",
       images: [{ url: `${SITE_URL}/brand/og-default.png`, width: 1200, height: 630 }],
     },
     alternates: { canonical: `${SITE_URL}/blog/page/${page}` },

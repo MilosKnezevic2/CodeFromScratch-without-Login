@@ -42,7 +42,7 @@ export default function BlogLoading() {
         </div>
       </section>
 
-      <main className="mx-auto max-w-7xl px-4 pb-32 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 pb-32 sm:px-6 lg:px-8">
         {/* Toolbar */}
         <div className="mt-10 border-y border-border py-4">
           <div className="h-6 w-full animate-pulse bg-surface-2" />
@@ -139,7 +139,7 @@ export default function BlogLoading() {
             </div>
           ))}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

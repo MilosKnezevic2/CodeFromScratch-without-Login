@@ -32,12 +32,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
   const tag = tags.find((t) => t.slug.current === slug);
   if (!tag) return { title: "Tag not found" };
+  const { posts } = await getPostsByTag(slug);
+  if (posts.length === 0) return { title: "Tag not found", robots: { index: false } };
   return {
     // Bare title — the root layout template appends "| CodeFromScratch";
     // the tag's real title, not the raw slug.
     title: `#${tag.title}`,
     description: `Browse all articles tagged with #${tag.title}.`,
     alternates: { canonical: `${SITE_URL}/blog/tag/${slug}` },
+    openGraph: { url: `${SITE_URL}/blog/tag/${slug}` },
+    // One or two articles is a thin page; let Google follow the links, not index it.
+    ...(posts.length <= 2 && { robots: { index: false, follow: true } }),
   };
 }
 
@@ -49,6 +54,8 @@ export default async function TagPage({ params }: PageProps) {
   // reads as a soft-404 and invites unlimited thin URLs into the index.
   if (!tag) notFound();
   const { posts } = await getPostsByTag(slug);
+  // 86 of 101 tags had no posts and answered 200: soft 404s that Google indexed.
+  if (posts.length === 0) notFound();
 
   return (
     <div>

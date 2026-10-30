@@ -1,4 +1,4 @@
-import { getPostsByCategory, getCategories } from "@/lib/sanity/queries";
+import { getPostsByCategory, getCategories, getCategoriesWithCounts } from "@/lib/sanity/queries";
 import Link from "next/link";
 import Image from "next/image";
 import type { Metadata } from "next";
@@ -15,10 +15,11 @@ type PageProps = { params: Promise<{ slug: string }> };
 // of streaming the skeleton first (see app/blog/(listing)/README.md).
 export const revalidate = 60;
 
+/** Only categories that hold articles; an empty one is a 404, not a page. */
 export async function generateStaticParams() {
   try {
-    const categories = await getCategories();
-    return categories.map((c) => ({ slug: c.slug.current }));
+    const categories = await getCategoriesWithCounts();
+    return categories.filter((c) => c.postCount > 0).map((c) => ({ slug: c.slug.current }));
   } catch {
     // Sanity unreachable at build time: render on demand instead.
     return [];
@@ -37,11 +38,16 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   }
   const category = categories.find((c) => c.slug.current === slug);
   if (!category) return { title: "Category not found" };
+  const { posts } = await getPostsByCategory(slug);
+  if (posts.length === 0) return { title: "Category not found", robots: { index: false } };
   return {
     // Bare title — the root layout template appends "| CodeFromScratch".
     title: category.title,
     description: category.description || `Browse all ${category.title} articles.`,
     alternates: { canonical: `${SITE_URL}/blog/category/${slug}` },
+    openGraph: { url: `${SITE_URL}/blog/category/${slug}` },
+    // One or two articles is a thin page; let Google follow the links, not index it.
+    ...(posts.length <= 2 && { robots: { index: false, follow: true } }),
   };
 }
 
@@ -53,6 +59,8 @@ export default async function CategoryPage({ params }: PageProps) {
   // reads as a soft-404 and invites unlimited thin URLs into the index.
   if (!category) notFound();
   const { posts } = await getPostsByCategory(slug);
+  // An empty category with HTTP 200 is a soft 404 that invites thin URLs into the index.
+  if (posts.length === 0) notFound();
 
   return (
     <div>

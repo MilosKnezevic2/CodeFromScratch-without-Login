@@ -90,6 +90,9 @@ export async function generateMetadata({
     openGraph: {
       title: post.seoTitle || post.title,
       description: post.seoDescription || post.excerpt,
+      url: `${SITE_URL}/blog/${slug}`,
+      siteName: "CodeFromScratch",
+      locale: "en_US",
       type: "article",
       publishedTime: post.publishedAt,
       modifiedTime: post._updatedAt || post.publishedAt,
@@ -167,7 +170,7 @@ export default async function PostPage({ params }: PageProps) {
       <JsonLd
         data={breadcrumbJsonLd([
           { name: "Home", url: SITE_URL },
-          { name: "Blog", url: `${SITE_URL}/blog` },
+          { name: "Journal", url: `${SITE_URL}/blog` },
           ...(post.categories?.[0]
             ? [
                 {
