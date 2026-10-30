@@ -7,7 +7,14 @@ const prismaMock = vi.hoisted(() => ({
     update: vi.fn(),
   },
 }));
+const sendMock = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/prisma", () => ({ prisma: prismaMock }));
+vi.mock("@/lib/resend", () => ({
+  getResend: () => ({ emails: { send: sendMock } }),
+  getEmailFrom: () => "CodeFromScratch <hello@codefromscratch.org>",
+}));
+vi.mock("@/lib/sanity/queries", () => ({ getPostBySlug: vi.fn() }));
+vi.mock("@/lib/sanity/image", () => ({ urlFor: vi.fn() }));
 
 import { GET, POST } from "./route";
 
@@ -28,6 +35,7 @@ function subscriber(overrides: Record<string, unknown> = {}) {
     email: "reader@example.com",
     confirmed: false,
     confirmToken: HASHED,
+    unsubscribeToken: "unsub-1",
     updatedAt: new Date(),
     ...overrides,
   };
@@ -50,6 +58,8 @@ describe("POST /api/newsletter/confirm", () => {
   beforeEach(() => {
     prismaMock.newsletterSubscriber.findFirst.mockReset();
     prismaMock.newsletterSubscriber.update.mockReset();
+    sendMock.mockReset();
+    sendMock.mockResolvedValue({ data: { id: "m1" }, error: null });
   });
 
   it("rejects a missing token", async () => {
@@ -73,8 +83,37 @@ describe("POST /api/newsletter/confirm", () => {
     expect((await res.json()).status).toBe("confirmed");
     expect(prismaMock.newsletterSubscriber.update).toHaveBeenCalledWith({
       where: { id: "sub_1" },
-      data: { confirmed: true },
+      data: { confirmed: true, confirmedAt: expect.any(Date) },
     });
+  });
+
+  it("sends the welcome letter once, with the checklist and a real unsubscribe link", async () => {
+    prismaMock.newsletterSubscriber.findFirst.mockResolvedValue(subscriber());
+    prismaMock.newsletterSubscriber.update.mockResolvedValue({});
+    await POST(post(RAW_TOKEN));
+
+    expect(sendMock).toHaveBeenCalledTimes(1);
+    const mail = sendMock.mock.calls[0]![0];
+    expect(mail.to).toBe("reader@example.com");
+    expect(mail.html).toContain("/production-checklist");
+    expect(mail.html).toContain("/newsletter/unsubscribe?token=unsub-1");
+    expect(mail.headers["List-Unsubscribe"]).toContain("/api/newsletter/unsubscribe?token=unsub-1");
+    expect(mail.headers["List-Unsubscribe-Post"]).toBe("List-Unsubscribe=One-Click");
+  });
+
+  it("keeps the subscription when the welcome letter fails", async () => {
+    prismaMock.newsletterSubscriber.findFirst.mockResolvedValue(subscriber());
+    prismaMock.newsletterSubscriber.update.mockResolvedValue({});
+    sendMock.mockResolvedValue({ data: null, error: { name: "quota", message: "over" } });
+    const res = await POST(post(RAW_TOKEN));
+    expect((await res.json()).status).toBe("confirmed");
+    expect(prismaMock.newsletterSubscriber.update).toHaveBeenCalled();
+  });
+
+  it("does not send the welcome letter again on a repeat click", async () => {
+    prismaMock.newsletterSubscriber.findFirst.mockResolvedValue(subscriber({ confirmed: true }));
+    expect((await (await POST(post(RAW_TOKEN))).json()).status).toBe("already");
+    expect(sendMock).not.toHaveBeenCalled();
   });
 
   it("is idempotent: a second click reports already-confirmed, not an error", async () => {

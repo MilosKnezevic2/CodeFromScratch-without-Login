@@ -6,6 +6,7 @@ export default function SubscribeForm() {
   const [email, setEmail] = useState("");
   const [honeypot, setHoneypot] = useState("");
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [message, setMessage] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -17,60 +18,71 @@ export default function SubscribeForm() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, honeypot }),
       });
+      const body = (await res.json().catch(() => null)) as {
+        message?: string;
+        error?: string;
+      } | null;
 
       if (res.ok) {
+        setMessage(body?.message ?? "Check your inbox.");
         setStatus("success");
         setEmail("");
       } else {
+        setMessage(body?.error ?? "Something went wrong. Try again.");
         setStatus("error");
       }
     } catch {
+      setMessage("Network error. Try again.");
       setStatus("error");
     }
   }
 
   if (status === "success") {
     return (
-      <p className="text-sm text-emerald-400">
-        Check your email to confirm your subscription!
+      <p role="status" className="text-sm text-emerald-400">
+        {message}
       </p>
     );
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex gap-2">
-      {/* Honeypot — invisible to humans, bots fill it and get a fake success. */}
-      <input
-        type="text"
-        name="website"
-        value={honeypot}
-        onChange={(e) => setHoneypot(e.target.value)}
-        tabIndex={-1}
-        autoComplete="off"
-        aria-hidden="true"
-        className="absolute -left-[9999px] h-0 w-0 opacity-0"
-      />
-      <input
-        type="email"
-        value={email}
-        onChange={(e) => setEmail(e.target.value)}
-        placeholder="your@email.com"
-        aria-label="Email address"
-        required
-        autoComplete="email"
-        className="w-0 min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-base text-foreground placeholder-muted-foreground focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
-        suppressHydrationWarning
-      />
-      <button
-        type="submit"
-        disabled={status === "loading"}
-        className="rounded-lg gradient-btn px-4 py-2 text-sm font-medium transition disabled:opacity-50"
-        suppressHydrationWarning
-      >
-        {status === "loading" ? "..." : "Subscribe"}
-      </button>
+    <form onSubmit={handleSubmit}>
+      <div className="flex gap-2">
+        {/* Honeypot — invisible to humans, bots fill it and get a fake success. */}
+        <input
+          type="text"
+          name="website"
+          value={honeypot}
+          onChange={(e) => setHoneypot(e.target.value)}
+          tabIndex={-1}
+          autoComplete="off"
+          aria-hidden="true"
+          className="absolute -left-[9999px] h-0 w-0 opacity-0"
+        />
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="your@email.com"
+          aria-label="Email address"
+          required
+          autoComplete="email"
+          className="w-0 min-w-0 flex-1 rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-base text-foreground placeholder-muted-foreground focus:border-accent focus:ring-1 focus:ring-accent focus:outline-none"
+          suppressHydrationWarning
+        />
+        <button
+          type="submit"
+          disabled={status === "loading"}
+          className="rounded-lg gradient-btn px-4 py-2 text-sm font-medium transition disabled:opacity-50"
+          suppressHydrationWarning
+        >
+          {status === "loading" ? "..." : "Subscribe"}
+        </button>
+      </div>
       {status === "error" && (
-        <p className="text-xs text-red-400">Something went wrong</p>
+        <p role="alert" className="mt-2 text-xs text-red-400">
+          {message}
+        </p>
       )}
     </form>
   );

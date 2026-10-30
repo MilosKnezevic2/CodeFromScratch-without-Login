@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { isAdminRequest } from "@/lib/admin-guard";
 import { prisma } from "@/lib/prisma";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
 export async function PATCH(_request: Request, { params }: RouteContext) {
-  const session = await auth();
-  if (session?.user?.role !== "ADMIN") {
+  if (!(await isAdminRequest())) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
 

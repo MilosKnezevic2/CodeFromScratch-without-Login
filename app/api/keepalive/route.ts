@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { purgeExpiredPending } from "@/lib/newsletter/service";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,8 @@ export const dynamic = "force-dynamic";
  *
  * When CRON_SECRET is set, Vercel sends it as a bearer token and we reject
  * everything else; without it the route is open but harmless (no data out,
- * rate of one row read).
+ * rate of one row read). The same daily run deletes newsletter sign-ups that
+ * were never confirmed (retention promised in the privacy policy).
  */
 export async function GET(request: NextRequest) {
   const secret = process.env.CRON_SECRET;
@@ -24,8 +26,9 @@ export async function GET(request: NextRequest) {
 
   try {
     await prisma.$queryRaw`SELECT 1`;
+    const purgedPending = await purgeExpiredPending();
     return NextResponse.json(
-      { status: "ok", database: "awake", time: new Date().toISOString() },
+      { status: "ok", database: "awake", purgedPending, time: new Date().toISOString() },
       { headers: { "Cache-Control": "no-store" } },
     );
   } catch {

@@ -9,6 +9,7 @@ export default function InlineNewsletterCard() {
     "idle" | "loading" | "success" | "error"
   >("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -21,6 +22,10 @@ export default function InlineNewsletterCard() {
         body: JSON.stringify({ email, honeypot }),
       });
       if (res.ok) {
+        const body = (await res.json().catch(() => null)) as {
+          message?: string;
+        } | null;
+        setSuccessMessage(body?.message ?? "Check your inbox.");
         setStatus("success");
         setEmail("");
       } else {
@@ -114,19 +119,19 @@ export default function InlineNewsletterCard() {
               {status === "loading"
                 ? "Subscribing…"
                 : status === "success"
-                  ? "Subscribed ✓"
+                  ? "Sent ✓"
                   : "Subscribe →"}
             </button>
           </div>
           <p className="editorial-meta mt-4 text-muted-foreground/70">
-            No spam · Free · Unsubscribe in one click
+            No spam · No tracking · Unsubscribe in one click
           </p>
           {status === "success" && (
             <p
               role="status"
               className="mt-3 text-xs font-medium text-emerald-400"
             >
-              Check your inbox to confirm — that&rsquo;s the last step.
+              {successMessage}
             </p>
           )}
           {status === "error" && errorMessage && (

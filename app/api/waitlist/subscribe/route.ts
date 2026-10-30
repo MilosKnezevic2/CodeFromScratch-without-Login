@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
-import { getResend, getEmailFrom } from "@/lib/resend";
+import { sendEmail } from "@/lib/send-email";
 import { WaitlistConfirmEmail } from "@/lib/emails/waitlist-confirm";
 import { AlreadySubscribedEmail } from "@/lib/emails/already-subscribed";
 import { rateLimit } from "@/lib/rate-limit";
@@ -42,8 +42,7 @@ export async function POST(request: Request) {
     const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
 
     if (existing?.confirmed) {
-      await getResend().emails.send({
-        from: getEmailFrom(),
+      await sendEmail({
         to: email,
         subject: "You are already on the course waitlist",
         html: AlreadySubscribedEmail({
@@ -72,8 +71,7 @@ export async function POST(request: Request) {
       },
     });
 
-    await getResend().emails.send({
-      from: getEmailFrom(),
+    await sendEmail({
       to: email,
       subject: "Confirm your place on the course waitlist",
       html: WaitlistConfirmEmail({
@@ -85,6 +83,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: NEUTRAL_MESSAGE });
   } catch (error) {
     console.error("Waitlist subscribe error:", error);
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Something went wrong. Please try again in a few minutes." },
+      { status: 500 },
+    );
   }
 }
