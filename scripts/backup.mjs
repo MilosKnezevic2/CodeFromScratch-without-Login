@@ -50,6 +50,14 @@ for (const old of exports.slice(0, Math.max(0, exports.length - KEEP))) rmSync(j
 rmSync(join(backup, "content-drafts"), { recursive: true, force: true });
 cpSync(join(root, "content-drafts"), join(backup, "content-drafts"), { recursive: true });
 
+// The database has no backup of its own on the free tier; the encrypted dump
+// goes into the same private repository (see scripts/backup-db.mjs).
+try {
+  console.log(execFileSync(process.execPath, [join(root, "scripts", "backup-db.mjs")], { cwd: root, encoding: "utf8" }).trim());
+} catch (error) {
+  console.error(`database backup failed, continuing with the rest: ${error.message}`);
+}
+
 const git = (...args) => execFileSync("git", args, { cwd: brain, encoding: "utf8" }).trim();
 git("add", "-A");
 if (git("status", "--porcelain") === "") {
