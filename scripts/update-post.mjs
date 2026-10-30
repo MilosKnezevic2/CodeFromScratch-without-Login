@@ -80,6 +80,8 @@ const patch = {
   seoDescription: draft.excerpt,
   seoTitle: draft.seoTitle ?? existing.seoTitle,
   content,
+  // A rewrite is the one change that should move the visible and crawled "updated" date.
+  contentUpdatedAt: new Date().toISOString(),
 };
 console.log(`${APPLY ? "APPLY" : "DRY RUN"} ${slug}`);
 console.log(`  title: ${existing.title}  ->  ${draft.title}`);

@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
-import { sendAnalytics } from "@/lib/analytics/client";
+import { flushAnalytics, queueAnalytics, sendAnalytics } from "@/lib/analytics/client";
 
 const ENGAGED_AFTER_MS = 30_000;
 const ARTICLE_PATH = /^\/blog\/[^/]+$/;
@@ -43,6 +43,10 @@ function articleDepth(): number {
  * Counts page views, whether a reader stayed, and how far they read. It keeps
  * no state beyond the current page and writes nothing to the device, so two
  * visits by one person cannot be connected.
+ *
+ * The view is sent at once; staying, reading depth and time are queued and
+ * leave together when the page is hidden or left, so one read costs the
+ * database one or two writes instead of five.
  */
 export default function SiteTracker() {
   const pathname = usePathname();
@@ -80,16 +84,17 @@ export default function SiteTracker() {
       settle();
       const seconds = Math.round(unsentMs / 1000);
       if (seconds >= 1) {
-        sendAnalytics({ type: "time", path, seconds });
+        queueAnalytics({ type: "time", path, seconds });
         unsentMs = 0;
       }
+      flushAnalytics();
     };
 
     const engagedTimer = window.setInterval(() => {
       settle();
       if (!engaged && totalMs >= ENGAGED_AFTER_MS) {
         engaged = true;
-        sendAnalytics({ type: "milestone", path, name: "engaged" });
+        queueAnalytics({ type: "milestone", path, name: "engaged" });
         window.clearInterval(engagedTimer);
       }
     }, 2000);
@@ -109,11 +114,11 @@ export default function SiteTracker() {
       const depth = articleDepth();
       if (!reachedHalf && depth >= 0.5) {
         reachedHalf = true;
-        sendAnalytics({ type: "milestone", path, name: "read50" });
+        queueAnalytics({ type: "milestone", path, name: "read50" });
       }
       if (!reachedEnd && depth >= 0.9) {
         reachedEnd = true;
-        sendAnalytics({ type: "milestone", path, name: "read90" });
+        queueAnalytics({ type: "milestone", path, name: "read90" });
         window.removeEventListener("scroll", onScroll);
       }
     };

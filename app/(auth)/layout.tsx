@@ -1,10 +1,13 @@
 import Link from "next/link";
+import { requireAccounts } from "@/lib/surfaces";
 
-export default function AuthLayout({
+export default async function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  // Sign-in and sign-up are a relaunch surface: a 404 until registration is switched on in Settings.
+  await requireAccounts();
   return (
     <div className="flex min-h-[80dvh]">
       {/* Brand panel — hidden on mobile */}

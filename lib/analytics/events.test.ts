@@ -8,7 +8,10 @@ import {
   deviceFrom,
   isBot,
   MAX_SECONDS_PER_EVENT,
+  MAX_BATCH,
+  mergeCounters,
   parseEvent,
+  parseEvents,
   type CountContext,
 } from "./events";
 
@@ -35,6 +38,41 @@ describe("parseEvent", () => {
     expect(parseEvent({ type: "time", path: "/", seconds: -5 })).toBeNull();
     expect(parseEvent({ type: "time", path: "/", seconds: Number.NaN })).toBeNull();
     expect(parseEvent({ type: "time", path: "/", seconds: "10" })).toBeNull();
+  });
+});
+
+describe("parseEvents", () => {
+  const view = { type: "view", path: "/", entry: false, referrer: null };
+
+  it("reads one event, a bare array, or a wrapped array", () => {
+    expect(parseEvents(view)).toHaveLength(1);
+    expect(parseEvents([view, { type: "milestone", path: "/", name: "read50" }])).toHaveLength(2);
+    expect(parseEvents({ events: [view] })).toHaveLength(1);
+  });
+
+  it("drops the broken entries and keeps the rest", () => {
+    expect(parseEvents([view, { type: "nope" }, null, 7])).toHaveLength(1);
+    expect(parseEvents({ events: "x" })).toHaveLength(0);
+  });
+
+  it("caps a batch", () => {
+    expect(parseEvents(Array.from({ length: MAX_BATCH + 5 }, () => view))).toHaveLength(MAX_BATCH);
+  });
+});
+
+describe("mergeCounters", () => {
+  it("adds up counters for the same metric and key, keeping order", () => {
+    expect(
+      mergeCounters([
+        { metric: "view", key: "/", value: 1 },
+        { metric: "seconds", key: "/", value: 30 },
+        { metric: "view", key: "/", value: 1 },
+        { metric: "seconds", key: "/", value: 12 },
+      ]),
+    ).toEqual([
+      { metric: "view", key: "/", value: 2 },
+      { metric: "seconds", key: "/", value: 42 },
+    ]);
   });
 });
 

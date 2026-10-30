@@ -1,10 +1,10 @@
 import { cookies } from "next/headers";
 import { verifyAdminSession } from "@/lib/admin-session";
-import { countersFor, countryFrom, deviceFrom, isBot, parseEvent } from "@/lib/analytics/events";
+import { countersFor, countryFrom, deviceFrom, isBot, mergeCounters, parseEvents } from "@/lib/analytics/events";
 import { incrementCounters, publishedSlugs } from "@/lib/analytics/store";
 import { rateLimit } from "@/lib/rate-limit";
 
-const MAX_BODY = 1024;
+const MAX_BODY = 4096;
 const IGNORED = () => new Response(null, { status: 204 });
 
 const withoutWww = (host: string) => host.replace(/^www\./, "");
@@ -20,9 +20,9 @@ function isCanonicalHost(request: Request): boolean {
 }
 
 /**
- * Receives one anonymous event from a page. Always answers 204: a visitor's
- * page has nothing to do with the answer, and telling apart "counted" from
- * "ignored" would only help someone probing the filters.
+ * Receives one anonymous event, or a small batch, from a page. Always answers
+ * 204: a visitor's page has nothing to do with the answer, and telling apart
+ * "counted" from "ignored" would only help someone probing the filters.
  */
 export async function POST(request: Request) {
   const userAgent = request.headers.get("user-agent");
@@ -46,16 +46,16 @@ export async function POST(request: Request) {
   } catch {
     return IGNORED();
   }
-  const event = parseEvent(body);
-  if (!event) return IGNORED();
+  const events = parseEvents(body);
+  if (events.length === 0) return IGNORED();
 
   try {
-    const counters = countersFor(event, {
+    const context = {
       country: countryFrom(request.headers.get("x-vercel-ip-country")),
       device: deviceFrom(userAgent ?? ""),
       slugs: await publishedSlugs(),
-    });
-    await incrementCounters(counters);
+    };
+    await incrementCounters(mergeCounters(events.flatMap((event) => countersFor(event, context))));
   } catch (error) {
     // The database may be asleep; statistics are never worth an error for a reader.
     console.error("Analytics collect failed:", error);

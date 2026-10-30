@@ -9,6 +9,7 @@ type FeedPost = {
   excerpt?: string;
   publishedAt: string;
   _updatedAt?: string;
+  contentUpdatedAt?: string;
   author?: { name?: string };
   categories?: { title: string }[];
 };
@@ -27,7 +28,7 @@ export async function GET() {
   try {
     posts = await client.fetch<FeedPost[]>(
       `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] | order(publishedAt desc) [0...50] {
-        _id, title, slug, excerpt, publishedAt, _updatedAt, author->{ name }, categories[]->{ title }
+        _id, title, slug, excerpt, publishedAt, _updatedAt, contentUpdatedAt, author->{ name }, categories[]->{ title }
       }`,
     );
   } catch {
@@ -41,7 +42,7 @@ export async function GET() {
 
   const updated =
     posts.length > 0
-      ? new Date(posts[0]?._updatedAt ?? posts[0]?.publishedAt ?? Date.now()).toISOString()
+      ? new Date(posts[0]?.contentUpdatedAt ?? posts[0]?.publishedAt ?? Date.now()).toISOString()
       : new Date().toISOString();
 
   const entries = posts
@@ -52,7 +53,7 @@ export async function GET() {
     <link href="${url}"/>
     <id>${url}</id>
     <published>${new Date(post.publishedAt).toISOString()}</published>
-    <updated>${new Date(post._updatedAt ?? post.publishedAt).toISOString()}</updated>${
+    <updated>${new Date(post.contentUpdatedAt ?? post.publishedAt).toISOString()}</updated>${
       post.author?.name
         ? `\n    <author><name>${escapeXml(post.author.name)}</name></author>`
         : ""

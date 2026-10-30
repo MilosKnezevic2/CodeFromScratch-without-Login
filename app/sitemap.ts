@@ -29,7 +29,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const slugs = await getAllPostSlugs();
     postPages = slugs.map((s) => ({
       url: `${baseUrl}/blog/${s.slug.current}`,
-      lastModified: s.publishedAt ? new Date(s.publishedAt) : undefined,
+      // A rewrite moves the date; a small edit does not, so crawlers see real changes only.
+      lastModified: s.contentUpdatedAt ? new Date(s.contentUpdatedAt) : s.publishedAt ? new Date(s.publishedAt) : undefined,
       changeFrequency: "monthly" as const,
       priority: 0.8,
     }));

@@ -20,6 +20,7 @@ export interface SanityPost {
   seoDescription?: string;
   publishedAt: string;
   _updatedAt?: string;
+  contentUpdatedAt?: string;
   readingTime?: number;
 }
 
@@ -56,6 +57,7 @@ const postFields = `
   seoDescription,
   publishedAt,
   _updatedAt,
+  contentUpdatedAt,
   readingTime
 `;
 
@@ -328,8 +330,8 @@ export async function getAdjacentPosts(publishedAt: string) {
 
 export async function getAllPostSlugs() {
   if (!isSanityConfigured) return [];
-  return client.fetch<{ slug: { current: string }; publishedAt?: string }[]>(
-    `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] { slug, publishedAt }`
+  return client.fetch<{ slug: { current: string }; publishedAt?: string; contentUpdatedAt?: string }[]>(
+    `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] { slug, publishedAt, contentUpdatedAt }`
   );
 }
 

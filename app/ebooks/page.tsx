@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { requireCommerce } from "@/lib/surfaces";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import EbookNotifyForm from "@/components/ebooks/EbookNotifyForm";
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 export default async function EbooksPage() {
+  await requireCommerce();
   const ebooks = await prisma.ebook
     .findMany({
       where: { published: true },

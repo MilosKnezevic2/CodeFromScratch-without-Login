@@ -61,6 +61,27 @@ describe("POST /api/analytics/collect", () => {
     ]);
   });
 
+  it("counts a batch with one write, folding duplicates", async () => {
+    const res = await POST(
+      request({
+        events: [
+          { type: "milestone", path: "/blog/real-post", name: "read50" },
+          { type: "milestone", path: "/blog/real-post", name: "read90" },
+          { type: "time", path: "/blog/real-post", seconds: 20 },
+          { type: "time", path: "/blog/real-post", seconds: 15 },
+          { type: "broken" },
+        ],
+      }),
+    );
+    expect(res.status).toBe(204);
+    expect(increment).toHaveBeenCalledTimes(1);
+    expect(increment).toHaveBeenCalledWith([
+      { metric: "read50", key: "/blog/real-post", value: 1 },
+      { metric: "read90", key: "/blog/real-post", value: 1 },
+      { metric: "seconds", key: "/blog/real-post", value: 35 },
+    ]);
+  });
+
   it("stores nothing that identifies the visitor", async () => {
     await POST(request(view));
     const stored = JSON.stringify(increment.mock.calls[0][0]);
@@ -111,7 +132,7 @@ describe("POST /api/analytics/collect", () => {
   it("ignores broken and oversized bodies", async () => {
     await POST(request("{not json"));
     await POST(request(""));
-    await POST(request(JSON.stringify({ ...view, referrer: "x".repeat(2000) })));
+    await POST(request(JSON.stringify({ ...view, referrer: "x".repeat(5000) })));
     await POST(request({ type: "unknown", path: "/" }));
     expect(increment).not.toHaveBeenCalled();
   });
