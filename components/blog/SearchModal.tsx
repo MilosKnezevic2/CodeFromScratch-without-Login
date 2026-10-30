@@ -1,19 +1,19 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useState, useCallback, useRef } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import Link from "next/link";
+import type { SearchResult } from "./SearchPanel";
 
-interface SearchResult {
-  _id: string;
-  title: string;
-  slug: { current: string };
-  excerpt?: string;
-  categories?: { title: string }[];
-}
+/**
+ * The dialog carries the animation library and the result list, which most
+ * visitors never open. It is fetched the first time the search opens and
+ * stays mounted afterwards so the closing animation still plays.
+ */
+const SearchPanel = dynamic(() => import("./SearchPanel"), { ssr: false });
 
 export default function SearchModal() {
   const [open, setOpen] = useState(false);
+  const [everOpened, setEverOpened] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<SearchResult[]>([]);
   const [loading, setLoading] = useState(false);
@@ -38,6 +38,7 @@ export default function SearchModal() {
   const [prevOpen, setPrevOpen] = useState(false);
   if (prevOpen !== open) {
     setPrevOpen(open);
+    if (open) setEverOpened(true);
     if (!open) {
       setQuery("");
       setResults([]);
@@ -46,8 +47,18 @@ export default function SearchModal() {
 
   useEffect(() => {
     if (!open) return;
-    const t = setTimeout(() => inputRef.current?.focus(), 100);
-    return () => clearTimeout(t);
+    // The panel may still be downloading on the first open; keep trying briefly.
+    let attempts = 0;
+    const t = setInterval(() => {
+      attempts += 1;
+      if (inputRef.current) {
+        inputRef.current.focus();
+        clearInterval(t);
+      } else if (attempts > 20) {
+        clearInterval(t);
+      }
+    }, 100);
+    return () => clearInterval(t);
   }, [open]);
 
   const search = useCallback(async (q: string) => {
@@ -77,10 +88,13 @@ export default function SearchModal() {
     <>
       {/* Search trigger in navbar */}
       <button
+        type="button"
         onClick={() => setOpen(true)}
+        aria-haspopup="dialog"
+        aria-expanded={open}
         className="hidden items-center gap-2 rounded-lg border border-border/50 px-3 py-1.5 text-sm text-muted transition hover:border-accent/30 hover:text-foreground sm:flex"
       >
-        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+        <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
           <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
         </svg>
         Search...
@@ -89,94 +103,17 @@ export default function SearchModal() {
         </kbd>
       </button>
 
-      <AnimatePresence>
-        {open && (
-          <>
-            {/* Backdrop */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm"
-              onClick={() => setOpen(false)}
-            />
-
-            {/* Modal */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: -20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: -20 }}
-              transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              className="fixed left-1/2 top-[15%] z-[91] w-full max-w-xl -translate-x-1/2 overflow-hidden rounded-xl border border-border bg-surface shadow-2xl"
-            >
-              {/* Search input */}
-              <div className="flex items-center gap-3 border-b border-border px-4 py-3">
-                <svg className="h-5 w-5 shrink-0 text-muted" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  value={query}
-                  onChange={(e) => onInput(e.target.value)}
-                  placeholder="Search articles..."
-                  className="flex-1 bg-transparent text-foreground placeholder:text-muted-foreground outline-none"
-                />
-                <kbd className="rounded border border-border/50 px-1.5 py-0.5 text-[10px] text-muted-foreground">
-                  ESC
-                </kbd>
-              </div>
-
-              {/* Results */}
-              <div className="max-h-[60vh] overflow-y-auto p-2">
-                {loading && (
-                  <p className="px-3 py-6 text-center text-sm text-muted-foreground">Searching...</p>
-                )}
-
-                {!loading && query.length >= 2 && results.length === 0 && (
-                  <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-                    No results for &ldquo;{query}&rdquo;
-                  </p>
-                )}
-
-                {!loading && results.length > 0 && (
-                  <ul>
-                    {results.map((r) => (
-                      <li key={r._id}>
-                        <Link
-                          href={`/blog/${r.slug.current}`}
-                          onClick={() => setOpen(false)}
-                          className="block rounded-lg px-3 py-3 transition hover:bg-surface-2"
-                        >
-                          <p className="text-sm font-medium text-foreground">{r.title}</p>
-                          {r.excerpt && (
-                            <p className="mt-0.5 text-xs text-muted line-clamp-1">{r.excerpt}</p>
-                          )}
-                          {r.categories && r.categories.length > 0 && (
-                            <div className="mt-1.5 flex gap-1.5">
-                              {r.categories.map((c) => (
-                                <span key={c.title} className="rounded-full bg-accent/10 px-2 py-0.5 text-[10px] text-accent">
-                                  {c.title}
-                                </span>
-                              ))}
-                            </div>
-                          )}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-
-                {!loading && query.length < 2 && (
-                  <p className="px-3 py-6 text-center text-sm text-muted-foreground">
-                    Type to search articles...
-                  </p>
-                )}
-              </div>
-            </motion.div>
-          </>
-        )}
-      </AnimatePresence>
+      {everOpened && (
+        <SearchPanel
+          open={open}
+          query={query}
+          results={results}
+          loading={loading}
+          inputRef={inputRef}
+          onInput={onInput}
+          onClose={() => setOpen(false)}
+        />
+      )}
     </>
   );
 }

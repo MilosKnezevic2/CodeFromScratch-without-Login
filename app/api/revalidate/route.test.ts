@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 
 const revalidatePath = vi.hoisted(() => vi.fn());
 vi.mock("next/cache", () => ({ revalidatePath }));
+// The route pings IndexNow after a post publish; tests must never reach the network.
+vi.stubGlobal("fetch", vi.fn(async () => new Response("", { status: 200 })));
 
 import { POST } from "./route";
 
