@@ -3,6 +3,8 @@ import { subDays, startOfMonth, subMonths } from "date-fns";
 import KPICard from "@/components/admin/KPICard";
 import Badge from "@/components/admin/Badge";
 import Link from "next/link";
+import ExcludeDevice from "@/components/admin/analytics/ExcludeDevice";
+import { topArticleViews } from "@/lib/analytics/load";
 
 export const metadata = {
   title: "Admin Dashboard",
@@ -37,7 +39,7 @@ export default async function AdminPage() {
     }).then((r) => r.length),
     prisma.newsletterSubscriber.count({ where: { confirmed: true } }),
     prisma.contactSubmission.count({ where: { read: false } }),
-    prisma.postView.findMany({ orderBy: { count: "desc" }, take: 5 }),
+    topArticleViews(30, 5),
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },
       take: 8,
@@ -53,6 +55,7 @@ export default async function AdminPage() {
 
   return (
     <div className="space-y-8">
+      <ExcludeDevice />
       {/* Page header */}
       <div>
         <h1 className="text-2xl font-extrabold text-foreground" style={{ fontFamily: "var(--font-heading)" }}>
@@ -140,7 +143,7 @@ export default async function AdminPage() {
       {topPosts.length > 0 && (
         <div className="glow-border overflow-hidden rounded-xl bg-surface">
           <div className="border-b border-border px-5 py-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Top Posts by Views</h3>
+            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Top Articles, Last 30 Days</h3>
           </div>
           <div className="divide-y divide-border">
             {topPosts.map((post, i) => (

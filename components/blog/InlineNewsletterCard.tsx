@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { trackGoal } from "@/lib/analytics/client";
 
 export default function InlineNewsletterCard() {
   const [email, setEmail] = useState("");
@@ -27,6 +28,7 @@ export default function InlineNewsletterCard() {
         } | null;
         setSuccessMessage(body?.message ?? "Check your inbox.");
         setStatus("success");
+        trackGoal("signup");
         setEmail("");
       } else {
         const body = (await res.json().catch(() => null)) as {

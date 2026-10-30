@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { trackGoal } from "@/lib/analytics/client";
 
 export default function SubscribeForm() {
   const [email, setEmail] = useState("");
@@ -26,6 +27,7 @@ export default function SubscribeForm() {
       if (res.ok) {
         setMessage(body?.message ?? "Check your inbox.");
         setStatus("success");
+        trackGoal("signup");
         setEmail("");
       } else {
         setMessage(body?.error ?? "Something went wrong. Try again.");

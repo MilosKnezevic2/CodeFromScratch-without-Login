@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { topArticleViews } from "@/lib/analytics/load";
 import { subDays, subMonths, startOfMonth } from "date-fns";
 
 export async function GET() {
   const now = new Date();
-  const thirtyDaysAgo = subDays(now, 30);
-  const sixtyDaysAgo = subDays(now, 60);
   const sevenDaysAgo = subDays(now, 7);
   const thisMonth = startOfMonth(now);
   const lastMonth = startOfMonth(subMonths(now, 1));
@@ -36,10 +35,7 @@ export async function GET() {
     prisma.newsletterSubscriber.count({ where: { confirmed: true } }),
     prisma.newsletterSubscriber.count({ where: { confirmed: true, createdAt: { lt: thisMonth } } }),
     prisma.contactSubmission.count({ where: { read: false } }),
-    prisma.postView.findMany({
-      orderBy: { count: "desc" },
-      take: 5,
-    }),
+    topArticleViews(30, 5),
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },
       take: 8,

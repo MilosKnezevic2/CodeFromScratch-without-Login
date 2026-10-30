@@ -1,7 +1,6 @@
 /**
  * Reads Search Console data for the site with a read-only service account and
  * prints a compact report: totals, top queries, top pages, sitemap status.
- * No dependencies: the service-account JWT is signed with node:crypto.
  *
  * Key file: .secrets/gsc-key.json (git-ignored). Property: sc-domain:codefromscratch.org
  *
@@ -9,58 +8,14 @@
  * Output also saved to brand-brain/research/gsc-<YYYY-MM-DD>.json when that folder exists.
  */
 
-import { createSign } from "crypto";
-import { readFileSync, writeFileSync, existsSync } from "fs";
+import { writeFileSync, existsSync } from "fs";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { SITE, gscApi } from "./lib/gsc.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
-const SITE = "sc-domain:codefromscratch.org";
 const days = Number(process.argv[2] ?? 28);
-const keyPath = join(root, ".secrets", "gsc-key.json");
-
-if (!existsSync(keyPath)) {
-  console.error("missing .secrets/gsc-key.json");
-  process.exit(2);
-}
-const key = JSON.parse(readFileSync(keyPath, "utf8"));
-
-const b64 = (v) => Buffer.from(typeof v === "string" ? v : JSON.stringify(v)).toString("base64url");
-
-async function accessToken() {
-  const now = Math.floor(Date.now() / 1000);
-  const header = b64({ alg: "RS256", typ: "JWT" });
-  const claims = b64({
-    iss: key.client_email,
-    scope: "https://www.googleapis.com/auth/webmasters.readonly",
-    aud: "https://oauth2.googleapis.com/token",
-    iat: now,
-    exp: now + 3600,
-  });
-  const signature = createSign("RSA-SHA256").update(`${header}.${claims}`).sign(key.private_key, "base64url");
-  const res = await fetch("https://oauth2.googleapis.com/token", {
-    method: "POST",
-    headers: { "content-type": "application/x-www-form-urlencoded" },
-    body: new URLSearchParams({
-      grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
-      assertion: `${header}.${claims}.${signature}`,
-    }),
-  });
-  const body = await res.json();
-  if (!body.access_token) throw new Error(`token request failed: ${JSON.stringify(body)}`);
-  return body.access_token;
-}
-
-const token = await accessToken();
-const api = (path, init = {}) =>
-  fetch(`https://www.googleapis.com/webmasters/v3/sites/${encodeURIComponent(SITE)}${path}`, {
-    ...init,
-    headers: { authorization: `Bearer ${token}`, "content-type": "application/json" },
-  }).then(async (r) => {
-    const body = await r.json();
-    if (!r.ok) throw new Error(`${path}: ${r.status} ${JSON.stringify(body.error ?? body)}`);
-    return body;
-  });
+const api = await gscApi(join(root, ".secrets", "gsc-key.json"));
 
 // Search Analytics data lags about two days; end there.
 const end = new Date(Date.now() - 2 * 864e5).toISOString().slice(0, 10);

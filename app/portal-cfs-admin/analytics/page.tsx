@@ -1,338 +1,533 @@
-import { prisma } from "@/lib/prisma";
-import { client } from "@/lib/sanity/client";
-import { subDays, startOfMonth, subMonths, differenceInMinutes } from "date-fns";
+import type { Metadata } from "next";
+import Link from "next/link";
+import DailyBars from "@/components/admin/analytics/DailyBars";
+import ExcludeDevice from "@/components/admin/analytics/ExcludeDevice";
 import KPICard from "@/components/admin/KPICard";
-import Badge from "@/components/admin/Badge";
+import { loadOutcomes, loadReport } from "@/lib/analytics/load";
+import {
+  change,
+  GOOD_FINISH_RATE,
+  LOW_CTR,
+  LOW_FINISH_RATE,
+  LOW_STAY_RATE,
+  MIN_IMPRESSIONS,
+  MIN_VIEWS,
+  percent,
+  type ArticleRow,
+  type RankedRow,
+  type Report,
+  type VerdictTone,
+} from "@/lib/analytics/report";
 
-interface SanityPostMeta {
-  title: string;
-  slug: { current: string };
-  readingTime?: number;
-  categories?: { title: string; slug: { current: string } }[];
-  tags?: { title: string; slug: { current: string } }[];
+export const metadata: Metadata = {
+  title: "Analytics",
+  robots: { index: false, follow: false },
+};
+
+const BASE = "/portal-cfs-admin/analytics";
+const RANGES = [7, 30, 90] as const;
+const SORTS = [
+  { id: "views", label: "Most read" },
+  { id: "google", label: "Most seen in Google" },
+  { id: "signups", label: "Most sign-ups" },
+] as const;
+type SortId = (typeof SORTS)[number]["id"];
+
+/** Targets from the brand plan (brand-brain/board/OKR.md and FUNNEL.md). */
+const GOALS = { visits: 500, subscribers: 50, ebookSubscribers: 300, deadline: "31 Jan 2027" };
+const STALE_SEARCH_DAYS = 7;
+
+const TONE_STYLE: Record<VerdictTone, string> = {
+  // Ink stays the text colour so the label stays readable in both themes.
+  good: "bg-emerald-500/20 text-foreground",
+  warn: "bg-amber-500/20 text-foreground",
+  bad: "bg-red-500/20 text-foreground",
+  neutral: "bg-surface-2 text-muted-foreground",
+};
+
+const shortDate = (day: string) =>
+  new Date(`${day}T00:00:00Z`).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+
+const rate = (value: number | null) => (value === null ? "—" : `${value}%`);
+
+function duration(seconds: number | null): string {
+  if (seconds === null) return "—";
+  return seconds < 60 ? `${seconds}s` : `${Math.floor(seconds / 60)}m ${seconds % 60}s`;
 }
 
-export default async function AdminAnalyticsPage() {
-  const now = new Date();
-  const sevenDaysAgo = subDays(now, 7);
-  const thirtyDaysAgo = subDays(now, 30);
-  const thisMonth = startOfMonth(now);
-  const lastMonth = startOfMonth(subMonths(now, 1));
+function Section({ title, hint, children }: { title: string; hint?: string; children: React.ReactNode }) {
+  return (
+    <section aria-label={title} className="space-y-3">
+      <div>
+        <h2 className="text-lg font-bold text-foreground">{title}</h2>
+        {hint && <p className="mt-0.5 text-sm text-muted-foreground">{hint}</p>}
+      </div>
+      {children}
+    </section>
+  );
+}
 
-  // Fetch everything in parallel
-  const [
-    totalUsers,
-    usersThisMonth,
-    usersLastMonth,
-    activeReaders7d,
-    activeReaders30d,
-    allReadingHistory,
-    postViews,
-    reactionsByPost,
-    reactionsByType,
-    savedByPost,
-    totalSaves,
-    totalReactions,
-    totalCompleted,
-    sanityPosts,
-    topReaders,
-  ] = await Promise.all([
-    prisma.user.count(),
-    prisma.user.count({ where: { createdAt: { gte: thisMonth } } }),
-    prisma.user.count({ where: { createdAt: { gte: lastMonth, lt: thisMonth } } }),
-    prisma.readingHistory.groupBy({ by: ["userId"], where: { readAt: { gte: sevenDaysAgo } } }).then((r) => r.length),
-    prisma.readingHistory.groupBy({ by: ["userId"], where: { readAt: { gte: thirtyDaysAgo } } }).then((r) => r.length),
-    prisma.readingHistory.findMany({
-      select: { postSlug: true, scrollPercent: true, completedAt: true, readAt: true, userId: true },
-    }),
-    prisma.postView.findMany({ orderBy: { count: "desc" } }),
-    prisma.postReaction.groupBy({ by: ["postSlug"], _count: { postSlug: true } }),
-    prisma.postReaction.groupBy({ by: ["type"], _count: { type: true } }),
-    prisma.savedPost.groupBy({ by: ["postSlug"], _count: { postSlug: true } }),
-    prisma.savedPost.count(),
-    prisma.postReaction.count(),
-    prisma.readingHistory.count({ where: { completedAt: { not: null } } }),
-    client.fetch<SanityPostMeta[]>(
-      `*[_type == "post" && status == "published"] { title, slug, readingTime, categories[]->{ title, slug }, tags[]->{ title, slug } }`
-    ).catch(() => [] as SanityPostMeta[]),
-    prisma.readingHistory.groupBy({
-      by: ["userId"],
-      _count: { userId: true },
-      orderBy: { _count: { userId: "desc" } },
-      take: 10,
-    }),
+function ToneBadge({ tone, label }: { tone: VerdictTone; label: string }) {
+  return <span className={`whitespace-nowrap rounded px-2 py-0.5 text-xs font-medium ${TONE_STYLE[tone]}`}>{label}</span>;
+}
+
+function ListCard({ title, rows, empty }: { title: string; rows: RankedRow[]; empty: string }) {
+  const max = Math.max(...rows.map((row) => row.value), 1);
+  return (
+    <div className="glow-border rounded-xl bg-surface p-5">
+      <h3 className="text-sm font-semibold text-foreground">{title}</h3>
+      {rows.length === 0 ? (
+        <p className="mt-3 text-sm text-muted-foreground">{empty}</p>
+      ) : (
+        <ul className="mt-3 space-y-2.5">
+          {rows.map((row) => (
+            <li key={row.label}>
+              <div className="flex items-baseline justify-between gap-3 text-sm">
+                <span className="min-w-0 truncate text-foreground">
+                  {row.label}
+                  {row.tag && row.tag.toLowerCase() !== row.label && (
+                    <span className="ml-2 text-xs text-muted-foreground">{row.tag}</span>
+                  )}
+                </span>
+                <span className="font-semibold text-foreground">{row.value.toLocaleString()}</span>
+              </div>
+              <div className="mt-1 h-1 overflow-hidden rounded-full bg-surface-2">
+                <div className="h-full rounded-full bg-accent" style={{ width: `${(row.value / max) * 100}%` }} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
+function GoalBar({ label, value, goal, note }: { label: string; value: number; goal: number; note: string }) {
+  const share = Math.min(100, (value / goal) * 100);
+  return (
+    <div className="glow-border rounded-xl bg-surface p-5">
+      <p className="text-sm font-semibold text-foreground">{label}</p>
+      <p className="mt-2 text-2xl font-extrabold text-foreground">
+        {value.toLocaleString()} <span className="text-base font-medium text-muted-foreground">of {goal.toLocaleString()}</span>
+      </p>
+      <div
+        role="progressbar"
+        aria-label={label}
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={goal}
+        className="mt-3 h-1.5 overflow-hidden rounded-full bg-surface-2"
+      >
+        <div className="h-full rounded-full bg-accent" style={{ width: `${share}%` }} />
+      </div>
+      <p className="mt-2 text-xs text-muted-foreground">{note}</p>
+    </div>
+  );
+}
+
+function FunnelStep({ label, value, of, ofLabel }: { label: string; value: number; of?: number; ofLabel?: string }) {
+  const share = of === undefined ? null : percent(value, of);
+  return (
+    <li className="glow-border rounded-xl bg-surface p-4">
+      <p className="text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mt-1 text-xl font-extrabold text-foreground">{value.toLocaleString()}</p>
+      {share !== null && (
+        <p className="mt-1 text-xs text-muted-foreground">
+          {share}% of {ofLabel}
+        </p>
+      )}
+    </li>
+  );
+}
+
+function sortArticles(articles: ArticleRow[], sort: SortId): ArticleRow[] {
+  const score = (a: ArticleRow) => (sort === "google" ? a.impressions : sort === "signups" ? a.signups : a.views);
+  return [...articles].sort((a, b) => score(b) - score(a) || b.impressions - a.impressions || b.views - a.views);
+}
+
+function ArticlesTable({ articles }: { articles: ArticleRow[] }) {
+  if (articles.length === 0) {
+    return (
+      <p className="glow-border rounded-xl bg-surface p-8 text-center text-sm text-muted-foreground">
+        The article list could not be loaded. Try again in a minute.
+      </p>
+    );
+  }
+  return (
+    <div className="glow-border overflow-x-auto rounded-xl bg-surface">
+      <table className="w-full min-w-[1040px] text-left text-sm">
+        <thead className="border-b border-border text-xs text-muted-foreground">
+          <tr>
+            <th scope="col" className="px-4 py-3 font-semibold">Article</th>
+            <th scope="col" className="px-3 py-3 text-right font-semibold">Views</th>
+            <th scope="col" className="px-3 py-3 text-right font-semibold">Stayed 30s+</th>
+            <th scope="col" className="px-3 py-3 text-right font-semibold">Finished</th>
+            <th scope="col" className="px-3 py-3 text-right font-semibold">Avg. time</th>
+            <th scope="col" className="px-3 py-3 text-right font-semibold">Sign-ups</th>
+            <th scope="col" className="px-3 py-3 text-right font-semibold">Google shown</th>
+            <th scope="col" className="px-3 py-3 text-right font-semibold">Clicks</th>
+            <th scope="col" className="px-3 py-3 text-right font-semibold">Position</th>
+            <th scope="col" className="px-4 py-3 font-semibold">What to do</th>
+          </tr>
+        </thead>
+        <tbody>
+          {articles.map((article) => (
+            <tr key={article.slug} className="border-b border-border/60 align-top last:border-0">
+              <td className="max-w-[260px] px-4 py-3">
+                <a
+                  href={`/blog/${article.slug}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-foreground underline-offset-2 hover:underline"
+                >
+                  {article.title}
+                </a>
+                {article.category && <p className="mt-0.5 text-xs text-muted-foreground">{article.category}</p>}
+              </td>
+              <td className="px-3 py-3 text-right font-semibold text-foreground">{article.views.toLocaleString()}</td>
+              <td className="px-3 py-3 text-right text-muted-foreground">{rate(article.stayedRate)}</td>
+              <td className="px-3 py-3 text-right text-muted-foreground">{rate(article.finishedRate)}</td>
+              <td className="px-3 py-3 text-right text-muted-foreground">{duration(article.avgSeconds)}</td>
+              <td className="px-3 py-3 text-right text-muted-foreground">{article.signups}</td>
+              <td className="px-3 py-3 text-right text-muted-foreground">{article.impressions.toLocaleString()}</td>
+              <td className="px-3 py-3 text-right text-muted-foreground">{article.clicks}</td>
+              <td className="px-3 py-3 text-right text-muted-foreground">
+                {article.position === null ? "—" : article.position.toFixed(1)}
+              </td>
+              <td className="min-w-[240px] px-4 py-3">
+                <ToneBadge tone={article.verdict.tone} label={article.verdict.label} />
+                <p className="mt-1 text-xs text-muted-foreground">{article.verdict.advice}</p>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+function QueriesTable({ rows, empty }: { rows: Report["queries"]; empty: string }) {
+  if (rows.length === 0) return <p className="text-sm text-muted-foreground">{empty}</p>;
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[420px] text-left text-sm">
+        <thead className="text-xs text-muted-foreground">
+          <tr>
+            <th scope="col" className="py-2 pr-3 font-semibold">Search phrase</th>
+            <th scope="col" className="px-2 py-2 text-right font-semibold">Shown</th>
+            <th scope="col" className="px-2 py-2 text-right font-semibold">Clicks</th>
+            <th scope="col" className="py-2 pl-2 text-right font-semibold">Position</th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.query} className="border-t border-border/60">
+              <td className="py-2 pr-3 text-foreground">{row.query}</td>
+              <td className="px-2 py-2 text-right text-muted-foreground">{row.impressions}</td>
+              <td className="px-2 py-2 text-right text-muted-foreground">{row.clicks}</td>
+              <td className="py-2 pl-2 text-right text-muted-foreground">{row.position.toFixed(1)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+export default async function AdminAnalyticsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ days?: string; sort?: string }>;
+}) {
+  const params = await searchParams;
+  const days = RANGES.find((range) => String(range) === params.days) ?? 30;
+  const sort: SortId = SORTS.find((option) => option.id === params.sort)?.id ?? "views";
+
+  const [report, outcomes, last30] = await Promise.all([
+    loadReport(days),
+    loadOutcomes(),
+    days === 30 ? null : loadReport(30),
   ]);
+  const { current, previous } = report;
+  const monthlyVisits = (last30 ?? report).current.visits;
+  const newSubscribers = current.confirmed - current.unsubscribed;
 
-  // Build lookup maps
-  const postMap = new Map(sanityPosts.map((p) => [p.slug.current, p]));
-  const viewMap = new Map(postViews.map((v) => [v.postSlug, v.count]));
-  const reactionMap = new Map(reactionsByPost.map((r) => [r.postSlug, r._count.postSlug]));
-  const saveMap = new Map(savedByPost.map((s) => [s.postSlug, s._count.postSlug]));
+  const searchAge = report.searchAgeDays;
 
-  // Calculate per-post analytics
-  const readingByPost = new Map<string, { totalReads: number; totalScroll: number; completed: number; estimatedMinutes: number }>();
-  for (const r of allReadingHistory) {
-    const existing = readingByPost.get(r.postSlug) || { totalReads: 0, totalScroll: 0, completed: 0, estimatedMinutes: 0 };
-    existing.totalReads++;
-    existing.totalScroll += r.scrollPercent;
-    if (r.completedAt) existing.completed++;
-    const meta = postMap.get(r.postSlug);
-    if (meta?.readingTime) {
-      existing.estimatedMinutes += Math.round(meta.readingTime * (r.scrollPercent / 100));
-    }
-    readingByPost.set(r.postSlug, existing);
-  }
-
-  // Build post performance table
-  const postPerformance = sanityPosts.map((post) => {
-    const slug = post.slug.current;
-    const reading = readingByPost.get(slug);
-    const views = viewMap.get(slug) || 0;
-    const reactions = reactionMap.get(slug) || 0;
-    const saves = saveMap.get(slug) || 0;
-    const avgScroll = reading ? Math.round(reading.totalScroll / reading.totalReads) : 0;
-    const completionRate = reading && reading.totalReads > 0 ? Math.round((reading.completed / reading.totalReads) * 100) : 0;
-    const totalMinutes = reading?.estimatedMinutes || 0;
-
-    return { title: post.title, slug, categories: post.categories, tags: post.tags, views, reactions, saves, avgScroll, completionRate, totalMinutes, readingTime: post.readingTime };
-  }).sort((a, b) => b.views - a.views);
-
-  // Category analytics
-  const categoryStats = new Map<string, { views: number; posts: number; reactions: number; saves: number; minutes: number }>();
-  for (const post of postPerformance) {
-    for (const cat of post.categories || []) {
-      const existing = categoryStats.get(cat.title) || { views: 0, posts: 0, reactions: 0, saves: 0, minutes: 0 };
-      existing.views += post.views;
-      existing.posts++;
-      existing.reactions += post.reactions;
-      existing.saves += post.saves;
-      existing.minutes += post.totalMinutes;
-      categoryStats.set(cat.title, existing);
-    }
-  }
-  const categoryRanking = [...categoryStats.entries()].sort((a, b) => b[1].views - a[1].views);
-
-  // Tag analytics
-  const tagStats = new Map<string, { views: number; posts: number }>();
-  for (const post of postPerformance) {
-    for (const tag of post.tags || []) {
-      const existing = tagStats.get(tag.title) || { views: 0, posts: 0 };
-      existing.views += post.views;
-      existing.posts++;
-      tagStats.set(tag.title, existing);
-    }
-  }
-  const tagRanking = [...tagStats.entries()].sort((a, b) => b[1].views - a[1].views).slice(0, 15);
-
-  // Total reading time
-  const totalReadingMinutes = [...readingByPost.values()].reduce((sum, r) => sum + r.estimatedMinutes, 0);
-  const totalReadingHours = Math.round(totalReadingMinutes / 60);
-  const avgScrollOverall = allReadingHistory.length > 0 ? Math.round(allReadingHistory.reduce((s, r) => s + r.scrollPercent, 0) / allReadingHistory.length) : 0;
-
-  // User growth
-  const userGrowth = usersLastMonth > 0 ? Math.round(((usersThisMonth - usersLastMonth) / usersLastMonth) * 100) : 0;
-
-  // Top readers — get user info
-  const topReaderIds = topReaders.map((r) => r.userId);
-  const topReaderUsers = topReaderIds.length > 0
-    ? await prisma.user.findMany({
-        where: { id: { in: topReaderIds } },
-        select: { id: true, name: true, email: true },
-      })
-    : [];
-  const readerUserMap = new Map(topReaderUsers.map((u) => [u.id, u]));
+  const href = (next: { days?: number; sort?: SortId }) => {
+    const query = new URLSearchParams();
+    const nextDays = next.days ?? days;
+    const nextSort = next.sort ?? sort;
+    if (nextDays !== 30) query.set("days", String(nextDays));
+    if (nextSort !== "views") query.set("sort", nextSort);
+    const text = query.toString();
+    return text ? `${BASE}?${text}` : BASE;
+  };
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-extrabold text-foreground" style={{ fontFamily: "var(--font-heading)" }}>Analytics</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Deep insights into your content and audience</p>
+    <div className="space-y-10">
+      <ExcludeDevice />
+
+      <header className="space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h1 className="text-2xl font-bold text-foreground">Analytics</h1>
+          <nav aria-label="Time range" className="flex gap-1">
+            {RANGES.map((range) => (
+              <Link
+                key={range}
+                href={href({ days: range })}
+                aria-current={range === days ? "page" : undefined}
+                className={`inline-flex min-h-11 items-center rounded-lg px-4 text-sm font-medium transition ${
+                  range === days ? "bg-accent/15 text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {range} days
+              </Link>
+            ))}
+          </nav>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          {report.countingSince
+            ? `Site numbers are counted since ${shortDate(report.countingSince)}.`
+            : "Site numbers start with the first real visit after this release."}{" "}
+          {report.searchThrough
+            ? `Google numbers run through ${shortDate(report.searchThrough)}, because Google reports a few days late.`
+            : "Google numbers have not been loaded yet."}{" "}
+          This device is not counted.
+        </p>
+        {searchAge !== null && searchAge > STALE_SEARCH_DAYS && (
+          <p role="status" className="rounded-lg bg-amber-500/20 px-4 py-3 text-sm text-foreground">
+            Google numbers are {searchAge} days old. The daily update has stopped, so it needs a look.
+          </p>
+        )}
+      </header>
+
+      <Section title="What to do next" hint="The clearest signals in this period.">
+        {report.insights.length === 0 ? (
+          <p className="glow-border rounded-xl bg-surface p-5 text-sm text-muted-foreground">
+            Nothing clear yet. Small numbers can mislead, so verdicts appear only after {MIN_VIEWS} views or{" "}
+            {MIN_IMPRESSIONS} Google impressions.
+          </p>
+        ) : (
+          <ul className="grid gap-3 lg:grid-cols-2">
+            {report.insights.map((insight) => (
+              <li key={insight.label} className="glow-border rounded-xl bg-surface p-4">
+                <ToneBadge
+                  tone={insight.tone}
+                  label={insight.tone === "good" ? "Going well" : insight.tone === "bad" ? "Fix first" : insight.tone === "warn" ? "Worth improving" : "Note"}
+                />
+                <p className="mt-2 text-sm font-semibold text-foreground">{insight.label}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{insight.advice}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </Section>
+
+      <Section title={`Last ${days} days`} hint={`Arrows compare with the ${days} days before.`}>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <KPICard label="Visits" value={current.visits} change={change(current.visits, previous.visits)} />
+          <KPICard label="Pages per visit" value={current.visits > 0 ? (current.views / current.visits).toFixed(1) : "—"} />
+          <KPICard
+            label="Stayed 30 seconds or more"
+            value={rate(percent(current.stayed, current.views))}
+          />
+          <KPICard
+            label="Articles read to the end"
+            value={rate(percent(current.finished, current.articleViews))}
+          />
+          <KPICard label="New subscribers, net" value={newSubscribers} />
+          <KPICard label="Clicks from Google" value={current.clicks} change={change(current.clicks, previous.clicks)} />
+        </div>
+      </Section>
+
+      <Section
+        title="From stranger to subscriber"
+        hint="Where people drop out. Each step is a share of the step before it."
+      >
+        <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+          <FunnelStep label="Shown in Google" value={current.impressions} />
+          <FunnelStep label="Clicked from Google" value={current.clicks} of={current.impressions} ofLabel="shown" />
+          <FunnelStep label="Article views" value={current.articleViews} />
+          <FunnelStep label="Read to the end" value={current.finished} of={current.articleViews} ofLabel="views" />
+          <FunnelStep label="Asked to subscribe" value={current.signups} of={current.views} ofLabel="page views" />
+          <FunnelStep label="Confirmed by email" value={current.confirmed} of={current.signups} ofLabel="requests" />
+        </ol>
+      </Section>
+
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        <DailyBars
+          title="Visits per day"
+          unit="visits"
+          points={report.dailyVisits}
+          emptyText="Visits appear here from the first real visit after this release."
+        />
+        <DailyBars
+          title="Google impressions per day"
+          unit="impressions"
+          points={report.dailyImpressions}
+          emptyText="No Google data for this period yet."
+        />
       </div>
 
-      {/* KPI Row */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KPICard label="Total Users" value={totalUsers} change={userGrowth} />
-        <KPICard label="Active Readers (7d)" value={activeReaders7d} />
-        <KPICard label="Total Reading Time" value={`${totalReadingHours}h`} />
-        <KPICard label="Avg Scroll Depth" value={`${avgScrollOverall}%`} />
-      </div>
+      <Section title="Goals" hint="Targets are working guesses from the brand plan.">
+        <div className="grid gap-4 md:grid-cols-3">
+          <GoalBar
+            label="Visits, last 30 days"
+            value={monthlyVisits}
+            goal={GOALS.visits}
+            note={`Goal by ${GOALS.deadline}.`}
+          />
+          <GoalBar
+            label="Confirmed subscribers"
+            value={outcomes.confirmedSubscribers}
+            goal={GOALS.subscribers}
+            note={`Goal by ${GOALS.deadline}. ${outcomes.waitingSubscribers} still waiting to confirm.`}
+          />
+          <GoalBar
+            label="Subscribers needed for the ebook"
+            value={outcomes.confirmedSubscribers}
+            goal={GOALS.ebookSubscribers}
+            note={`Course waitlist: ${outcomes.waitlistConfirmed} confirmed.`}
+          />
+        </div>
+      </Section>
 
-      {/* Engagement overview */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div className="glow-border rounded-xl bg-surface p-4 text-center">
-          <p className="text-2xl font-extrabold text-foreground">{totalReactions}</p>
-          <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Total Reactions</p>
-        </div>
-        <div className="glow-border rounded-xl bg-surface p-4 text-center">
-          <p className="text-2xl font-extrabold text-foreground">{totalSaves}</p>
-          <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Total Saves</p>
-        </div>
-        <div className="glow-border rounded-xl bg-surface p-4 text-center">
-          <p className="text-2xl font-extrabold text-foreground">{totalCompleted}</p>
-          <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Articles Completed</p>
-        </div>
-        <div className="glow-border rounded-xl bg-surface p-4 text-center">
-          <p className="text-2xl font-extrabold text-foreground">{activeReaders30d}</p>
-          <p className="mt-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">Active Readers (30d)</p>
-        </div>
-      </div>
+      <Section title="Every article" hint="Numbers for this period, with one next step for each.">
+        <nav aria-label="Sort articles" className="flex flex-wrap gap-1">
+          {SORTS.map((option) => (
+            <Link
+              key={option.id}
+              href={href({ sort: option.id })}
+              aria-current={option.id === sort ? "true" : undefined}
+              className={`inline-flex min-h-11 items-center rounded-lg px-3 text-sm font-medium transition ${
+                option.id === sort ? "bg-accent/15 text-foreground" : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              {option.label}
+            </Link>
+          ))}
+        </nav>
+        <ArticlesTable articles={sortArticles(report.articles, sort)} />
+        <p className="text-xs text-muted-foreground">
+          How verdicts work: judged on reading after {MIN_VIEWS} views, on Google after {MIN_IMPRESSIONS} impressions.
+          Under {LOW_STAY_RATE}% staying is &quot;leave fast&quot;, under {LOW_FINISH_RATE}% finishing is &quot;stop
+          early&quot;, {GOOD_FINISH_RATE}% or more finishing is good, and under {LOW_CTR}% clicks on page 1 is &quot;seen, not
+          clicked&quot;. These lines are our own judgement and can be adjusted as data grows.
+        </p>
+      </Section>
 
-      {/* Reaction breakdown */}
-      <div className="glow-border rounded-xl bg-surface p-5">
-        <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Reaction Breakdown</h3>
-        <div className="mt-4 flex flex-wrap gap-4">
-          {reactionsByType.map((r) => {
-            const emoji = r.type === "helpful" ? "👍" : r.type === "love" ? "❤️" : r.type === "insightful" ? "💡" : "🚀";
-            return (
-              <div key={r.type} className="flex items-center gap-2 rounded-lg bg-surface-2/50 px-4 py-2.5">
-                <span className="text-lg">{emoji}</span>
-                <div>
-                  <p className="text-sm font-bold text-foreground">{r._count.type}</p>
-                  <p className="text-[10px] capitalize text-muted-foreground">{r.type}</p>
+      <Section title="Where people come from" hint="Counted once per visit, when someone arrives from outside the site.">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+          <ListCard title="Type of source" rows={report.sourceKinds} empty="No visits yet." />
+          <ListCard title="Exact sources" rows={report.sources} empty="No visits yet." />
+          <ListCard title="First page they saw" rows={report.landingPages} empty="No visits yet." />
+          <ListCard title="Countries" rows={report.countries} empty="No visits yet." />
+          <ListCard title="Devices" rows={report.devices} empty="No visits yet." />
+          <ListCard title="Other pages viewed" rows={report.otherPages} empty="No views yet." />
+        </div>
+      </Section>
+
+      <Section title="What people search for" hint="From Google Search Console.">
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          <div className="glow-border rounded-xl bg-surface p-5">
+            <h3 className="text-sm font-semibold text-foreground">Most shown</h3>
+            <div className="mt-2">
+              <QueriesTable rows={report.queries} empty="No search phrases in this period." />
+            </div>
+          </div>
+          <div className="glow-border rounded-xl bg-surface p-5">
+            <h3 className="text-sm font-semibold text-foreground">Close to page 1</h3>
+            <p className="mt-0.5 text-xs text-muted-foreground">Positions 11 to 20: the cheapest wins.</p>
+            <div className="mt-2">
+              <QueriesTable rows={report.almostPageOne} empty="None in this period." />
+            </div>
+          </div>
+        </div>
+      </Section>
+
+      <Section title="Newsletter and actions">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <div className="glow-border rounded-xl bg-surface p-5">
+            <h3 className="text-sm font-semibold text-foreground">This period</h3>
+            <dl className="mt-3 space-y-2 text-sm">
+              {[
+                ["Confirmed", current.confirmed],
+                ["Unsubscribed", current.unsubscribed],
+                ["Joined the course waitlist", current.waitlist],
+                ["Used a share button", current.shares],
+                ["Opened a page that does not exist", current.missing],
+              ].map(([label, value]) => (
+                <div key={label} className="flex justify-between gap-4 border-b border-border/60 pb-2 last:border-0 last:pb-0">
+                  <dt className="text-muted-foreground">{label}</dt>
+                  <dd className="font-semibold text-foreground">{value}</dd>
                 </div>
-              </div>
-            );
-          })}
-          {reactionsByType.length === 0 && <p className="text-sm text-muted-foreground">No reactions yet</p>}
-        </div>
-      </div>
-
-      {/* Post performance table */}
-      <div className="glow-border overflow-hidden rounded-xl bg-surface">
-        <div className="border-b border-border px-5 py-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Post Performance ({postPerformance.length} posts)
-          </h3>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border text-left text-[10px] uppercase tracking-wider text-muted-foreground">
-                <th className="px-5 py-3 font-semibold">Post</th>
-                <th className="px-3 py-3 font-semibold text-right">Views</th>
-                <th className="px-3 py-3 font-semibold text-right">Avg Scroll</th>
-                <th className="px-3 py-3 font-semibold text-right">Completion</th>
-                <th className="px-3 py-3 font-semibold text-right">Time (est.)</th>
-                <th className="px-3 py-3 font-semibold text-right">Reactions</th>
-                <th className="px-3 py-3 font-semibold text-right">Saves</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {postPerformance.slice(0, 20).map((post, i) => (
-                <tr key={post.slug} className="transition hover:bg-surface-2/30">
-                  <td className="max-w-[280px] px-5 py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="gradient-text text-xs font-black">{String(i + 1).padStart(2, "0")}</span>
-                      <span className="truncate font-medium text-foreground">{post.title}</span>
-                    </div>
-                    {post.categories?.[0] && (
-                      <span className="text-[10px] text-accent">{post.categories[0].title}</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-3 text-right font-semibold text-foreground">{post.views.toLocaleString()}</td>
-                  <td className="px-3 py-3 text-right">
-                    <div className="flex items-center justify-end gap-2">
-                      <div className="h-1.5 w-12 overflow-hidden rounded-full bg-surface-2">
-                        <div className="h-full rounded-full bg-gradient-to-r from-accent to-accent-2" style={{ width: `${post.avgScroll}%` }} />
-                      </div>
-                      <span className="text-xs text-muted-foreground">{post.avgScroll}%</span>
-                    </div>
-                  </td>
-                  <td className="px-3 py-3 text-right">
-                    <span className={`text-xs font-semibold ${post.completionRate >= 70 ? "text-green-400" : post.completionRate >= 40 ? "text-yellow-400" : "text-muted-foreground"}`}>
-                      {post.completionRate}%
-                    </span>
-                  </td>
-                  <td className="px-3 py-3 text-right text-xs text-muted-foreground">
-                    {post.totalMinutes > 60 ? `${Math.round(post.totalMinutes / 60)}h` : `${post.totalMinutes}m`}
-                  </td>
-                  <td className="px-3 py-3 text-right text-muted-foreground">{post.reactions}</td>
-                  <td className="px-3 py-3 text-right text-muted-foreground">{post.saves}</td>
-                </tr>
               ))}
-              {postPerformance.length === 0 && (
-                <tr><td colSpan={7} className="px-5 py-12 text-center text-muted-foreground">No published posts yet</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Category + Tag analytics side by side */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {/* Categories */}
-        <div className="glow-border overflow-hidden rounded-xl bg-surface">
-          <div className="border-b border-border px-5 py-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Category Performance</h3>
+            </dl>
           </div>
-          <div className="divide-y divide-border">
-            {categoryRanking.map(([name, stats]) => (
-              <div key={name} className="flex items-center gap-4 px-5 py-3">
-                <span className="text-sm font-semibold text-accent">{name}</span>
-                <div className="ml-auto flex items-center gap-4 text-xs text-muted-foreground">
-                  <span>{stats.posts} posts</span>
-                  <span className="font-semibold text-foreground">{stats.views.toLocaleString()} views</span>
-                  <span>{stats.reactions} reactions</span>
-                  <span>{stats.saves} saves</span>
-                  <span>{stats.minutes > 60 ? `${Math.round(stats.minutes / 60)}h` : `${stats.minutes}m`} read</span>
-                </div>
-              </div>
-            ))}
-            {categoryRanking.length === 0 && (
-              <div className="px-5 py-8 text-center text-sm text-muted-foreground">No category data</div>
+          <div className="glow-border rounded-xl bg-surface p-5">
+            <h3 className="text-sm font-semibold text-foreground">Latest letters</h3>
+            {outcomes.letters.length === 0 ? (
+              <p className="mt-3 text-sm text-muted-foreground">No letters sent yet.</p>
+            ) : (
+              <ul className="mt-3 space-y-2 text-sm">
+                {outcomes.letters.map((letter) => (
+                  <li
+                    key={`${letter.subject}-${letter.sentAt?.toISOString()}`}
+                    className="flex justify-between gap-4 border-b border-border/60 pb-2 last:border-0 last:pb-0"
+                  >
+                    <span className="min-w-0 truncate text-foreground">{letter.subject}</span>
+                    <span className="whitespace-nowrap text-muted-foreground">
+                      {letter.sentCount} sent{letter.failedCount > 0 ? `, ${letter.failedCount} failed` : ""}
+                    </span>
+                  </li>
+                ))}
+              </ul>
             )}
           </div>
         </div>
+      </Section>
 
-        {/* Tags */}
-        <div className="glow-border overflow-hidden rounded-xl bg-surface">
-          <div className="border-b border-border px-5 py-4">
-            <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Top Tags</h3>
-          </div>
-          <div className="divide-y divide-border">
-            {tagRanking.map(([name, stats]) => (
-              <div key={name} className="flex items-center justify-between px-5 py-3">
-                <span className="text-sm text-foreground">{name}</span>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground">
-                  <span>{stats.posts} posts</span>
-                  <span className="font-semibold text-foreground">{stats.views.toLocaleString()} views</span>
-                </div>
-              </div>
-            ))}
-            {tagRanking.length === 0 && (
-              <div className="px-5 py-8 text-center text-sm text-muted-foreground">No tag data</div>
-            )}
-          </div>
+      <Section title="What this page cannot tell you">
+        <div className="glow-border rounded-xl bg-surface p-5 text-sm text-muted-foreground">
+          <ul className="list-disc space-y-2 pl-5">
+            <li>
+              <strong className="text-foreground">Returning readers.</strong> The site stores nothing on a visitor&apos;s
+              device, so two visits by one person look like two strangers. Confirmed subscribers are the honest stand-in.
+            </li>
+            <li>
+              <strong className="text-foreground">Email opens and clicks.</strong> Not tracked, as promised to readers.
+              Visits from a letter appear under Direct. Replies are the signal to watch.
+            </li>
+            <li>
+              <strong className="text-foreground">Speed.</strong> See{" "}
+              <a
+                href="https://vercel.com/milosknezevic2s-projects/codefromscratch/speed-insights"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent underline underline-offset-2"
+              >
+                Vercel Speed Insights
+              </a>
+              . Its{" "}
+              <a
+                href="https://vercel.com/milosknezevic2s-projects/codefromscratch/analytics"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-accent underline underline-offset-2"
+              >
+                Web Analytics
+              </a>{" "}
+              is a good second opinion on the numbers here.
+            </li>
+          </ul>
         </div>
-      </div>
-
-      {/* Top Readers */}
-      <div className="glow-border overflow-hidden rounded-xl bg-surface">
-        <div className="border-b border-border px-5 py-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Top Readers</h3>
-        </div>
-        <div className="divide-y divide-border">
-          {topReaders.map((reader, i) => {
-            const user = readerUserMap.get(reader.userId);
-            return (
-              <div key={reader.userId} className="flex items-center gap-4 px-5 py-3">
-                <span className="gradient-text text-sm font-black">{String(i + 1).padStart(2, "0")}</span>
-                <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10 text-xs font-bold text-accent">
-                  {(user?.name || user?.email || "?").charAt(0).toUpperCase()}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium text-foreground">{user?.name || "Unnamed"}</p>
-                  <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
-                </div>
-                <span className="text-sm font-bold text-accent">{reader._count.userId} articles</span>
-              </div>
-            );
-          })}
-          {topReaders.length === 0 && (
-            <div className="px-5 py-8 text-center text-sm text-muted-foreground">No reading data yet</div>
-          )}
-        </div>
-      </div>
+      </Section>
     </div>
   );
 }
