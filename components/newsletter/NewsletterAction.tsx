@@ -40,16 +40,18 @@ const COPY: Record<Result, { heading: string; body: string }> = {
 export default function NewsletterAction({
   token,
   mode,
+  kind = "newsletter",
 }: {
   token: string;
   mode: "confirm" | "unsubscribe";
+  kind?: "newsletter" | "waitlist";
 }) {
   const [state, setState] = useState<"idle" | "working" | Result>("idle");
 
   async function run() {
     setState("working");
     try {
-      const res = await fetch(`/api/newsletter/${mode}`, {
+      const res = await fetch(`/api/${kind}/${mode}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token }),
@@ -77,7 +79,13 @@ export default function NewsletterAction({
     return (
       <>
         <h1 className="text-2xl font-bold text-foreground">
-          {isConfirm ? "Confirm your subscription" : "Unsubscribe from the newsletter"}
+          {isConfirm
+            ? kind === "waitlist"
+              ? "Confirm your place on the waitlist"
+              : "Confirm your subscription"
+            : kind === "waitlist"
+              ? "Leave the course waitlist"
+              : "Unsubscribe from the newsletter"}
         </h1>
         <p className="mt-2 max-w-md text-muted">
           {isConfirm
@@ -100,7 +108,18 @@ export default function NewsletterAction({
     );
   }
 
-  const copy = COPY[state];
+  const copy =
+    kind === "waitlist" && state === "confirmed"
+      ? {
+          heading: "You're on the list",
+          body: "I'll send you one email when the course opens. Until then, nothing else.",
+        }
+      : kind === "waitlist" && state === "unsubscribed"
+        ? {
+            heading: "Removed",
+            body: "Your address, level and note are deleted from the waitlist.",
+          }
+        : COPY[state];
   const succeeded = state === "confirmed" || state === "already" || state === "unsubscribed";
   return (
     <>
@@ -122,7 +141,7 @@ export default function NewsletterAction({
           Try again
         </button>
       )}
-      {(state === "confirmed" || state === "already") && (
+      {kind === "newsletter" && (state === "confirmed" || state === "already") && (
         <Link
           href="/production-checklist"
           className="mt-6 rounded-lg gradient-btn px-6 py-2.5 text-sm font-medium transition"

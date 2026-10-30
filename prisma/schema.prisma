@@ -193,6 +193,21 @@ model NewsletterSubscriber {
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 
+/// Course waitlist: separate from the newsletter on purpose, so a person who
+/// only asked to hear when the course opens never receives campaigns. Double
+/// opt-in like the newsletter; unsubscribing deletes the row.
+model CourseWaitlist {
+  id               String   @id @default(cuid())
+  email            String   @unique
+  confirmed        Boolean  @default(false)
+  confirmToken     String?  @unique
+  unsubscribeToken String   @unique
+  level            String
+  note             String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
 model NewsletterCampaign {
   id        String    @id @default(cuid())
   subject   String
