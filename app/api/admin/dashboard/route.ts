@@ -1,9 +1,14 @@
 import { NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/admin-guard";
 import { prisma } from "@/lib/prisma";
 import { topArticleViews } from "@/lib/analytics/load";
 import { subDays, subMonths, startOfMonth } from "date-fns";
 
 export async function GET() {
+  if (!(await isAdminRequest())) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const now = new Date();
   const sevenDaysAgo = subDays(now, 7);
   const thisMonth = startOfMonth(now);
