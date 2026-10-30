@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { trackGoal } from "@/lib/analytics/client";
 import { WAITLIST_LEVELS, WAITLIST_NOTE_MAX, type WaitlistLevel } from "@/lib/course-waitlist";
 
 const LEVEL_LABEL: Record<WaitlistLevel, string> = {
@@ -29,6 +30,7 @@ export default function WaitlistForm() {
       });
       if (res.ok) {
         setStatus("success");
+        trackGoal("waitlist");
       } else {
         const body = (await res.json().catch(() => null)) as { error?: string } | null;
         setErrorMessage(body?.error ?? "Something went wrong. Try again.");

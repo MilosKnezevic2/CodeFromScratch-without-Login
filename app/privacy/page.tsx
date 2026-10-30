@@ -48,6 +48,18 @@ export default function PrivacyPage() {
               <a href="https://vercel.com/docs/speed-insights/privacy-policy" className={LINK} target="_blank" rel="noopener noreferrer">Speed Insights privacy</a>.
             </li>
             <li>
+              <strong>Our own visit counts.</strong> We also keep simple daily totals in our database: how often each
+              page was viewed, how often a page stayed open for 30 seconds, how often an article was read halfway and to
+              the end, the total time spent on a page, and how many sign-ups and shares started from it. For a visit
+              that arrives from outside the site, we add one to separate daily totals for the website it came from, the
+              country and the device type (mobile, tablet or desktop). We also count confirmed sign-ups and unsubscribes
+              as plain daily numbers. We store no cookie, no identifier and no IP address, and nothing is written to your
+              device, so we cannot recognise you or connect two visits. Your IP address is used briefly, in memory, to
+              limit abusive requests, and our hosting provider uses it to work out the country. If your browser sends a
+              Global Privacy Control or Do Not Track signal, these counts are not sent. Legal basis: our legitimate
+              interest in knowing which articles are useful (Art. 6(1)(f) GDPR).
+            </li>
+            <li>
               <strong>Newsletter.</strong> If you subscribe, we store your email address, a confirmation token, your
               subscription status, and the dates you signed up and confirmed (our proof of your consent). We first send
               one confirmation email and only add you to the list after you click the link (double opt-in). Sign-ups
@@ -80,7 +92,8 @@ export default function PrivacyPage() {
           <p className="mt-2">
             The public pages of this site set no cookies. Your browser stores your theme (light or dark) and text-size
             choice in its local storage; this stays on your device and is never sent to us. Only the site
-            administrator has a login cookie, in a separate area that visitors do not use.
+            administrator has a login cookie, in a separate area that visitors do not use, and a local-storage marker
+            that keeps their own visits out of the counts.
           </p>
         </section>
 
@@ -88,7 +101,7 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-bold text-foreground">4. Service providers who process data for us</h2>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li><strong>Vercel</strong>: hosting, anonymous analytics and performance measurement</li>
-            <li><strong>Supabase</strong>: database for newsletter subscribers and contact messages</li>
+            <li><strong>Supabase</strong>: database for newsletter subscribers, contact messages and the daily visit totals</li>
             <li><strong>Resend</strong>: sending the confirmation and newsletter emails</li>
             <li><strong>Sanity</strong>: content management for the articles (it holds our articles, not visitor data)</li>
           </ul>

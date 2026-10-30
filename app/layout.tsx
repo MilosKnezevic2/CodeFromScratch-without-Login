@@ -23,6 +23,7 @@ import VisualEditing from "../components/VisualEditing";
 // exception and no consent banner is required.
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import SiteTracker from "@/components/analytics/SiteTracker";
 
 // next/font self-hosts the files (no request to Google at runtime) and emits
 // a size-adjusted fallback face, so the swap from system font to Sen does not
@@ -151,6 +152,7 @@ export default async function RootLayout({
           )}
           <Analytics />
           <SpeedInsights />
+          <SiteTracker />
         </SavedPostsProvider>
         </SessionProvider>
         </ThemeProvider>

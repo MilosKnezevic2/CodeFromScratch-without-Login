@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { client } from "@/lib/sanity/client";
+import { articleViews } from "@/lib/analytics/load";
 import Link from "next/link";
 
 interface SanityPostSummary {
@@ -11,18 +12,17 @@ interface SanityPostSummary {
 }
 
 export default async function AdminContentPage() {
-  const [posts, postViews, reactionCounts, savedCounts] = await Promise.all([
+  const [posts, viewMap, reactionCounts, savedCounts] = await Promise.all([
     client.fetch<SanityPostSummary[]>(
       `*[_type == "post" && status == "published"] | order(publishedAt desc) {
         _id, title, slug, publishedAt, categories[]->{ title }
       }`
     ).catch(() => [] as SanityPostSummary[]),
-    prisma.postView.findMany(),
+    articleViews(),
     prisma.postReaction.groupBy({ by: ["postSlug"], _count: { postSlug: true } }),
     prisma.savedPost.groupBy({ by: ["postSlug"], _count: { postSlug: true } }),
   ]);
 
-  const viewMap = new Map(postViews.map((v) => [v.postSlug, v.count]));
   const reactionMap = new Map(reactionCounts.map((r) => [r.postSlug, r._count.postSlug]));
   const saveMap = new Map(savedCounts.map((s) => [s.postSlug, s._count.postSlug]));
 

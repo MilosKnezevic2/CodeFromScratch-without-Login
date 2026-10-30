@@ -1,7 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { urlFor } from "@/lib/sanity/image";
-import ViewCounter from "./ViewCounter";
 
 type Author = {
   name: string;
@@ -27,7 +26,6 @@ export default function BlogPostMasthead({
   author,
   publishedAt,
   readingMinutes,
-  slug,
 }: {
   title: string;
   excerpt?: string;
@@ -38,7 +36,6 @@ export default function BlogPostMasthead({
   /** isPremium accepted for callsite compatibility but currently unused
       — the Premium badge is hidden site-wide during the unpaid phase. */
   isPremium?: boolean;
-  slug: string;
 }) {
   const dateLabel = new Date(publishedAt).toLocaleDateString("en-GB", {
     day: "2-digit",
@@ -121,9 +118,6 @@ export default function BlogPostMasthead({
               {dateLabel}
             </span>
           </div>
-          <span className="editorial-meta">
-            <ViewCounter slug={slug} />
-          </span>
         </div>
       )}
     </header>

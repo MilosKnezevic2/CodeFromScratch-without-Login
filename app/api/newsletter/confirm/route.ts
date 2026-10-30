@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { sendLetterToOne, welcomeLetter } from "@/lib/newsletter/service";
+import { countServerEvent } from "@/lib/analytics/store";
 
 /** Unconfirmed sign-ups must confirm within this window; re-subscribing
  *  issues a fresh token and restarts it. */
@@ -60,6 +61,7 @@ export async function POST(request: Request) {
       where: { id: subscriber.id },
       data: { confirmed: true, confirmedAt: new Date() },
     });
+    await countServerEvent("confirmed");
 
     // The subscription stands even if this fails: the checklist is also linked
     // on the page the reader is looking at right now.

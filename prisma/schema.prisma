@@ -240,6 +240,31 @@ model ContactSubmission {
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
 }
 
+/// Daily totals from the site's own anonymous counting. One row per day, metric
+/// and key; nothing in here identifies or connects visitors.
+model AnalyticsCounter {
+  day    DateTime @db.Date
+  metric String
+  key    String   @default("")
+  value  Int      @default(0)
+
+  @@id([day, metric, key])
+  @@index([metric, day])
+}
+
+/// Daily aggregates copied from Google Search Console by scripts/gsc-sync.mjs.
+model SearchStat {
+  day         DateTime @db.Date
+  kind        String
+  key         String   @default("")
+  clicks      Int      @default(0)
+  impressions Int      @default(0)
+  position    Float    @default(0)
+
+  @@id([day, kind, key])
+  @@index([kind, day])
+}
+
 model PostView {
   id        String   @id @default(cuid())
   postSlug  String

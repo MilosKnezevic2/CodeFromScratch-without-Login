@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { trackGoal } from "@/lib/analytics/client";
 
 export default function ShareButtons({ title, slug }: { title: string; slug: string }) {
   const [copied, setCopied] = useState(false);
@@ -33,7 +34,12 @@ export default function ShareButtons({ title, slug }: { title: string; slug: str
   const btnClass = "flex h-9 w-9 items-center justify-center rounded-lg border border-border/50 text-muted transition hover:bg-surface-2 hover:text-accent";
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div
+      className="flex flex-wrap items-center gap-2"
+      onClick={(event) => {
+        if ((event.target as Element).closest("a, button")) trackGoal("share");
+      }}
+    >
       <span className="text-xs font-medium uppercase tracking-wider text-muted-foreground">
         Share
       </span>

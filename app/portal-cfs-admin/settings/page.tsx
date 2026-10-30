@@ -4,7 +4,9 @@ import { SITE_CONFIG, SOCIAL_LINKS } from "@/lib/config";
 export default async function AdminSettingsPage() {
   const [userCount, postViewCount, subscriberCount, ebookCount] = await Promise.all([
     prisma.user.count(),
-    prisma.postView.count(),
+    prisma.analyticsCounter
+      .aggregate({ where: { metric: "view" }, _sum: { value: true } })
+      .then((result) => result._sum.value ?? 0),
     prisma.newsletterSubscriber.count(),
     prisma.ebook.count(),
   ]);
@@ -75,7 +77,7 @@ export default async function AdminSettingsPage() {
           <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Database</h3>
           <div className="mt-4 space-y-3 text-sm">
             <div className="flex justify-between"><span className="text-muted-foreground">Users</span><span className="font-medium text-foreground">{userCount}</span></div>
-            <div className="flex justify-between"><span className="text-muted-foreground">Post views tracked</span><span className="font-medium text-foreground">{postViewCount}</span></div>
+            <div className="flex justify-between"><span className="text-muted-foreground">Page views counted</span><span className="font-medium text-foreground">{postViewCount}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Newsletter subscribers</span><span className="font-medium text-foreground">{subscriberCount}</span></div>
             <div className="flex justify-between"><span className="text-muted-foreground">Ebooks</span><span className="font-medium text-foreground">{ebookCount}</span></div>
           </div>

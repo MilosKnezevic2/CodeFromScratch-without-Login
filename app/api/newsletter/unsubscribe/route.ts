@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { countServerEvent } from "@/lib/analytics/store";
 
 /**
  * Unsubscribing is a mutation, so it happens on POST — mail scanners
@@ -52,6 +53,7 @@ export async function POST(request: Request) {
     await prisma.newsletterSubscriber.delete({
       where: { id: subscriber.id },
     });
+    await countServerEvent("unsubscribe");
 
     return NextResponse.json({ status: "unsubscribed" });
   } catch (error) {
