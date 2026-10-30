@@ -1,11 +1,14 @@
 import { NextResponse } from "next/server";
+import { isAdminRequest } from "@/lib/admin-guard";
 import { prisma } from "@/lib/prisma";
 import { subDays, subMonths, startOfMonth } from "date-fns";
 
 export async function GET() {
+  if (!(await isAdminRequest())) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+  }
+
   const now = new Date();
-  const thirtyDaysAgo = subDays(now, 30);
-  const sixtyDaysAgo = subDays(now, 60);
   const sevenDaysAgo = subDays(now, 7);
   const thisMonth = startOfMonth(now);
   const lastMonth = startOfMonth(subMonths(now, 1));
