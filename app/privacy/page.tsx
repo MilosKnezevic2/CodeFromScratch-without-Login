@@ -48,10 +48,14 @@ export default function PrivacyPage() {
               <a href="https://vercel.com/docs/speed-insights/privacy-policy" className={LINK} target="_blank" rel="noopener noreferrer">Speed Insights privacy</a>.
             </li>
             <li>
-              <strong>Newsletter.</strong> If you subscribe, we store your email address, a confirmation token and your
-              subscription status. We first send one confirmation email and only add you to the list after you click the
-              link (double opt-in). Legal basis: your consent (Art. 6(1)(a) GDPR). You can withdraw it at any time with
-              the unsubscribe link in every email; unsubscribing deletes your address from our list.
+              <strong>Newsletter.</strong> If you subscribe, we store your email address, a confirmation token, your
+              subscription status, and the dates you signed up and confirmed (our proof of your consent). We first send
+              one confirmation email and only add you to the list after you click the link (double opt-in). Sign-ups
+              that are never confirmed are deleted after 30 days. After you confirm, you get one welcome email with the
+              free checklist, then one short email when a new article is published. We do not track whether you open
+              these emails or click their links. Legal basis: your consent (Art. 6(1)(a) GDPR). You can withdraw it at
+              any time with the unsubscribe link in every email, or by entering your address on the newsletter page
+              again, which sends you a link to leave. Unsubscribing deletes your address from our list.
             </li>
             <li>
               <strong>Course waitlist.</strong> If you join the waitlist for a possible future course, we store your

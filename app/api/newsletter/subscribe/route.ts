@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { getResend, getEmailFrom } from "@/lib/resend";
+import { sendEmail } from "@/lib/send-email";
 import { NewsletterConfirmEmail } from "@/lib/emails/newsletter-confirm";
 import { AlreadySubscribedEmail } from "@/lib/emails/already-subscribed";
 import { rateLimit } from "@/lib/rate-limit";
@@ -41,8 +41,7 @@ export async function POST(request: Request) {
     if (existing?.confirmed) {
       // Already on the list: the page reply stays identical, and the owner of
       // the address is told by email instead of getting silence.
-      await getResend().emails.send({
-        from: getEmailFrom(),
+      await sendEmail({
         to: email,
         subject: "You are already subscribed",
         html: AlreadySubscribedEmail({
@@ -75,8 +74,7 @@ export async function POST(request: Request) {
 
     const confirmUrl = `${origin}/newsletter/confirm?token=${rawConfirmToken}`;
 
-    await getResend().emails.send({
-      from: getEmailFrom(),
+    await sendEmail({
       to: email,
       subject: "Confirm your newsletter subscription",
       html: NewsletterConfirmEmail({ confirmUrl }),
@@ -85,6 +83,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: NEUTRAL_MESSAGE });
   } catch (error) {
     console.error("Newsletter subscribe error:", error);
-    return NextResponse.json({ error: "Something went wrong" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Something went wrong. Please try again in a few minutes." },
+      { status: 500 },
+    );
   }
 }

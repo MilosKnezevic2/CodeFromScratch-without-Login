@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
+import { sendLetterToOne, welcomeLetter } from "@/lib/newsletter/service";
 
 /** Unconfirmed sign-ups must confirm within this window; re-subscribing
  *  issues a fresh token and restarts it. */
@@ -57,8 +58,19 @@ export async function POST(request: Request) {
 
     await prisma.newsletterSubscriber.update({
       where: { id: subscriber.id },
-      data: { confirmed: true },
+      data: { confirmed: true, confirmedAt: new Date() },
     });
+
+    // The subscription stands even if this fails: the checklist is also linked
+    // on the page the reader is looking at right now.
+    try {
+      await sendLetterToOne(welcomeLetter(), {
+        email: subscriber.email,
+        unsubscribeToken: subscriber.unsubscribeToken,
+      });
+    } catch (error) {
+      console.error("Newsletter welcome email failed:", error);
+    }
 
     return NextResponse.json({ status: "confirmed" });
   } catch (error) {

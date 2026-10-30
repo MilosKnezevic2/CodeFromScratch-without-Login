@@ -187,6 +187,8 @@ model NewsletterSubscriber {
   confirmToken     String?  @unique
   unsubscribeToken String   @unique
   preferences      Json     @default("{}")
+  /// When the double opt-in link was pressed: the proof of consent (GDPR Art. 7(1)).
+  confirmedAt      DateTime?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
@@ -209,13 +211,20 @@ model CourseWaitlist {
 }
 
 model NewsletterCampaign {
-  id        String    @id @default(cuid())
-  subject   String
-  htmlBody  String    @db.Text
-  sentAt    DateTime?
-  sentCount Int       @default(0)
-  openCount Int       @default(0)
-  createdAt DateTime  @default(now())
+  id             String    @id @default(cuid())
+  subject        String
+  htmlBody       String    @db.Text
+  preheader      String?
+  note           String?   @db.Text
+  postSlug       String?
+  /// SENDING | SENT | PARTIAL | FAILED
+  status         String    @default("SENT")
+  recipientCount Int       @default(0)
+  failedCount    Int       @default(0)
+  sentAt         DateTime?
+  sentCount      Int       @default(0)
+  openCount      Int       @default(0)
+  createdAt      DateTime  @default(now())
 }
 
 model ContactSubmission {

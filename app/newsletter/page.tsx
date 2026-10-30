@@ -31,7 +31,11 @@ export default function NewsletterPage() {
           </Link>
           , available to everyone, subscribed or not.
         </li>
-        <li>Your address is used for this letter only, and you can leave in one click.</li>
+        <li>
+          Your address is used for this letter only. Every email has a one-click
+          unsubscribe link, and entering your address below again sends you a
+          link to leave.
+        </li>
       </ul>
 
       <div className="mt-12">

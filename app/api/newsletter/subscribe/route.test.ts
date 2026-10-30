@@ -125,6 +125,6 @@ describe("POST /api/newsletter/subscribe", () => {
     );
     const res = await POST(post({ email: "reader@example.com" }));
     expect(res.status).toBe(500);
-    expect((await res.json()).error).toBe("Something went wrong");
+    expect((await res.json()).error).toBe("Something went wrong. Please try again in a few minutes.");
   });
 });
