@@ -7,11 +7,16 @@ import { rateLimit } from "@/lib/rate-limit";
 const MAX_BODY = 1024;
 const IGNORED = () => new Response(null, { status: 204 });
 
-/** Only the real site counts: preview deployments must not add to the totals. */
+const withoutWww = (host: string) => host.replace(/^www\./, "");
+
+/**
+ * Only the real site counts: preview deployments must not add to the totals.
+ * The site also answers on www, and those are real readers.
+ */
 function isCanonicalHost(request: Request): boolean {
   const site = process.env.NEXT_PUBLIC_SITE_URL;
   if (!site) return false;
-  return new URL(site).host === new URL(request.url).host;
+  return withoutWww(new URL(site).host) === withoutWww(new URL(request.url).host);
 }
 
 /**
