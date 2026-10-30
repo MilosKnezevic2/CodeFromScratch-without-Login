@@ -1,6 +1,7 @@
 import { PrismaClient } from "./generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import { Pool } from "pg";
+import { toTransactionPooler } from "./db-url";
 
 const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined;
@@ -12,12 +13,10 @@ function createPrismaClient() {
   // stats would hang on the OS TCP timeout instead of hitting its catch
   // block within a few seconds.
   //
-  // The database allows 15 connections in total through its pooler, and a
-  // frozen serverless instance keeps its connections open for many minutes.
-  // pg's default of 10 per instance let one admin page use most of them and
-  // would then fail reader sign-ups, so each instance stays small.
+  // Each serverless instance stays small because Vercel can run many at once;
+  // pg's default of 10 per instance is meant for one long-lived server.
   const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: toTransactionPooler(process.env.DATABASE_URL),
     max: 2,
     idleTimeoutMillis: 3_000,
     connectionTimeoutMillis: 3_000,
