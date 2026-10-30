@@ -5,6 +5,13 @@ import { rateLimit } from "@/lib/rate-limit";
 import { validateEmail, validateName, validatePassword, sanitizeInput } from "@/lib/sanitize";
 
 export async function POST(request: Request) {
+  // Content-first launch: the public site promises "no user accounts" in its
+  // privacy policy, so sign-up stays closed until the commerce relaunch sets
+  // REGISTRATION_OPEN=true (with the policy updated first).
+  if (process.env.REGISTRATION_OPEN !== "true") {
+    return NextResponse.json({ error: "Registration is closed." }, { status: 403 });
+  }
+
   try {
     const ip = request.headers.get("x-forwarded-for")?.split(",")[0] ?? "unknown";
     const { success } = rateLimit(`register:${ip}`, 5, 15 * 60 * 1000);
