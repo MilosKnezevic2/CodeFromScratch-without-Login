@@ -8,6 +8,27 @@ export const SITE_URL = () => process.env.NEXT_PUBLIC_SITE_URL || "https://codef
 
 export const REPLY_TO = "office@codefromscratch.org";
 
+/** Who signs the footer of every email. The portal's General settings fill this in. */
+export interface LetterIdentity {
+  siteName: string;
+  ownerName: string;
+  ownerCity: string;
+  replyTo: string;
+}
+
+export const DEFAULT_IDENTITY: LetterIdentity = {
+  siteName: "CodeFromScratch",
+  ownerName: "Milos Knezevic",
+  ownerCity: "Graz, Austria",
+  replyTo: REPLY_TO,
+};
+
+const identityHtml = (identity: LetterIdentity) =>
+  [identity.siteName, identity.ownerName, identity.ownerCity, identity.replyTo].map(escapeHtml).join(" &middot; ");
+
+const identityText = (identity: LetterIdentity) =>
+  [identity.siteName, identity.ownerName, identity.ownerCity, identity.replyTo].join(" · ");
+
 const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif";
 const INK = "#0f172a";
 const BODY = "#334155";
@@ -109,8 +130,6 @@ ${hidden}
 </html>`;
 }
 
-const IDENTITY = `CodeFromScratch &middot; Milos Knezevic &middot; Graz, Austria &middot; ${REPLY_TO}`;
-
 function legalLinks(): string {
   const site = SITE_URL();
   return `<a href="${site}/privacy" style="color:${MUTED};">Privacy</a> &middot; <a href="${site}/impressum" style="color:${MUTED};">Impressum</a>`;
@@ -126,14 +145,14 @@ export interface LetterContent {
 }
 
 /** A letter to a subscriber: note, optional article card, unsubscribe footer. */
-export function renderLetter(content: LetterContent, unsubscribeUrl: string): string {
+export function renderLetter(content: LetterContent, unsubscribeUrl: string, identity: LetterIdentity = DEFAULT_IDENTITY): string {
   const bodyHtml = `${content.note ? noteToHtml(content.note) : ""}${content.card ? cardToHtml(content.card) : ""}`;
-  const footerHtml = `<p style="${smallText}">You get this email because you subscribed at codefromscratch.org and confirmed it. <a href="${escapeHtml(unsubscribeUrl)}" style="color:${MUTED};">Unsubscribe in one click</a>.</p><p style="${smallText}">${legalLinks()}</p><p style="margin:0;font:12px/1.6 ${FONT};color:${MUTED};">${IDENTITY}</p>`;
+  const footerHtml = `<p style="${smallText}">You get this email because you subscribed at codefromscratch.org and confirmed it. <a href="${escapeHtml(unsubscribeUrl)}" style="color:${MUTED};">Unsubscribe in one click</a>.</p><p style="${smallText}">${legalLinks()}</p><p style="margin:0;font:12px/1.6 ${FONT};color:${MUTED};">${identityHtml(identity)}</p>`;
   return shell({ title: content.subject, preheader: content.preheader, bodyHtml, footerHtml });
 }
 
 /** Plain-text twin of renderLetter. Mail clients and spam filters both want one. */
-export function renderLetterText(content: LetterContent, unsubscribeUrl: string): string {
+export function renderLetterText(content: LetterContent, unsubscribeUrl: string, identity: LetterIdentity = DEFAULT_IDENTITY): string {
   const parts: string[] = [];
   if (content.note) parts.push(content.note.trim());
   if (content.card) {
@@ -141,7 +160,7 @@ export function renderLetterText(content: LetterContent, unsubscribeUrl: string)
     parts.push([title, excerpt, meta, `${cta}: ${url}`].filter(Boolean).join("\n"));
   }
   parts.push(
-    `--\nYou get this email because you subscribed at codefromscratch.org and confirmed it.\nUnsubscribe: ${unsubscribeUrl}\nCodeFromScratch · Milos Knezevic · Graz, Austria · ${REPLY_TO}`,
+    `--\nYou get this email because you subscribed at codefromscratch.org and confirmed it.\nUnsubscribe: ${unsubscribeUrl}\n${identityText(identity)}`,
   );
   return parts.join("\n\n");
 }
@@ -154,10 +173,10 @@ interface NoticeOptions {
 }
 
 /** A one-off notice (confirm your address, already subscribed): same look, no marketing footer. */
-export function renderNotice({ title, paragraphs, action, footnote }: NoticeOptions): string {
+export function renderNotice({ title, paragraphs, action, footnote }: NoticeOptions, identity: LetterIdentity = DEFAULT_IDENTITY): string {
   const bodyHtml = `<h1 style="margin:0 0 16px;font:bold 22px/1.3 ${FONT};color:${INK};">${escapeHtml(title)}</h1>${paragraphs
     .map((p) => `<p style="margin:0 0 16px;font:16px/1.65 ${FONT};color:${BODY};">${escapeHtml(p)}</p>`)
     .join("")}${action ? `<div style="margin:8px 0 20px;">${button(action.label, action.url)}</div><p style="margin:0 0 16px;font:13px/1.6 ${FONT};color:${MUTED};word-break:break-all;">Or open this link: <a href="${escapeHtml(action.url)}" style="color:${MUTED};">${escapeHtml(action.url)}</a></p>` : ""}${footnote ? `<p style="margin:0 0 16px;font:14px/1.6 ${FONT};color:${MUTED};">${textToHtml(footnote)}</p>` : ""}`;
-  const footerHtml = `<p style="${smallText}">${legalLinks()}</p><p style="margin:0;font:12px/1.6 ${FONT};color:${MUTED};">${IDENTITY}</p>`;
+  const footerHtml = `<p style="${smallText}">${legalLinks()}</p><p style="margin:0;font:12px/1.6 ${FONT};color:${MUTED};">${identityHtml(identity)}</p>`;
   return shell({ title, bodyHtml, footerHtml });
 }

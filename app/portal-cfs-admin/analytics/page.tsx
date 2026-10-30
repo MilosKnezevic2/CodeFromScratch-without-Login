@@ -4,6 +4,7 @@ import DailyBars from "@/components/admin/analytics/DailyBars";
 import ExcludeDevice from "@/components/admin/analytics/ExcludeDevice";
 import KPICard from "@/components/admin/KPICard";
 import { loadOutcomes, loadReport } from "@/lib/analytics/load";
+import { loadSettings } from "@/lib/settings/store";
 import {
   change,
   GOOD_FINISH_RATE,
@@ -33,8 +34,6 @@ const SORTS = [
 ] as const;
 type SortId = (typeof SORTS)[number]["id"];
 
-/** Targets from the brand plan (brand-brain/board/OKR.md and FUNNEL.md). */
-const GOALS = { visits: 500, subscribers: 50, ebookSubscribers: 300, deadline: "31 Jan 2027" };
 const STALE_SEARCH_DAYS = 7;
 
 const TONE_STYLE: Record<VerdictTone, string> = {
@@ -248,11 +247,13 @@ export default async function AdminAnalyticsPage({
   const days = RANGES.find((range) => String(range) === params.days) ?? 30;
   const sort: SortId = SORTS.find((option) => option.id === params.sort)?.id ?? "views";
 
-  const [report, outcomes, last30] = await Promise.all([
+  const [report, outcomes, last30, { analytics: goals }] = await Promise.all([
     loadReport(days),
     loadOutcomes(),
     days === 30 ? null : loadReport(30),
+    loadSettings(),
   ]);
+  const deadline = shortDate(goals.goalDeadline);
   const { current, previous } = report;
   const monthlyVisits = (last30 ?? report).current.visits;
   const newSubscribers = current.confirmed - current.unsubscribed;
@@ -375,24 +376,24 @@ export default async function AdminAnalyticsPage({
         />
       </div>
 
-      <Section title="Goals" hint="Targets are working guesses from the brand plan.">
+      <Section title="Goals" hint="Targets are set under Settings, Goals.">
         <div className="grid gap-4 md:grid-cols-3">
           <GoalBar
             label="Visits, last 30 days"
             value={monthlyVisits}
-            goal={GOALS.visits}
-            note={`Goal by ${GOALS.deadline}.`}
+            goal={goals.monthlyVisitsGoal}
+            note={`Goal by ${deadline}.`}
           />
           <GoalBar
             label="Confirmed subscribers"
             value={outcomes.confirmedSubscribers}
-            goal={GOALS.subscribers}
-            note={`Goal by ${GOALS.deadline}. ${outcomes.waitingSubscribers} still waiting to confirm.`}
+            goal={goals.subscribersGoal}
+            note={`Goal by ${deadline}. ${outcomes.waitingSubscribers} still waiting to confirm.`}
           />
           <GoalBar
             label="Subscribers needed for the ebook"
             value={outcomes.confirmedSubscribers}
-            goal={GOALS.ebookSubscribers}
+            goal={goals.ebookSubscribersGate}
             note={`Course waitlist: ${outcomes.waitlistConfirmed} confirmed.`}
           />
         </div>

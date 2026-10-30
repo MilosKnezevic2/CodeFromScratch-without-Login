@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import WaitlistForm from "@/components/waitlist/WaitlistForm";
+import { getSettings } from "@/lib/settings/store";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
 
@@ -11,7 +12,8 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE_URL}/course-waitlist` },
 };
 
-export default function CourseWaitlistPage() {
+export default async function CourseWaitlistPage() {
+  const { features } = await getSettings();
   return (
     <div className="mx-auto max-w-2xl px-4 py-20 sm:px-6 lg:px-8">
       <p className="editorial-meta text-muted-foreground">Course waitlist</p>
@@ -31,7 +33,13 @@ export default function CourseWaitlistPage() {
       </p>
 
       <div className="mt-10">
-        <WaitlistForm />
+        {features.courseWaitlistOpen ? (
+          <WaitlistForm />
+        ) : (
+          <p className="rounded-xl border border-border bg-surface p-5 text-sm text-muted">
+            The list is closed for now. Subscribe to the newsletter and you will hear when it opens again.
+          </p>
+        )}
       </div>
 
       <p className="mt-8 text-xs leading-relaxed text-muted-foreground">

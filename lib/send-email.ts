@@ -23,6 +23,8 @@ export function htmlToPlainText(html: string): string {
 }
 
 interface SendEmailOptions {
+  /** Overrides the sender's display name; the address always stays the verified one. */
+  from?: string;
   to: string;
   subject: string;
   html: string;
@@ -36,9 +38,9 @@ interface SendEmailOptions {
  * not as a thrown exception. Unchecked, a failed send looks like a success and
  * the reader is told to check an inbox that will stay empty, so this throws.
  */
-export async function sendEmail({ to, subject, html, text, headers, replyTo }: SendEmailOptions) {
+export async function sendEmail({ from, to, subject, html, text, headers, replyTo }: SendEmailOptions) {
   const result = await getResend().emails.send({
-    from: getEmailFrom(),
+    from: from ?? getEmailFrom(),
     to,
     subject,
     html,

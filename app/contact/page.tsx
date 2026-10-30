@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import ContactPageClient from "@/components/contact/ContactPageClient";
+import { getSettings } from "@/lib/settings/store";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
 
@@ -14,6 +15,7 @@ export const metadata: Metadata = {
   alternates: { canonical: `${SITE_URL}/contact` },
 };
 
-export default function ContactPage() {
-  return <ContactPageClient />;
+export default async function ContactPage() {
+  const { general, features } = await getSettings();
+  return <ContactPageClient contactEmail={general.contactEmail} social={features.showSocialLinks ? general.social : null} />;
 }

@@ -3,12 +3,13 @@ import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { validateEmail, validateName, validatePassword, sanitizeInput } from "@/lib/sanitize";
+import { getSettings } from "@/lib/settings/store";
 
 export async function POST(request: Request) {
   // Content-first launch: the public site promises "no user accounts" in its
-  // privacy policy, so sign-up stays closed until the commerce relaunch sets
-  // REGISTRATION_OPEN=true (with the policy updated first).
-  if (process.env.REGISTRATION_OPEN !== "true") {
+  // privacy policy, so sign-up stays closed until the portal switch is turned
+  // on for the commerce relaunch (with the policy updated first).
+  if (!(await getSettings()).features.registrationOpen) {
     return NextResponse.json({ error: "Registration is closed." }, { status: 403 });
   }
 
