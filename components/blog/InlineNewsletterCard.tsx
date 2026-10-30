@@ -69,9 +69,9 @@ export default function InlineNewsletterCard() {
             Never miss an issue.
           </h2>
           <p className="mt-5 max-w-md text-base leading-relaxed text-muted-foreground">
-            One short letter whenever a new piece ships — the article, what
-            I&rsquo;m reading, what I&rsquo;m building. Twenty seconds to
-            skim. Unsubscribe in one click.
+            One short email whenever a new article goes live, plus the free
+            Production Checklist. Twenty seconds to skim. Unsubscribe in one
+            click.
           </p>
         </div>
         <form onSubmit={onSubmit} className="min-w-0 lg:col-span-5">
@@ -119,7 +119,7 @@ export default function InlineNewsletterCard() {
             </button>
           </div>
           <p className="editorial-meta mt-4 text-muted-foreground/70">
-            No spam, ever · No tracking pixels · Unsubscribe in one click
+            No spam · Free · Unsubscribe in one click
           </p>
           {status === "success" && (
             <p
