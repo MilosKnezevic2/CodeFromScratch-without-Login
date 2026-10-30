@@ -3,13 +3,14 @@ import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { getResend, getEmailFrom } from "@/lib/resend";
 import { WaitlistConfirmEmail } from "@/lib/emails/waitlist-confirm";
+import { AlreadySubscribedEmail } from "@/lib/emails/already-subscribed";
 import { rateLimit } from "@/lib/rate-limit";
 import { WAITLIST_NOTE_MAX, isWaitlistLevel } from "@/lib/course-waitlist";
 
 // One neutral reply for every valid address, so nobody can probe who is on
 // the list.
 const NEUTRAL_MESSAGE =
-  "Check your inbox — if this address isn't already on the list, a confirmation email is on its way.";
+  "Check your inbox. You will get one email either way: a confirmation link, or a note that you are already on the list. If it does not arrive within a few minutes, look in your spam folder.";
 
 export async function POST(request: Request) {
   try {
@@ -38,7 +39,18 @@ export async function POST(request: Request) {
       typeof body.note === "string" ? body.note.trim().slice(0, WAITLIST_NOTE_MAX) : "";
 
     const existing = await prisma.courseWaitlist.findUnique({ where: { email } });
+    const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
+
     if (existing?.confirmed) {
+      await getResend().emails.send({
+        from: getEmailFrom(),
+        to: email,
+        subject: "You are already on the course waitlist",
+        html: AlreadySubscribedEmail({
+          what: "the course waitlist",
+          unsubscribeUrl: `${origin}/course-waitlist/unsubscribe?token=${existing.unsubscribeToken}`,
+        }),
+      });
       return NextResponse.json({ message: NEUTRAL_MESSAGE });
     }
 
@@ -60,7 +72,6 @@ export async function POST(request: Request) {
       },
     });
 
-    const origin = process.env.NEXT_PUBLIC_SITE_URL || new URL(request.url).origin;
     await getResend().emails.send({
       from: getEmailFrom(),
       to: email,

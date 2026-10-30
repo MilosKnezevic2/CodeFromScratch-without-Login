@@ -57,7 +57,9 @@ describe("POST /api/newsletter/subscribe", () => {
     prismaMock.newsletterSubscriber.findUnique.mockResolvedValue({
       email: "old@example.com",
       confirmed: true,
+      unsubscribeToken: "unsub-token-1",
     });
+    sendMock.mockResolvedValue({});
     const res2 = await POST(post({ email: "old@example.com" }));
     const confirmed = await res2.json();
 
@@ -67,13 +69,21 @@ describe("POST /api/newsletter/subscribe", () => {
     expect(fresh.message).toBe(confirmed.message);
   });
 
-  it("does not email an already-confirmed address", async () => {
+  it("tells an already-confirmed address by email, without re-confirming or writing", async () => {
     prismaMock.newsletterSubscriber.findUnique.mockResolvedValue({
       email: "old@example.com",
       confirmed: true,
+      unsubscribeToken: "unsub-token-1",
     });
-    await POST(post({ email: "old@example.com" }));
-    expect(sendMock).not.toHaveBeenCalled();
+    sendMock.mockResolvedValue({});
+    const res = await POST(post({ email: "old@example.com" }));
+    expect(res.status).toBe(200);
+    expect(sendMock).toHaveBeenCalledTimes(1);
+    const mail = sendMock.mock.calls[0]![0];
+    expect(mail.to).toBe("old@example.com");
+    expect(mail.html).toContain("already");
+    expect(mail.html).toContain("/newsletter/unsubscribe?token=unsub-token-1");
+    expect(mail.html).not.toContain("/newsletter/confirm");
     expect(prismaMock.newsletterSubscriber.upsert).not.toHaveBeenCalled();
   });
 

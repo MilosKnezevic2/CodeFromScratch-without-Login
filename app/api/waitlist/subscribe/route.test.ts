@@ -55,17 +55,26 @@ describe("POST /api/waitlist/subscribe", () => {
     expect(sendMock).not.toHaveBeenCalled();
   });
 
-  it("gives the same reply for new and already-confirmed addresses, and emails only the new one", async () => {
+  it("gives the same reply for new and already-confirmed addresses, and emails both", async () => {
     prismaMock.courseWaitlist.findUnique.mockResolvedValue(null);
     prismaMock.courseWaitlist.upsert.mockResolvedValue({});
     sendMock.mockResolvedValue({});
     const fresh = await (await POST(post({ email: "new@example.com", level: "beginner" }))).json();
     expect(sendMock).toHaveBeenCalledTimes(1);
+    expect(sendMock.mock.calls[0]![0].html).toContain("/course-waitlist/confirm?token=");
 
-    prismaMock.courseWaitlist.findUnique.mockResolvedValue({ email: "old@example.com", confirmed: true });
+    prismaMock.courseWaitlist.findUnique.mockResolvedValue({
+      email: "old@example.com",
+      confirmed: true,
+      unsubscribeToken: "unsub-token-2",
+    });
     const known = await (await POST(post({ email: "old@example.com", level: "beginner" }))).json();
     expect(known.message).toBe(fresh.message);
-    expect(sendMock).toHaveBeenCalledTimes(1);
+    expect(sendMock).toHaveBeenCalledTimes(2);
+    const mail = sendMock.mock.calls[1]![0];
+    expect(mail.html).toContain("/course-waitlist/unsubscribe?token=unsub-token-2");
+    expect(mail.html).not.toContain("/course-waitlist/confirm");
+    expect(prismaMock.courseWaitlist.upsert).toHaveBeenCalledTimes(1);
   });
 
   it("stores only the hash of the confirm token and links to the page, not the API", async () => {
