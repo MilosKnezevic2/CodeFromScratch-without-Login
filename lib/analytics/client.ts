@@ -28,10 +28,8 @@ function canCount(): boolean {
   return !readNoCountFlag();
 }
 
-export function sendAnalytics(event: CollectEvent): void {
-  if (!canCount()) return;
+function transmit(body: string): void {
   const url = "/api/analytics/collect";
-  const body = JSON.stringify(event);
   // sendBeacon survives the page closing, which is when reading time is sent.
   if (navigator.sendBeacon?.(url, new Blob([body], { type: "application/json" }))) return;
   fetch(url, { method: "POST", body, keepalive: true, headers: { "content-type": "application/json" } }).catch(
@@ -39,6 +37,26 @@ export function sendAnalytics(event: CollectEvent): void {
       // Statistics are best effort; a lost count must never disturb the reader.
     },
   );
+}
+
+export function sendAnalytics(event: CollectEvent): void {
+  if (!canCount()) return;
+  transmit(JSON.stringify(event));
+}
+
+const queue: CollectEvent[] = [];
+
+/** Holds an event until the page is hidden or left, so several arrive as one request. */
+export function queueAnalytics(event: CollectEvent): void {
+  if (!canCount()) return;
+  queue.push(event);
+}
+
+/** Sends everything queued in one beacon. Called when the page hides or unloads. */
+export function flushAnalytics(): void {
+  if (queue.length === 0) return;
+  const events = queue.splice(0, queue.length);
+  transmit(JSON.stringify({ events }));
 }
 
 /** Records that a reader did something that matters, on the page they did it from. */

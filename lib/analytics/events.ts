@@ -36,6 +36,8 @@ const GOALS: readonly string[] = ["signup", "waitlist", "share"];
 const MAX_PATH = 200;
 const MAX_HOST = 100;
 export const MAX_SECONDS_PER_EVENT = 600;
+/** Events one request may carry: a page sends at most a view, three milestones, a time and a goal or two. */
+export const MAX_BATCH = 12;
 
 /** Public pages that have a fixed address. Everything else is an article or unknown. */
 const STATIC_PATHS = new Set([
@@ -103,6 +105,34 @@ export function parseEvent(body: unknown): CollectEvent | null {
     default:
       return null;
   }
+}
+
+/**
+ * Reads one event, a bare array of events, or { events: [...] }. Anything
+ * malformed inside a batch is dropped; the rest still counts.
+ */
+export function parseEvents(body: unknown): CollectEvent[] {
+  const list = Array.isArray(body)
+    ? body
+    : body && typeof body === "object" && Array.isArray((body as { events?: unknown }).events)
+      ? ((body as { events: unknown[] }).events)
+      : [body];
+  return list
+    .slice(0, MAX_BATCH)
+    .map(parseEvent)
+    .filter((event): event is CollectEvent => event !== null);
+}
+
+/** Sums counters that hit the same day row, so a batch is one database statement. */
+export function mergeCounters(counters: Counter[]): Counter[] {
+  const merged = new Map<string, Counter>();
+  for (const counter of counters) {
+    const id = `${counter.metric}\u0000${counter.key}`;
+    const existing = merged.get(id);
+    if (existing) existing.value += counter.value;
+    else merged.set(id, { ...counter });
+  }
+  return [...merged.values()];
 }
 
 export type PathClass = { kind: "known"; key: string } | { kind: "missing" } | { kind: "ignored" };
