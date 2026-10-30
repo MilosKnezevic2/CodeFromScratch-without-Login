@@ -44,7 +44,7 @@ export default function InlineNewsletterCard() {
   return (
     <aside
       aria-labelledby="inline-newsletter-heading"
-      className="relative overflow-hidden rounded-3xl border border-border/50 bg-foreground/[0.03] px-6 py-12 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.4)] backdrop-blur-2xl sm:px-10 sm:py-16 lg:px-16 lg:py-20"
+      className="relative overflow-clip rounded-3xl border border-border/50 bg-foreground/[0.03] px-6 py-12 shadow-[0_20px_60px_-30px_rgba(0,0,0,0.4)] backdrop-blur-2xl sm:px-10 sm:py-16 lg:px-16 lg:py-20"
     >
       {/* Frosted-glass tint — uses the page's own foreground colour at very
           low opacity so the panel feels embedded in the palette, just
