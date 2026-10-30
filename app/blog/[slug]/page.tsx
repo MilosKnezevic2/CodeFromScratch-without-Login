@@ -95,7 +95,7 @@ export async function generateMetadata({
       locale: "en_US",
       type: "article",
       publishedTime: post.publishedAt,
-      modifiedTime: post._updatedAt || post.publishedAt,
+      modifiedTime: post.contentUpdatedAt || post.publishedAt,
       authors: post.author ? [post.author.name] : undefined,
       images: [{ url: ogImage, width: 1200, height: 630 }],
     },
@@ -163,7 +163,7 @@ export default async function PostPage({ params }: PageProps) {
         slug={slug}
         excerpt={post.excerpt}
         publishedAt={post.publishedAt}
-        updatedAt={post._updatedAt}
+        updatedAt={post.contentUpdatedAt}
         authorName={post.author?.name}
         imageUrl={featuredImageUrl}
       />
@@ -276,6 +276,19 @@ export default async function PostPage({ params }: PageProps) {
                         month: "short",
                         year: "numeric",
                       })}
+                      {post.contentUpdatedAt && (
+                        <>
+                          {" "}
+                          · Updated{" "}
+                          <time dateTime={post.contentUpdatedAt}>
+                            {new Date(post.contentUpdatedAt).toLocaleDateString("en-GB", {
+                              day: "2-digit",
+                              month: "short",
+                              year: "numeric",
+                            })}
+                          </time>
+                        </>
+                      )}
                       {readingMinutes > 0 && <> · {readingMinutes} min read</>}
                     </span>
                   </div>

@@ -214,6 +214,13 @@ export const post = defineType({
       description: "Sortable publication date. Set when you publish.",
     }),
     defineField({
+      name: "contentUpdatedAt",
+      title: "Content Updated At",
+      type: "datetime",
+      description:
+        "Set only when the article is substantially rewritten. Drives the sitemap date, the schema dateModified and the visible \"Updated\" line. Leave empty for small edits.",
+    }),
+    defineField({
       name: "readingTime",
       title: "Reading Time (minutes)",
       type: "number",
