@@ -10,6 +10,16 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.or
 
 type PageProps = { params: Promise<{ slug: string }> };
 
+// Rendered on first visit, then cached and refreshed every minute. Outside
+// the (listing) group so an unknown tag answers a real 404. Nothing is
+// prerendered: 100+ tag pages are not worth the build time, but the empty
+// list is what lets Next cache them on demand.
+export const revalidate = 60;
+
+export function generateStaticParams() {
+  return [];
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   // A metadata-phase throw bypasses error.tsx — swallow it so the page

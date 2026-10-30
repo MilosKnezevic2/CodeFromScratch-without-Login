@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { verifyAdminSession } from "@/lib/admin-session";
 import { isTrustedOrigin } from "@/lib/csrf";
+import { legacyBlogRedirect, listingHref, queryFromParams } from "@/lib/blog-url";
 
 // Next 16 name for the edge request hook (the `middleware` file convention
 // is deprecated). Runs on Edge — Web Crypto only, no node:crypto.
@@ -22,6 +23,22 @@ export async function proxy(request: NextRequest) {
     if (!isTrustedOrigin(origin, request.url, process.env.NEXT_PUBLIC_SITE_URL)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
+  }
+
+  // The journal index is static now; its old query-string addresses
+  // (?page=2, ?category=x, ?q=...) live on other routes.
+  if (pathname === "/blog") {
+    const target = legacyBlogRedirect(request.nextUrl.searchParams);
+    if (target) return NextResponse.redirect(new URL(target, request.nextUrl.origin), 308);
+    return NextResponse.next();
+  }
+  // A search-route state that has a page of its own (plain journal, lone
+  // category or tag) is sent there with a real 308; the page's own redirect
+  // would only run after the listing skeleton has streamed a 200.
+  if (pathname === "/blog/search") {
+    const home = listingHref(queryFromParams(request.nextUrl.searchParams));
+    if (!home.startsWith("/blog/search")) return NextResponse.redirect(new URL(home, request.nextUrl.origin), 308);
+    return NextResponse.next();
   }
 
   // Check for NextAuth session token
@@ -70,6 +87,8 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    "/blog",
+    "/blog/search",
     "/portal-cfs-admin/:path*",
     "/dashboard/:path*",
     "/login",
