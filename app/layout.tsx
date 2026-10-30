@@ -7,8 +7,7 @@ import { draftMode } from "next/headers";
 // Navbar/Footer — without this import the logo silently fell back to
 // Georgia). Jakarta/Inter/JetBrains were declared but could never render
 // (they sat below Sen/Geist in every stack), so they were removed.
-import "@fontsource-variable/sen";
-import "@fontsource-variable/geist-mono";
+import { Sen, Geist_Mono } from "next/font/google";
 import "@fontsource-variable/fraunces";
 import "./globals.css";
 import SessionProvider from "../components/auth/SessionProvider";
@@ -24,6 +23,20 @@ import VisualEditing from "../components/VisualEditing";
 // exception and no consent banner is required.
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+
+// next/font self-hosts the files (no request to Google at runtime) and emits
+// a size-adjusted fallback face, so the swap from system font to Sen does not
+// reflow the hero (it caused a 0.204 layout shift on mobile before).
+const sen = Sen({
+  subsets: ["latin", "latin-ext"],
+  display: "swap",
+  variable: "--font-sen",
+});
+const geistMono = Geist_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-geist-mono",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -98,7 +111,11 @@ export default async function RootLayout({
   const { isEnabled: isDraft } = await draftMode();
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${sen.variable} ${geistMono.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         {process.env.NEXT_PUBLIC_PLAUSIBLE_DOMAIN && (
           <Script
