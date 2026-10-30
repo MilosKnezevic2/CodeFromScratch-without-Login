@@ -10,6 +10,21 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.or
 
 type PageProps = { params: Promise<{ slug: string }> };
 
+// Prerendered and refreshed every minute, like the journal index. Lives
+// outside the (listing) group so an unknown slug answers a real 404 instead
+// of streaming the skeleton first (see app/blog/(listing)/README.md).
+export const revalidate = 60;
+
+export async function generateStaticParams() {
+  try {
+    const categories = await getCategories();
+    return categories.map((c) => ({ slug: c.slug.current }));
+  } catch {
+    // Sanity unreachable at build time: render on demand instead.
+    return [];
+  }
+}
+
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   // A metadata-phase throw bypasses error.tsx — swallow it so the page

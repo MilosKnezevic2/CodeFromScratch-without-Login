@@ -129,7 +129,7 @@ export default function CommandPalette() {
   function onInputKeyDown(e: React.KeyboardEvent<HTMLInputElement>) {
     if (results.length === 0) {
       if (e.key === "Enter" && query.trim().length >= 2) {
-        navigate(`/blog?q=${encodeURIComponent(query.trim())}`, query);
+        navigate(`/blog/search?q=${encodeURIComponent(query.trim())}`, query);
       }
       return;
     }

@@ -124,7 +124,7 @@ export default function TopicBrowserDialog({
                 return (
                   <li key={cat._id}>
                     <Link
-                      href={`/blog?category=${cat.slug.current}`}
+                      href={`/blog/category/${cat.slug.current}`}
                       onClick={() => setOpen(false)}
                       aria-current={active ? "true" : undefined}
                       className={`flex items-baseline justify-between gap-4 px-6 py-3 transition-colors focus:outline-none focus-visible:bg-surface-2 ${

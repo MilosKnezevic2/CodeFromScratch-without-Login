@@ -10,7 +10,7 @@ export default function BlogToolbar({
   initialSearch,
   activeSort,
   preserveQuery,
-  searchActionPath = "/blog",
+  searchActionPath = "/blog/search",
 }: {
   initialSearch: string;
   activeSort: Sort;
@@ -32,7 +32,9 @@ export default function BlogToolbar({
       else if (v !== undefined) params.set(k, v);
     }
     const qs = params.toString();
-    return qs ? `${searchActionPath}?${qs}` : searchActionPath;
+    // Without any filter the journal has a static home; only a filtered view
+    // belongs on the search route.
+    return qs ? `${searchActionPath}?${qs}` : "/blog";
   }
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -47,7 +49,7 @@ export default function BlogToolbar({
     startTransition(() => router.push(target));
   }
 
-  const isOnBlogIndex = pathname === "/blog";
+  const isOnBlogIndex = pathname === "/blog" || pathname === "/blog/search" || pathname.startsWith("/blog/page/");
 
   return (
     <div className="flex flex-col gap-3 border-y border-border py-4 sm:flex-row sm:items-center sm:gap-6">
