@@ -1,9 +1,5 @@
 import type { MetadataRoute } from "next";
-import {
-  getAllPostSlugs,
-  getCategoriesWithCounts,
-  getTagsWithCategory,
-} from "@/lib/sanity/queries";
+import { getAllPostSlugs, getCategoriesWithCounts } from "@/lib/sanity/queries";
 
 // Re-generate hourly so newly published posts reach crawlers without a redeploy.
 export const revalidate = 3600;
@@ -55,17 +51,8 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     // Sanity may not be configured yet
   }
 
-  let tagPages: MetadataRoute.Sitemap = [];
-  try {
-    const tags = await getTagsWithCategory();
-    tagPages = tags.map((t) => ({
-      url: `${baseUrl}/blog/tag/${t.slug.current}`,
-      changeFrequency: "weekly" as const,
-      priority: 0.4,
-    }));
-  } catch {
-    // Sanity may not be configured yet
-  }
-
-  return [...staticPages, ...postPages, ...categoryPages, ...tagPages];
+  // Tag pages carry a noindex tag (thin lists), so advertising them here sent
+  // Google two opposite signals for 101 of 154 URLs. Categories stay: they are
+  // indexed and rank.
+  return [...staticPages, ...postPages, ...categoryPages];
 }
