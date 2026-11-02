@@ -56,6 +56,21 @@ if (!draft.title) err("missing title");
 else if ((draft.seoTitle ?? draft.title).length > 42) {
   warn(`seoTitle is ${(draft.seoTitle ?? draft.title).length} chars; the site adds " | CodeFromScratch", so keep it <= 42 (add "seoTitle" to the draft JSON)`);
 }
+if (!Array.isArray(draft.tags) || draft.tags.length < 2) {
+  warn('add "tags": 2-5 existing tag slugs (node scripts/tag-post.mjs --list), so "Same topic" picks can match');
+} else {
+  try {
+    const res = await fetch(
+      "https://jkgmggst.api.sanity.io/v2024-01-01/data/query/production?query=" +
+        encodeURIComponent('*[_type == "tag"].slug.current'),
+    );
+    const known = new Set((await res.json()).result ?? []);
+    const unknown = draft.tags.filter((s) => !known.has(s));
+    if (unknown.length > 0) err(`unknown tag slug(s): ${unknown.join(", ")} (node scripts/tag-post.mjs --list)`);
+  } catch {
+    warn("could not check the tag slugs against Sanity (offline?)");
+  }
+}
 if (!draft.excerpt) err("missing excerpt");
 else if (draft.excerpt.length < 140 || draft.excerpt.length > 165) {
   warn(`excerpt is ${draft.excerpt.length} chars (target 150-160)`);
