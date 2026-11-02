@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { urlFor } from "@/lib/sanity/image";
 import FadeUp from "@/components/animations/FadeUp";
+import { articleCount, shareImageUrl } from "@/lib/share-image";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
 
@@ -34,13 +35,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!tag) return { title: "Tag not found" };
   const { posts } = await getPostsByTag(slug);
   if (posts.length === 0) return { title: "Tag not found", robots: { index: false } };
+  const canonical = `${SITE_URL}/blog/tag/${slug}`;
+  // The tag's parent category picks the share card's accent (see /api/og).
+  const ogImage = shareImageUrl(`#${tag.title}`, tag.categorySlug || undefined, `Tag · ${articleCount(posts.length)}`);
   return {
     // Bare title — the root layout template appends "| CodeFromScratch";
     // the tag's real title, not the raw slug.
     title: `#${tag.title}`,
     description: `Browse all articles tagged with #${tag.title}.`,
-    alternates: { canonical: `${SITE_URL}/blog/tag/${slug}` },
-    openGraph: { url: `${SITE_URL}/blog/tag/${slug}` },
+    alternates: { canonical },
+    openGraph: { url: canonical, images: [{ url: ogImage, width: 1200, height: 630 }] },
+    twitter: { card: "summary_large_image", images: [ogImage] },
     // One or two articles is a thin page; let Google follow the links, not index it.
     ...(posts.length <= 2 && { robots: { index: false, follow: true } }),
   };

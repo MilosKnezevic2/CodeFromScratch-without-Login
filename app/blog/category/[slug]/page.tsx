@@ -5,6 +5,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { urlFor } from "@/lib/sanity/image";
 import FadeUp from "@/components/animations/FadeUp";
+import { articleCount, shareImageUrl } from "@/lib/share-image";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
 
@@ -40,12 +41,17 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   if (!category) return { title: "Category not found" };
   const { posts } = await getPostsByCategory(slug);
   if (posts.length === 0) return { title: "Category not found", robots: { index: false } };
+  const canonical = `${SITE_URL}/blog/category/${slug}`;
+  // A page-level openGraph replaces the layout's whole block, images included,
+  // so the share card is named here: the category's accent and its count.
+  const ogImage = shareImageUrl(category.title, category.title, `Category · ${articleCount(posts.length)}`);
   return {
     // Bare title — the root layout template appends "| CodeFromScratch".
     title: category.title,
     description: category.description || `Browse all ${category.title} articles.`,
-    alternates: { canonical: `${SITE_URL}/blog/category/${slug}` },
-    openGraph: { url: `${SITE_URL}/blog/category/${slug}` },
+    alternates: { canonical },
+    openGraph: { url: canonical, images: [{ url: ogImage, width: 1200, height: 630 }] },
+    twitter: { card: "summary_large_image", images: [ogImage] },
     // One or two articles is a thin page; let Google follow the links, not index it.
     ...(posts.length <= 2 && { robots: { index: false, follow: true } }),
   };
