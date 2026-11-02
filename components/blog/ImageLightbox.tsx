@@ -74,6 +74,8 @@ export default function ImageLightbox({
             width={width}
             height={height}
             sizes="90vw"
+            // The dialog just opened on a tap: fetch at once, not when the lazy observer gets round to it.
+            loading="eager"
             unoptimized={unoptimized}
             className="h-auto w-auto max-h-[90dvh] max-w-[90vw] rounded-lg object-contain shadow-2xl"
           />
