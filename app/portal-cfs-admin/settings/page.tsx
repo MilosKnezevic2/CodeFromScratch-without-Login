@@ -9,7 +9,7 @@ import { getAdminState } from "@/lib/admin-auth";
 import { readAdminSession } from "@/lib/admin-session";
 import { listAudit, type AuditEntry } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
-import { flatten, SECTION_INFO, SECTIONS, stripeKeyMode, type Section } from "@/lib/settings/schema";
+import { clientFields, flatten, SECTION_INFO, SECTIONS, stripeKeyMode, type Section } from "@/lib/settings/schema";
 import { loadSettings } from "@/lib/settings/store";
 import { saveSettingsAction } from "./actions";
 
@@ -268,7 +268,7 @@ async function SettingsTab({ section }: { section: Section }) {
     <SectionForm
       title={info.title}
       description={info.description}
-      fields={info.fields}
+      fields={clientFields(info.fields)}
       values={flatten(settings[section])}
       action={saveSettingsAction.bind(null, section)}
       before={section === "payments" ? <PaymentsStatus /> : undefined}

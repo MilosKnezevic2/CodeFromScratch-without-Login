@@ -2,7 +2,7 @@
 
 import { useActionState } from "react";
 import type { ActionResult } from "@/app/portal-cfs-admin/settings/actions";
-import type { Field, FlatValues } from "@/lib/settings/schema";
+import type { ClientField, FlatValues } from "@/lib/settings/schema";
 
 const INPUT =
   "mt-1 block w-full rounded-lg border border-border bg-surface-2 px-3 py-2.5 text-base text-foreground focus:border-accent focus:outline-none";
@@ -19,7 +19,7 @@ function Status({ result }: { result: ActionResult }) {
   );
 }
 
-function Control({ field, value, error }: { field: Field; value: string | number | boolean | undefined; error?: string }) {
+function Control({ field, value, error }: { field: ClientField; value: string | number | boolean | undefined; error?: string }) {
   const id = `field-${field.name.replace(/\./g, "-")}`;
   const describedBy = [field.help ? `${id}-help` : null, error ? `${id}-error` : null].filter(Boolean).join(" ") || undefined;
 
@@ -122,7 +122,7 @@ export default function SectionForm({
 }: {
   title: string;
   description: string;
-  fields: Field[];
+  fields: ClientField[];
   values: FlatValues;
   action: (previous: ActionResult, formData: FormData) => Promise<ActionResult>;
   before?: React.ReactNode;
@@ -130,7 +130,7 @@ export default function SectionForm({
   const [result, submit, pending] = useActionState(action, { ok: false, message: "" });
   // React resets a form after its action runs; on a validation failure the
   // submitted values come back and take the place of the stored ones.
-  const current = (field: Field) => {
+  const current = (field: ClientField) => {
     if (!result.values) return values[field.name];
     if (field.type === "toggle") return result.values[field.name] === "on";
     return result.values[field.name] ?? "";

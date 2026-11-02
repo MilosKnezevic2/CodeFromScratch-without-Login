@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { changedFields, DEFAULTS, flatten, fromStored, parseSection, readField, SECTION_INFO, SECTIONS, stripeKeyMode } from "./schema";
+import { changedFields, DEFAULTS, flatten, fromStored, clientFields, parseSection, readField, SECTION_INFO, SECTIONS, stripeKeyMode } from "./schema";
 
 const context = { stripeKeyMode: "none" as const };
 
@@ -138,6 +138,15 @@ describe("helpers", () => {
       "siteName",
       "social.x",
     ]);
+  });
+
+  it("hands the browser form only plain data", () => {
+    // Regression: the SEO tab answered 500 because a RegExp reached a client component.
+    for (const section of SECTIONS) {
+      const fields = clientFields(SECTION_INFO[section].fields);
+      expect(JSON.parse(JSON.stringify(fields))).toEqual(fields);
+    }
+    expect(clientFields(SECTION_INFO.seo.fields).find((f) => f.name === "xHandle")?.pattern).toBe("^@?[A-Za-z0-9_]{1,15}$");
   });
 
   it("tells a live key from a test key", () => {

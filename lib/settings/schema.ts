@@ -168,6 +168,18 @@ export interface Field {
   placeholder?: string;
 }
 
+/**
+ * A field as the browser form receives it. A RegExp cannot cross from a
+ * server component into a client one (the SEO tab answered 500 for that), so
+ * the pattern travels as its source; the server still validates with the
+ * RegExp itself.
+ */
+export type ClientField = Omit<Field, "pattern"> & { pattern?: string };
+
+export function clientFields(fields: readonly Field[]): ClientField[] {
+  return fields.map(({ pattern, ...rest }) => (pattern ? { ...rest, pattern: pattern.source } : rest));
+}
+
 /** What a section of the settings page says about itself. */
 export interface SectionInfo {
   title: string;
