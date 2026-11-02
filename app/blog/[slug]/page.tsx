@@ -344,7 +344,7 @@ export default async function PostPage({ params }: PageProps) {
             </div>
 
             {/* ── End-of-read footer ── */}
-            <footer className="mt-16">
+            <footer className="mt-16 px-4 sm:px-0">
               {/* Tags */}
               {post.tags && post.tags.length > 0 && (
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2 border-t border-border pt-8">

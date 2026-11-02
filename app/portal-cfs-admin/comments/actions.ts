@@ -9,6 +9,17 @@ const PAGE = "/portal-cfs-admin/comments";
 
 type Decision = "approve" | "reject" | "delete" | "ban";
 
+/** Approves every comment in the queue at once, after the admin has looked through the list. */
+export async function approveAllAction(): Promise<void> {
+  if (!(await isAdminRequest())) return;
+  const { count } = await prisma.postComment.updateMany({
+    where: { status: "PENDING", deletedAt: null },
+    data: { status: "APPROVED", reportedCount: 0 },
+  });
+  await recordAudit("comment.approve-all", { count });
+  revalidatePath(PAGE);
+}
+
 /** One moderation decision on one comment. Every call checks the portal session itself. */
 export async function moderateAction(form: FormData): Promise<void> {
   if (!(await isAdminRequest())) return;

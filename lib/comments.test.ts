@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { COMMENT_MAX, displayName, initialStatus, isPostSlug, linkCount, parseCommentBody } from "./comments";
+import { buildThreads, COMMENT_MAX, displayName, initialStatus, isPostSlug, linkCount, parseCommentBody } from "./comments";
 
 describe("parseCommentBody", () => {
   it("trims, unifies line endings and folds blank lines", () => {
@@ -45,5 +45,33 @@ describe("helpers", () => {
     expect(displayName("  ")).toBe("Reader");
     expect(displayName(null)).toBe("Reader");
     expect(displayName("Emily Carter")).toBe("Emily Carter");
+  });
+});
+
+describe("buildThreads", () => {
+  const c = (id: string, parentId: string | null, t: string) => ({
+    id,
+    parentId,
+    body: id,
+    createdAt: `2026-11-03T10:${t}:00Z`,
+    author: { name: "Emily", image: null },
+    mine: false,
+    pending: false,
+  });
+
+  it("nests replies under their parent, to any depth", () => {
+    const threads = buildThreads([c("a", null, "00"), c("b", "a", "01"), c("c", "b", "02"), c("d", "c", "03"), c("e", null, "04")]);
+    expect(threads.map((n) => n.id)).toEqual(["a", "e"]);
+    const d = threads[0].replies[0].replies[0].replies[0];
+    expect(d.id).toBe("d");
+    expect(d.depth).toBe(3);
+  });
+
+  it("keeps a reply whose parent is gone under a removed stand-in", () => {
+    const threads = buildThreads([c("b", "gone", "01"), c("c", "gone", "02")]);
+    expect(threads).toHaveLength(1);
+    expect(threads[0].removed).toBe(true);
+    expect(threads[0].replies.map((n) => n.id)).toEqual(["b", "c"]);
+    expect(threads[0].replies[0].depth).toBe(1);
   });
 });

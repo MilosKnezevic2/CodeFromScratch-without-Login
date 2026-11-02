@@ -63,6 +63,7 @@ const ACTION_LABELS: Record<string, string> = {
   "comment.reject": "Comment rejected",
   "comment.delete": "Comment removed",
   "comment.ban": "Reader blocked",
+  "comment.approve-all": "All waiting comments approved",
 };
 
 const when = (value: Date) =>

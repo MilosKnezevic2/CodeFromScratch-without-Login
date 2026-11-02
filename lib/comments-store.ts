@@ -32,10 +32,11 @@ export async function listComments(postSlug: string, viewerId: string | null): P
     },
     orderBy: { createdAt: "asc" },
     take: 300,
-    select: { id: true, body: true, createdAt: true, status: true, userId: true, user: { select: { name: true, image: true } } },
+    select: { id: true, parentId: true, body: true, createdAt: true, status: true, userId: true, user: { select: { name: true, image: true } } },
   });
   return rows.map((r) => ({
     id: r.id,
+    parentId: r.parentId,
     body: r.body,
     createdAt: r.createdAt.toISOString(),
     author: { name: displayName(r.user.name), image: r.user.image },

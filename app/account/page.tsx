@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-const PROVIDER_NAMES: Record<string, string> = { google: "Google", github: "GitHub" };
+const PROVIDER_NAMES: Record<string, string> = { google: "Google", github: "GitHub", resend: "Email link" };
 
 const STATUS_LABEL: Record<string, string> = {
   APPROVED: "published",
@@ -41,7 +41,7 @@ export default async function AccountPage() {
   });
   if (!user) redirect("/login?callbackUrl=/account");
 
-  const providers = user.accounts.map((a) => PROVIDER_NAMES[a.provider] ?? a.provider).join(", ") || "—";
+  const providers = user.accounts.map((a) => PROVIDER_NAMES[a.provider] ?? a.provider).join(", ") || "Email link";
 
   return (
     <div className="space-y-10">

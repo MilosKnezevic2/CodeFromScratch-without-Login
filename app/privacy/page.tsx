@@ -94,9 +94,10 @@ export default function PrivacyPage() {
               taking steps at your request. We keep the message only as long as it is needed to handle your request.
             </li>
             <li id="accounts">
-              <strong>Reader account and comments.</strong> You can sign in with Google or GitHub; there is no password
-              on this site. From the provider we receive and store your name, email address and profile picture, and a
-              technical link to your account with them. If you comment, we store the text, the article and the time.
+              <strong>Reader account and comments.</strong> You can sign in with Google or GitHub, or with a one-time link
+              we email to you; there is no password on this site. We store your name, email address and profile picture
+              (from Google or GitHub, if you use them) and a technical link to your account with them. A sign-in link is
+              stored in hashed form until it is used or expires after 30 minutes. If you comment, we store the text, the article and the time.
               Your name and picture appear next to your comments; your email address is never shown. A reader&rsquo;s
               first comment is checked by a person before it appears. We use the data to run your account and show your
               comments. Legal basis: providing the account you asked for (Art. 6(1)(b) GDPR). You can see everything we
@@ -125,7 +126,7 @@ export default function PrivacyPage() {
             <li><strong>Vercel</strong>: hosting, anonymous analytics and performance measurement</li>
             <li><strong>Supabase</strong>: database for reader accounts and comments, newsletter subscribers, contact messages and the daily visit totals</li>
             <li><strong>Google</strong> and <strong>GitHub</strong>: sign-in, if you choose them</li>
-            <li><strong>Resend</strong>: sending the confirmation and newsletter emails</li>
+            <li><strong>Resend</strong>: sending the confirmation, sign-in and newsletter emails</li>
             <li><strong>Sanity</strong>: content management for the articles (it holds our articles, not visitor data)</li>
             <li><strong>Sentry</strong> (Functional Software, Inc.): error reports, stored in the EU region</li>
           </ul>
