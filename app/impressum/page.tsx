@@ -1,12 +1,14 @@
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
+import { withPageUrl } from "@/lib/seo";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
-
-export const metadata: Metadata = {
+const METADATA: Metadata = {
   title: "Impressum",
   description: "Legal information about CodeFromScratch as required by Austrian law.",
-  alternates: { canonical: `${SITE_URL}/impressum` },
 };
+
+export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
+  return withPageUrl("/impressum", METADATA, parent);
+}
 
 export default function ImpressumPage() {
   return (

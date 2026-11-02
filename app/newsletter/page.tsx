@@ -1,15 +1,17 @@
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import InlineNewsletterCard from "@/components/blog/InlineNewsletterCard";
+import { withPageUrl } from "@/lib/seo";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
-
-export const metadata: Metadata = {
+const METADATA: Metadata = {
   title: "The CodeFromScratch Letter",
   description:
     "One short email when a new article is published. Free, no spam, unsubscribe in one click.",
-  alternates: { canonical: `${SITE_URL}/newsletter` },
 };
+
+export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
+  return withPageUrl("/newsletter", METADATA, parent);
+}
 
 export default function NewsletterPage() {
   return (
