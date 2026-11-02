@@ -176,6 +176,22 @@ async function main() {
     }
   }
 
+  // Tags come from the draft ("tags": existing tag slugs) and make the
+  // "Same topic" picks under an article possible. Unknown slugs stop the run:
+  // most of the 101 tags are empty and a typo would add one more.
+  const tagIds = new Map(
+    (await client.fetch(`*[_type == "tag"] { _id, "slug": slug.current }`)).map((t) => [t.slug, t._id]),
+  );
+  for (const j of todo) {
+    if (j.existing) continue;
+    const unknown = (j.draft.tags ?? []).filter((s) => !tagIds.has(s));
+    if (unknown.length > 0) {
+      console.error(`REFUSED ${j.slug}: unknown tag slug(s) ${unknown.join(", ")} (node scripts/tag-post.mjs --list)`);
+      process.exit(2);
+    }
+    if (!j.draft.tags?.length) console.log(`note: ${j.slug} has no "tags" in its draft; add them later with scripts/tag-post.mjs`);
+  }
+
   for (const j of todo) {
     if (j.existing) {
       console.log(`flip "${j.existing.title}" (${j.existing._id}) draft -> published at ${publishedAt}`);
@@ -198,6 +214,7 @@ async function main() {
         seoDescription: j.draft.excerpt,
         author: { _type: "reference", _ref: MILOS_AUTHOR_ID },
         categories: [{ _type: "reference", _ref: categoryId, _key: k() }],
+        tags: (j.draft.tags ?? []).map((s) => ({ _type: "reference", _ref: tagIds.get(s), _key: `tag-${s}` })),
         content: j.content,
         featuredImage: {
           _type: "image",
