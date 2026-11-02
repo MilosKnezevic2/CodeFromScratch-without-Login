@@ -67,18 +67,18 @@ export default function InlineNewsletterCard() {
 
       <div className="relative mx-auto grid max-w-5xl items-end gap-8 lg:grid-cols-12">
         <div className="min-w-0 lg:col-span-7">
-          <p className="editorial-meta text-muted-foreground">Subscription</p>
+          <p className="editorial-meta text-accent">Free Production Checklist</p>
           <h2
             id="inline-newsletter-heading"
             className="editorial-display mt-4 text-4xl leading-[0.95] text-foreground sm:text-5xl lg:text-6xl"
             style={{ fontStyle: "normal" }}
           >
-            Never miss an issue.
+            Ship it with the checklist.
           </h2>
           <p className="mt-5 max-w-md text-base leading-relaxed text-muted-foreground">
-            One short email whenever a new article goes live, plus the free
-            Production Checklist. Twenty seconds to skim. Unsubscribe in one
-            click.
+            Subscribe and get The Production Checklist: 24 checks to run
+            before a web app meets real users. Then one short email whenever a
+            new article goes live. Unsubscribe in one click.
           </p>
         </div>
         <form onSubmit={onSubmit} className="min-w-0 lg:col-span-5">
