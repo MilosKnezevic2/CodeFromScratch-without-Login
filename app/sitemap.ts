@@ -1,8 +1,13 @@
 import type { MetadataRoute } from "next";
 import { getAllPostSlugs, getCategoriesWithCounts } from "@/lib/sanity/queries";
 
-// Re-generate hourly so newly published posts reach crawlers without a redeploy.
-export const revalidate = 3600;
+// Re-generated every five minutes, so a new post reaches crawlers without a
+// redeploy. Five minutes rather than an hour because the on-demand purge from
+// /api/revalidate is not enough on Vercel: on 2026-11-02 it regenerated this
+// route twice and both copies still lacked a post published minutes earlier
+// (the same call refreshed it on a local build). The timer is what reliably
+// brings the new address in.
+export const revalidate = 300;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://codefromscratch.org";
