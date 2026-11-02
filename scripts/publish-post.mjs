@@ -26,6 +26,8 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { randomUUID } from "crypto";
 import { toPortableText } from "./lib/portable-text.mjs";
+import { existsSync } from "node:fs";
+import { spawnSync } from "node:child_process";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, "..", ".env.local") });
@@ -209,6 +211,45 @@ async function main() {
     for (const j of todo) await verifyLive(j.slug);
     if (todo.length > 0) await pingIndexNow(todo.map((j) => `${SITE}/blog/${j.slug}`));
   }
+  // Every published article is announced to subscribers the same session
+  // (operator decision 2026-11-02). The letter comes from
+  // content-drafts/letter-<slug>.json, written by the weekly cycle and approved
+  // with the article; --no-letter skips it (a re-flip, a rewrite).
+  if (!args.includes("--no-letter")) {
+    for (const j of todo) sendLetter(j.slug);
+  }
+}
+
+/** The brand mailbox gets a copy before the list does. */
+const LETTER_TEST_ADDRESS = "office@codefromscratch.org";
+
+function sendLetter(slug) {
+  const file = `content-drafts/letter-${slug}.json`;
+  if (!existsSync(file)) {
+    console.log(
+      `no newsletter for ${slug}: ${file} is missing. Write it, then: npx tsx scripts/send-letter.mts --post ${slug} --letter-file ${file} --apply --confirm auto`,
+    );
+    return;
+  }
+  // tsx is called by file, not through npx: no shell, no .cmd shim, same on every OS.
+  const tsx = join(__dirname, "..", "node_modules", "tsx", "dist", "cli.mjs");
+  const run = (extra) =>
+    spawnSync(process.execPath, [tsx, "scripts/send-letter.mts", "--post", slug, "--letter-file", file, ...extra], {
+      stdio: "inherit",
+      // Links and the unsubscribe address go into the email: always the public site.
+      env: { ...process.env, NEXT_PUBLIC_SITE_URL: SITE },
+    }).status === 0;
+  if (!APPLY) {
+    console.log(`
+newsletter for ${slug} (dry run):`);
+    run([]);
+    return;
+  }
+  if (!run(["--test", LETTER_TEST_ADDRESS])) {
+    console.error("newsletter: the test copy failed, so the list was not mailed");
+    return;
+  }
+  if (!run(["--apply", "--confirm", "auto"])) console.error("newsletter: the send failed (see above); the article itself is live");
 }
 
 main().catch((e) => {
