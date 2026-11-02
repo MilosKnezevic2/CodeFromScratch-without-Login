@@ -6,15 +6,17 @@ import {
   getPostBySlug,
   getAllPostSlugs,
   getAdjacentPosts,
-  getSidebarSuggestions,
+  getKeepReadingCandidates,
 } from "@/lib/sanity/queries";
+import { pickKeepReading } from "@/lib/blog/keep-reading";
 import { urlFor } from "@/lib/sanity/image";
 import PortableTextRenderer from "@/components/blog/PortableTextRenderer";
 import { extractHeadings } from "@/lib/portable-text-utils";
 import { highlightCodeBlocks } from "@/lib/shiki";
 import { calculateReadingTime } from "@/lib/reading-time";
 import TableOfContents from "@/components/blog/TableOfContents";
-import SmartSuggestions from "@/components/blog/SmartSuggestions";
+import KeepReading from "@/components/blog/KeepReading";
+import UpNextCard from "@/components/blog/UpNextCard";
 import ReadingProgress from "@/components/blog/ReadingProgress";
 import { shareImageUrl } from "@/lib/share-image";
 import ShareButtons from "@/components/blog/ShareButtons";
@@ -127,18 +129,17 @@ export default async function PostPage({ params }: PageProps) {
   }
 
   const headings = post.content ? extractHeadings(post.content) : [];
-  const categorySlugs = post.categories?.map((c) => c.slug.current) || [];
-  const tagSlugs = post.tags?.map((t) => t.slug.current) || [];
-  const categoryTitle = post.categories?.[0]?.title || "Related";
   const readingMinutes =
     typeof post.readingTime === "number" && post.readingTime > 0
       ? post.readingTime
       : calculateReadingTime(post.content ?? null);
 
-  const [{ prev, next }, suggestionGroups] = await Promise.all([
+  const [{ prev, next }, candidates] = await Promise.all([
     getAdjacentPosts(post.publishedAt),
-    getSidebarSuggestions(post._id, categorySlugs, tagSlugs, categoryTitle),
+    getKeepReadingCandidates(post._id),
   ]);
+  // Deterministic, so the prerendered page keeps its picks between refreshes.
+  const picks = pickKeepReading(post, candidates);
 
   // Premium gating is disabled while user accounts are hidden — every post
   // renders in full. The isPremium flag in Sanity still works for editorial
@@ -400,6 +401,8 @@ export default async function PostPage({ params }: PageProps) {
                 </div>
               )}
 
+              <KeepReading picks={picks} />
+
               {/* Newsletter CTA and comments: switched in the portal (Settings, Features). */}
               {features.articleNewsletterCard && (
                 <div className="mt-12">
@@ -417,12 +420,14 @@ export default async function PostPage({ params }: PageProps) {
             </footer>
           </article>
 
-          {/* ── Right sidebar — Suggested Posts ── */}
-          <aside className="hidden w-52 shrink-0 2xl:block">
-            <div className="sticky top-24">
-              <SmartSuggestions groups={suggestionGroups} />
-            </div>
-          </aside>
+          {/* ── Right column, wide screens: one "Up next" card, shown once the reader is 60% through ── */}
+          {picks[0] && (
+            <aside className="hidden w-72 shrink-0 2xl:block">
+              <div className="sticky top-24">
+                <UpNextCard post={picks[0]} />
+              </div>
+            </aside>
+          )}
         </div>
       </div>
     </>
