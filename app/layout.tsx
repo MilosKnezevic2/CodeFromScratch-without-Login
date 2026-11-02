@@ -143,6 +143,7 @@ export default async function RootLayout({
           <div className="min-h-screen flex flex-col">
             <LayoutShell
               banner={<AnnouncementBanner announcement={general.announcement} />}
+              accounts={features.registrationOpen}
               footer={
                 <Footer
                   siteName={general.siteName}

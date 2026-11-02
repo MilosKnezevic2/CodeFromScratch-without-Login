@@ -18,6 +18,14 @@ enum Plan {
   PRO_PLUS
 }
 
+/// Matches the production enum created with the April 2026 comment schema.
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SPAM
+}
+
 enum SubscriptionStatus {
   ACTIVE
   CANCELED
@@ -59,6 +67,7 @@ model User {
   contactSubmissions   ContactSubmission[]
   readingHistory ReadingHistory[]
   reactions      PostReaction[]
+  comments       PostComment[]
 }
 
 model Account {
@@ -356,4 +365,29 @@ model EmailSequenceStatus {
 
   @@unique([subscriberId, sequenceName])
   @@index([nextSendAt, completed])
+}
+
+/// A reader's comment under an article. The table already existed in
+/// production (empty, from the April 2026 schema); this model mirrors it
+/// column for column, so no migration was needed. A reader's first comment
+/// waits for approval; once one is approved, later ones publish at once.
+model PostComment {
+  id            String        @id @default(cuid())
+  postSlug      String
+  userId        String
+  parentId      String?
+  body          String
+  status        CommentStatus @default(PENDING)
+  reportedCount Int           @default(0)
+  deletedAt     DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  PostComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies PostComment[] @relation("CommentReplies")
+
+  @@index([postSlug, status, createdAt])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
 }

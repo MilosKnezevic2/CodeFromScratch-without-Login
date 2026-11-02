@@ -14,7 +14,7 @@ export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-extrabold text-foreground">Privacy Policy</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Last updated: 2 November 2026</p>
+      <p className="mt-2 text-sm text-muted-foreground">Last updated: 3 November 2026</p>
 
       <div className="mt-10 space-y-8 text-sm leading-relaxed text-muted">
         <section>
@@ -24,7 +24,8 @@ export default function PrivacyPage() {
             <a href="mailto:office@codefromscratch.org" className={LINK}>office@codefromscratch.org</a>.
           </p>
           <p className="mt-2">
-            The site has no user accounts, no payments and no advertising. It sets no cookies.
+            Reading the site needs no account. You can create one to comment under the articles (section 2). The
+            site has no payments and no advertising.
           </p>
         </section>
 
@@ -92,16 +93,29 @@ export default function PrivacyPage() {
               so we can answer you. Legal basis: our legitimate interest in answering enquiries (Art. 6(1)(f) GDPR), or
               taking steps at your request. We keep the message only as long as it is needed to handle your request.
             </li>
+            <li id="accounts">
+              <strong>Reader account and comments.</strong> You can sign in with Google or GitHub; there is no password
+              on this site. From the provider we receive and store your name, email address and profile picture, and a
+              technical link to your account with them. If you comment, we store the text, the article and the time.
+              Your name and picture appear next to your comments; your email address is never shown. A reader&rsquo;s
+              first comment is checked by a person before it appears. We use the data to run your account and show your
+              comments. Legal basis: providing the account you asked for (Art. 6(1)(b) GDPR). You can see everything we
+              store and delete your account, with all your comments, at any time on the{" "}
+              <a href="/account" className={LINK}>account page</a>; we then delete it from our database at once.
+              Google or GitHub process your sign-in under their own privacy policies.
+            </li>
           </ul>
         </section>
 
         <section id="cookies">
           <h2 className="text-lg font-bold text-foreground">3. Cookies and local storage</h2>
           <p className="mt-2">
-            The public pages of this site set no cookies. Your browser stores your theme (light or dark) and text-size
-            choice in its local storage; this stays on your device and is never sent to us. Only the site
-            administrator has a login cookie, in a separate area that visitors do not use, and a local-storage marker
-            that keeps their own visits out of the counts.
+            Reading the site sets no cookies. If you sign in, the site sets one cookie that keeps you signed in, plus
+            short-lived ones that protect the sign-in itself; they are needed for the account to work and are deleted
+            when you sign out or after 30 days. Your browser stores your theme (light or dark) and text-size choice in
+            its local storage; this stays on your device and is never sent to us. The site administrator has a login
+            cookie, in a separate area that visitors do not use, and a local-storage marker that keeps their own
+            visits out of the counts.
           </p>
         </section>
 
@@ -109,7 +123,8 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-bold text-foreground">4. Service providers who process data for us</h2>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li><strong>Vercel</strong>: hosting, anonymous analytics and performance measurement</li>
-            <li><strong>Supabase</strong>: database for newsletter subscribers, contact messages and the daily visit totals</li>
+            <li><strong>Supabase</strong>: database for reader accounts and comments, newsletter subscribers, contact messages and the daily visit totals</li>
+            <li><strong>Google</strong> and <strong>GitHub</strong>: sign-in, if you choose them</li>
             <li><strong>Resend</strong>: sending the confirmation and newsletter emails</li>
             <li><strong>Sanity</strong>: content management for the articles (it holds our articles, not visitor data)</li>
             <li><strong>Sentry</strong> (Functional Software, Inc.): error reports, stored in the EU region</li>

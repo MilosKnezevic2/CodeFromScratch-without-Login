@@ -59,6 +59,10 @@ const ACTION_LABELS: Record<string, string> = {
   "person.looked-up": "Reader data searched",
   "person.exported": "Reader data copied",
   "person.erased": "Reader data deleted",
+  "comment.approve": "Comment approved",
+  "comment.reject": "Comment rejected",
+  "comment.delete": "Comment removed",
+  "comment.ban": "Reader blocked",
 };
 
 const when = (value: Date) =>
@@ -132,7 +136,8 @@ async function SystemTab() {
     { label: "Cache refresh from Sanity", ok: Boolean(process.env.SANITY_REVALIDATE_SECRET), note: "published articles appear without a redeploy" },
     { label: "Daily cron protected", ok: Boolean(process.env.CRON_SECRET), note: "keeps the database awake, deletes unconfirmed sign-ups" },
     { label: "Error tracking (Sentry)", ok: Boolean(SENTRY_DSN), note: "codefromscratch-web, EU region; reports from the live site only" },
-    { label: "Comments (Giscus)", ok: Boolean(process.env.NEXT_PUBLIC_GISCUS_REPO_ID && process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID), note: "optional; needed before comments can be switched on" },
+    { label: "Sign-in (Google)", ok: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET), note: "reader accounts; needed before comments" },
+    { label: "Sign-in (GitHub)", ok: Boolean(process.env.GITHUB_ID && process.env.GITHUB_SECRET), note: "reader accounts; needed before comments" },
     { label: "Payments (Stripe)", ok: Boolean(process.env.STRIPE_SECRET_KEY), note: "see the Payments tab" },
   ];
   let database: string;
