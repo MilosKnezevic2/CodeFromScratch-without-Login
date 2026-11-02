@@ -1,6 +1,6 @@
 import DashboardSidebar from "@/components/dashboard/DashboardSidebar";
 import MobileSidebarDrawer from "@/components/dashboard/MobileSidebarDrawer";
-import { requireAccounts } from "@/lib/surfaces";
+import { requireCommerce } from "@/lib/surfaces";
 
 // Every dashboard page is per-user; none may be prerendered at build time
 // (the build environment has no database).
@@ -11,7 +11,8 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  await requireAccounts();
+  // Saved posts, collections, purchases: part of the paid relaunch, not of reader sign-in.
+  await requireCommerce();
   return (
     <div className="min-h-screen">
       {/* Top gradient bar */}

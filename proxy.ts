@@ -77,9 +77,8 @@ export async function proxy(request: NextRequest) {
   }
 
   // Redirect logged-in users away from auth pages
-  const authPages = ["/login", "/register", "/forgot-password", "/reset-password"];
-  if (isLoggedIn && authPages.some((p) => pathname.startsWith(p))) {
-    return NextResponse.redirect(new URL("/dashboard", request.nextUrl.origin));
+  if (isLoggedIn && pathname === "/login") {
+    return NextResponse.redirect(new URL("/account", request.nextUrl.origin));
   }
 
   return NextResponse.next();
@@ -92,9 +91,6 @@ export const config = {
     "/portal-cfs-admin/:path*",
     "/dashboard/:path*",
     "/login",
-    "/register",
-    "/forgot-password",
-    "/reset-password",
     "/api/:path*",
   ],
 };
