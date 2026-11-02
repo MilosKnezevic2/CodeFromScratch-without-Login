@@ -1,16 +1,18 @@
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import WaitlistForm from "@/components/waitlist/WaitlistForm";
 import { getSettings } from "@/lib/settings/store";
+import { withPageUrl } from "@/lib/seo";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
-
-export const metadata: Metadata = {
+const METADATA: Metadata = {
   title: "Course Waitlist",
   description:
     "A course on building and shipping real web apps is being considered. Tell me your level and I will email you once, when it opens.",
-  alternates: { canonical: `${SITE_URL}/course-waitlist` },
 };
+
+export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
+  return withPageUrl("/course-waitlist", METADATA, parent);
+}
 
 export default async function CourseWaitlistPage() {
   const { features } = await getSettings();

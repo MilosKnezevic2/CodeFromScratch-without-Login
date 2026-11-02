@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
 
 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://codefromscratch.org";
 
@@ -32,6 +32,31 @@ export function generateMetadata({
       ...(image && { images: [image] }),
     },
     alternates: { canonical: url },
+  };
+}
+
+/**
+ * Metadata for a fixed page, with og:url set. A page-level openGraph block
+ * replaces the layout's whole block, so the share image, site name and locale
+ * are carried over from the parent instead of being lost.
+ */
+export async function withPageUrl(
+  path: string,
+  metadata: Metadata,
+  parent: ResolvingMetadata,
+): Promise<Metadata> {
+  const url = `${siteUrl}${path}`;
+  const { openGraph } = await parent;
+  return {
+    ...metadata,
+    alternates: { ...metadata.alternates, canonical: url },
+    openGraph: {
+      type: "website",
+      url,
+      ...(openGraph?.siteName && { siteName: openGraph.siteName }),
+      ...(openGraph?.locale && { locale: openGraph.locale }),
+      ...(openGraph?.images && { images: openGraph.images }),
+    },
   };
 }
 

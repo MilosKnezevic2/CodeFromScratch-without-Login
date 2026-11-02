@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
 import {
   getPostsAdvanced,
@@ -12,18 +12,22 @@ import HomeAuthorLetter from "@/components/home/HomeAuthorLetter";
 import MobileSubscribeBar from "@/components/home/MobileSubscribeBar";
 import InlineNewsletterCard from "@/components/blog/InlineNewsletterCard";
 import JsonLd from "@/components/seo/JsonLd";
+import { withPageUrl } from "@/lib/seo";
 
 const SITE_URL =
   process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
 
-export const metadata: Metadata = {
+const METADATA: Metadata = {
   // `absolute` opts out of the root "%s | CodeFromScratch" template — the
   // brand is already in this title, the template would double it.
   title: { absolute: "CodeFromScratch — A journal for serious web developers" },
   description:
     "Tutorials, guides, and deep dives on modern web development. Thoughtful, carefully researched pieces — free, with code you can read in your own repo.",
-  alternates: { canonical: SITE_URL },
 };
+
+export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
+  return withPageUrl("", METADATA, parent);
+}
 
 export const revalidate = 60;
 

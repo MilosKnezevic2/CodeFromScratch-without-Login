@@ -1,12 +1,14 @@
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
+import { withPageUrl } from "@/lib/seo";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
-
-export const metadata: Metadata = {
+const METADATA: Metadata = {
   title: "Privacy Policy",
   description: "What personal data CodeFromScratch processes, why, and what rights you have.",
-  alternates: { canonical: `${SITE_URL}/privacy` },
 };
+
+export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
+  return withPageUrl("/privacy", METADATA, parent);
+}
 
 const LINK = "text-accent underline underline-offset-2";
 
