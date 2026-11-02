@@ -1,12 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAdminRequest } from "@/lib/admin-guard";
+import { csvCell } from "@/lib/csv";
 import { prisma } from "@/lib/prisma";
-
-/** Spreadsheets run cells starting with these as formulas; a leading quote disarms them. */
-function csvCell(value: string): string {
-  const safe = /^[=+\-@\t\r]/.test(value) ? `'${value}` : value;
-  return `"${safe.replace(/"/g, '""')}"`;
-}
 
 export async function GET() {
   if (!(await isAdminRequest())) {
