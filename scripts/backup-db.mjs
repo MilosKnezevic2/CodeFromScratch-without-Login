@@ -87,7 +87,12 @@ if (process.argv[2] === "--decrypt") {
 
 const url = new URL(process.env.DATABASE_URL);
 url.searchParams.delete("sslmode");
-if (url.hostname.endsWith(".pooler.supabase.com") && url.port === "5432") url.port = "6543";
+// Session mode (5432), never the transaction pooler (6543): a backup is one
+// long-lived connection, and in transaction mode anything set on the session
+// stays on the shared server connection for the site's next requests. On
+// 2026-11-03 a session-level "SET default_transaction_read_only = on" here
+// left the live site unable to write until those connections were ended.
+if (url.hostname.endsWith(".pooler.supabase.com")) url.port = "5432";
 const client = new pg.Client({
   connectionString: url.toString(),
   ssl: url.hostname === "localhost" ? false : { rejectUnauthorized: false },
@@ -96,7 +101,8 @@ const client = new pg.Client({
 
 try {
   await client.connect();
-  await client.query("SET default_transaction_read_only = on");
+  // Read-only for this transaction only, and one consistent snapshot of every table.
+  await client.query("BEGIN ISOLATION LEVEL REPEATABLE READ READ ONLY");
   const dump = { takenAt: new Date().toISOString(), tables: {} };
   let rows = 0;
   for (const table of TABLES) {
@@ -107,6 +113,7 @@ try {
     dump.tables[table] = result.rows;
     rows += result.rows.length;
   }
+  await client.query("COMMIT");
   mkdirSync(outDir, { recursive: true });
   const day = dump.takenAt.slice(0, 10);
   const file = join(outDir, `db-${day}.json.enc`);
