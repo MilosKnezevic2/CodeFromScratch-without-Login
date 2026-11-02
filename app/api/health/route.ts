@@ -1,3 +1,4 @@
+import * as Sentry from "@sentry/nextjs";
 import { NextResponse } from "next/server";
 
 /**
@@ -39,6 +40,8 @@ export async function GET() {
       uptimeSeconds: Math.round((Date.now() - startedAt) / 1000),
       commit: process.env.VERCEL_GIT_COMMIT_SHA ?? process.env.GIT_COMMIT_SHA ?? null,
       environment: process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? null,
+      // Whether this server process reports its errors (Sentry initialised).
+      errorTracking: Boolean(Sentry.getClient()),
     },
     {
       status: 200,
