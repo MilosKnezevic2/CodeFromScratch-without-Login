@@ -61,7 +61,8 @@ production-grade code, end-to-end journeys across the modern web stack.
 - NextAuth v5 beta — Google, GitHub, credentials (bcryptjs) + TOTP MFA
 - Stripe v20 (wired, hidden from public until relaunch)
 - Resend v6 + React Email templates + sequence engine
-- Tailwind v4 + CSS variable tokens + framer-motion + next-themes
+- Tailwind v4 + CSS variable tokens + next-themes (motion is plain CSS in
+  `app/globals.css`; no animation library — keep it that way)
 - Vitest 3 (co-located `*.test.ts`) · husky + lint-staged pre-commit
 
 ## 4. Quality bar (non-negotiable, applies to all code)

@@ -15,7 +15,7 @@ Under active development. Not yet deployed to production. Security-critical admi
 - **Auth:** NextAuth v5 (beta) — Google, GitHub, credentials (bcrypt)
 - **Payments:** Stripe v20 — subscriptions (FREE / PRO / PRO_PLUS) + ebook one-offs + webhooks
 - **Email:** Resend v6 + six React Email templates + sequence engine
-- **Styling:** Tailwind v4 + CSS variable tokens + framer-motion + next-themes
+- **Styling:** Tailwind v4 + CSS variable tokens + next-themes (motion is plain CSS; no animation library)
 - **Content:** Portable Text + MDX + Shiki (syntax highlighting)
 - **Analytics:** Plausible (env-gated; inactive until launch)
 
