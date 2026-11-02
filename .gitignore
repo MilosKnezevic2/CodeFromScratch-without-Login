@@ -56,3 +56,4 @@ resend-dns-records.local.json
 .secrets/
 *.local.json
 *.local.txt
+.claude/scheduled_tasks.lock
