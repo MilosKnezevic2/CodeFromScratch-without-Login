@@ -14,7 +14,7 @@ export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-extrabold text-foreground">Privacy Policy</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Last updated: 30 October 2026</p>
+      <p className="mt-2 text-sm text-muted-foreground">Last updated: 2 November 2026</p>
 
       <div className="mt-10 space-y-8 text-sm leading-relaxed text-muted">
         <section>
@@ -35,6 +35,13 @@ export default function PrivacyPage() {
               <strong>Visiting the site.</strong> Our hosting provider (Vercel) processes technical request data, such
               as your IP address and the page you request, to deliver the site and keep it secure. Legal basis: our
               legitimate interest in running a secure website (Art. 6(1)(f) GDPR).
+            </li>
+            <li>
+              <strong>Error reports.</strong> When a page or the server runs into a programming error, a technical
+              report goes to Sentry: the error message and where in the code it happened, the page address, and the
+              browser and operating system. It is set up not to include names, email addresses, form contents or
+              recordings of the page, and it is stored in Sentry&rsquo;s EU region (Frankfurt). We use it to find and
+              fix faults. Legal basis: our legitimate interest in a site that works (Art. 6(1)(f) GDPR).
             </li>
             <li>
               <strong>Anonymous statistics.</strong> We use Vercel Web Analytics and Vercel Speed Insights to see which
@@ -104,6 +111,7 @@ export default function PrivacyPage() {
             <li><strong>Supabase</strong>: database for newsletter subscribers, contact messages and the daily visit totals</li>
             <li><strong>Resend</strong>: sending the confirmation and newsletter emails</li>
             <li><strong>Sanity</strong>: content management for the articles (it holds our articles, not visitor data)</li>
+            <li><strong>Sentry</strong> (Functional Software, Inc.): error reports, stored in the EU region</li>
           </ul>
           <p className="mt-2">
             Some of these providers are based in, or process data in, the United States. They describe how they protect
