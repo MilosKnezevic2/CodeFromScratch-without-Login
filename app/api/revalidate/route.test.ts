@@ -55,6 +55,8 @@ describe("POST /api/revalidate", () => {
     expect(res.status).toBe(200);
     expect(revalidatePath).toHaveBeenCalledWith("/blog");
     expect(revalidatePath).toHaveBeenCalledWith("/blog/hello");
+    expect(revalidatePath).toHaveBeenCalledWith("/blog/page/[n]", "page");
+    expect(revalidatePath).toHaveBeenCalledWith("/sitemap.xml");
   });
 
   it("accepts the secret via query parameter", async () => {

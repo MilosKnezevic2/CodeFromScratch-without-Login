@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { motion } from "framer-motion";
 
 const reactions = [
   { type: "helpful", emoji: "\u{1F44D}", label: "Helpful" },
@@ -88,12 +87,12 @@ export default function PostReactions({ slug }: PostReactionsProps) {
           const isSelected = selected === r.type;
 
           return (
-            <motion.button
+            <button
+              type="button"
               key={r.type}
-              whileTap={{ scale: 0.9 }}
               onClick={() => handleReact(r.type)}
               disabled={loading}
-              className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition ${
+              className={`flex items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm transition active:scale-90 ${
                 isSelected
                   ? "border-accent bg-accent/10 text-accent"
                   : "border-border text-muted hover:border-accent/30 hover:text-foreground"
@@ -106,7 +105,7 @@ export default function PostReactions({ slug }: PostReactionsProps) {
                   {count}
                 </span>
               )}
-            </motion.button>
+            </button>
           );
         })}
       </div>

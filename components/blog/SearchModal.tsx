@@ -5,9 +5,8 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import type { SearchResult } from "./SearchPanel";
 
 /**
- * The dialog carries the animation library and the result list, which most
- * visitors never open. It is fetched the first time the search opens and
- * stays mounted afterwards so the closing animation still plays.
+ * The dialog and its result list are what most visitors never open, so the
+ * file is fetched the first time the search opens and stays mounted after.
  */
 const SearchPanel = dynamic(() => import("./SearchPanel"), { ssr: false });
 

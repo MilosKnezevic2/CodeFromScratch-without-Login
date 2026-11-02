@@ -282,6 +282,45 @@ body {
 .delay-400 { animation-delay: 0.4s; }
 .delay-500 { animation-delay: 0.5s; }
 
+/* Short entrances for overlays and popovers — what the animation library used to do */
+@keyframes slide-in-left {
+  from { transform: translateX(-100%); }
+  to { transform: translateX(0); }
+}
+
+/* Only transform: the element's own `translate` (Tailwind -translate-x-1/2) composes with it. */
+@keyframes pop-in {
+  from { opacity: 0; transform: translateY(-12px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes zoom-in {
+  from { opacity: 0; transform: scale(0.92); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.animate-fade-in-fast { animation: fade-in 0.18s ease-out both; }
+.animate-slide-in-left { animation: slide-in-left 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.animate-pop-in { animation: pop-in 0.18s ease-out both; }
+
+/* Share popover above a text selection: centred over the passage, pops up */
+@keyframes share-pop {
+  from { opacity: 0; transform: translate(-50%, calc(-100% + 6px)); }
+  to { opacity: 1; transform: translate(-50%, -100%); }
+}
+.share-pop {
+  transform: translate(-50%, -100%);
+  animation: share-pop 0.15s ease-out both;
+}
+
+/* Image lightbox: a native <dialog> in the top layer */
+.lightbox[open] { animation: fade-in 0.2s ease-out both; }
+.lightbox[open] > img { animation: zoom-in 0.25s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
+.lightbox::backdrop {
+  background: rgba(0, 0, 0, 0.8);
+  backdrop-filter: blur(4px);
+}
+
 /* Animated background — pure CSS, no JS, no framer-motion */
 .orb-layer { opacity: 0.22; }
 [data-theme="light"] .orb-layer { opacity: 0.14; }

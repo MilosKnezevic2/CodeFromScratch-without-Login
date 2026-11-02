@@ -1,7 +1,7 @@
 "use client";
 
 import { PortableText, PortableTextComponents, PortableTextBlock } from "@portabletext/react";
-import { urlFor } from "@/lib/sanity/image";
+import { imageInfo, urlFor } from "@/lib/sanity/image";
 import { slugify } from "@/lib/portable-text-utils";
 import ImageLightbox from "./ImageLightbox";
 import CodeBlock from "./CodeBlock";
@@ -19,6 +19,13 @@ const sizeClasses: Record<string, string> = {
   small: "max-w-[40%]",
   medium: "max-w-[70%]",
   full: "max-w-full",
+};
+
+// What the image optimizer is told about the slot, so phones get a phone-sized file.
+const imageSizes: Record<string, string> = {
+  small: "(max-width: 768px) 40vw, 320px",
+  medium: "(max-width: 768px) 70vw, 560px",
+  full: "(max-width: 768px) 100vw, 800px",
 };
 
 const alignClasses: Record<string, string> = {
@@ -128,11 +135,21 @@ const components: PortableTextComponents = {
       const size = value.size || "full";
       const alignment = value.alignment || "center";
       const width = sizeWidths[size] || 800;
+      const info = imageInfo(value);
+      // Real dimensions reserve the space, so the text does not jump when the image arrives.
+      const height = info ? Math.round((width * info.height) / info.width) : Math.round((width * 9) / 16);
+      const unoptimized = info?.format === "svg" || info?.format === "gif";
       return (
         <figure className={`my-6 ${sizeClasses[size] || ""} ${alignClasses[alignment] || "mx-auto"}`}>
           <ImageLightbox
-            src={urlFor(value).width(width).url()}
+            // One large source: the optimizer cuts every smaller rendition
+            // from it, and the lightbox shows it as is.
+            src={urlFor(value).width(unoptimized ? width : 1600).url()}
             alt={value.alt || ""}
+            width={width}
+            height={height}
+            sizes={imageSizes[size] || imageSizes.full}
+            unoptimized={unoptimized}
             className="w-full rounded-lg"
           />
           {value.caption && (

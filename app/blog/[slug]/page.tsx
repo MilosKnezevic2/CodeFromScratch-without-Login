@@ -16,6 +16,7 @@ import { calculateReadingTime } from "@/lib/reading-time";
 import TableOfContents from "@/components/blog/TableOfContents";
 import SmartSuggestions from "@/components/blog/SmartSuggestions";
 import ReadingProgress from "@/components/blog/ReadingProgress";
+import { shareImageUrl } from "@/lib/share-image";
 import ShareButtons from "@/components/blog/ShareButtons";
 import BackToTop from "@/components/blog/BackToTop";
 import PostNavigation from "@/components/blog/PostNavigation";
@@ -78,11 +79,7 @@ export async function generateMetadata({
 
   if (!post) return { title: "Post not found" };
 
-  const ogImage = `${SITE_URL}/api/og?title=${encodeURIComponent(post.title)}${
-    post.categories?.[0]
-      ? `&category=${encodeURIComponent(post.categories[0].title)}`
-      : ""
-  }`;
+  const ogImage = shareImageUrl(post.title, post.categories?.[0]?.title);
 
   return {
     title: post.seoTitle || post.title,

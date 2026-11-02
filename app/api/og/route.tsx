@@ -55,7 +55,8 @@ function hexToRgba(hex: string, a: number): string {
 }
 
 function pickAccent(category: string): [string, string] {
-  const key = category.trim().toLowerCase();
+  // Accepts a title ("APIs & Integrations") or a slug ("apis-and-integrations").
+  const key = category.trim().toLowerCase().replace(/-and-/g, " & ").replace(/-/g, " ");
   if (ACCENTS[key]) return ACCENTS[key];
   const values = Object.values(ACCENTS);
   let h = 0;
@@ -101,7 +102,9 @@ export async function GET(req: NextRequest) {
   const category = searchParams.get("category") || "";
   const variant = (searchParams.get("v") || VARIANTS[hash(title) % VARIANTS.length]).toLowerCase();
   const [accent, accent2] = pickAccent(category);
-  const kicker = (category || "Journal").toUpperCase();
+  // The small label above the title. Listing pages pass their own
+  // ("Category · 7 articles") while keeping the category's accent.
+  const kicker = (searchParams.get("kicker") || category || "Journal").slice(0, 60).toUpperCase();
 
   let fonts: { name: string; data: ArrayBuffer; weight: 400 | 500 | 700; style: "normal" | "italic" }[];
   try {

@@ -63,6 +63,10 @@ export async function POST(request: Request) {
     // Revalidate based on content type
     if (_type === "post") {
       revalidatePath("/blog");
+      // A new post shifts every listing page and must reach the sitemap now,
+      // not when its hourly refresh comes round.
+      revalidatePath("/blog/page/[n]", "page");
+      revalidatePath("/sitemap.xml");
       revalidatePath("/blog/category/[slug]", "page");
       revalidatePath("/blog/tag/[slug]", "page");
       if (slug?.current) {

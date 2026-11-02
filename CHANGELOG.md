@@ -6,6 +6,47 @@ Project versioning: semver (applied once first production release ships).
 
 ## [Unreleased]
 
+### Added (2026-10-30/31 platform round)
+- Cookieless analytics: daily counters per page, referrer, device, country,
+  reading depth and time; Search Console numbers synced daily; the admin
+  analytics page reads real data (the earlier random "views" are gone).
+- Admin Settings: general, SEO, newsletter, features, payments (gated by
+  the legal checklist), security (password, 2FA with backup codes, lockout,
+  audit log) and data (export or erase one person's data).
+- Encrypted database backup with a verified restore (`scripts/backup-db.mjs`),
+  a load-test script, an IndexNow ping on publish, a DMARC record.
+- A content-updated date per article that only a real rewrite moves
+  (sitemap lastmod, schema dateModified, feeds, a visible "Updated" line).
+- Share cards (og:image) for category and tag pages, drawn by `/api/og`
+  with a "Category · N articles" kicker in the category's accent.
+
+### Changed (2026-10-30/31 platform round)
+- `/blog` and `/blog/page/N` are prerendered and served from the edge;
+  filters live on `/blog/search` (noindex); the old `?page=`, `?category=`
+  and `?q=` addresses redirect (308).
+- Reading events leave the page in one batched request, one database write
+  per read instead of up to five.
+- The animation library (framer-motion) is gone; motion is CSS. Articles and
+  `/blog` transfer 42 KB less JavaScript (modern browsers, gzipped: article
+  218 → 176 KB, `/blog` 207 → 165 KB). The image lightbox is a native
+  `<dialog>`: focus trap, Escape, openable from the keyboard.
+- Article body images declare their real dimensions (no layout jump) and go
+  through the image optimizer with per-slot `sizes`.
+- `/api/og` responses are cached at the edge for a day.
+
+### Fixed (2026-10-30/31 platform round)
+- `/api/admin/dashboard` and `/api/admin/users/[id]` answered without an
+  admin session.
+- Unknown category and tag slugs answered 200 (soft 404s); empty ones now
+  404 and thin ones (≤ 2 articles) are `noindex, follow`.
+- Hidden relaunch surfaces (pricing, ebooks, courses, login, register,
+  checkout, onboarding, dashboard) answered 200; they 404 until their
+  switch in Settings is on.
+- Connection exhaustion on the Supabase session pooler under load: the
+  transaction pooler is forced in code.
+- The text-selection share popover added the scroll offset to a fixed
+  element and floated off-screen once the reader had scrolled.
+
 ### Fixed (2026-07 quality round: fonts, a11y, CI)
 - The wordmark in Navbar/Footer silently rendered in Georgia — its
   'Fraunces Variable' face was referenced but never imported. Fraunces
