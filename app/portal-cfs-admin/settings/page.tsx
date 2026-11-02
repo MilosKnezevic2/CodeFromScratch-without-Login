@@ -184,7 +184,11 @@ async function SystemTab() {
               <a href="/api/admin/sentry-test" target="_blank" rel="noopener noreferrer" className="text-accent underline-offset-2 hover:underline">
                 Send a test error to Sentry
               </a>{" "}
-              (the page shows an error; that is the point; it appears under Sentry &gt; Issues within a minute)
+              (answers &ldquo;sent: true&rdquo; with an event id; it appears under Sentry &gt; Issues within a minute).{" "}
+              <a href="/api/admin/sentry-test?throw=1" target="_blank" rel="noopener noreferrer" className="text-accent underline-offset-2 hover:underline">
+                Throw one like a real bug
+              </a>{" "}
+              (shows a 500 page on purpose).
             </p>
           </div>
           <div className="glow-border rounded-xl bg-surface p-5">
