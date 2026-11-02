@@ -38,9 +38,10 @@ export default function PrivacyPage() {
             </li>
             <li>
               <strong>Error reports.</strong> When a page or the server runs into a programming error, a technical
-              report goes to Sentry: the error message and where in the code it happened, the page address, and the
-              browser and operating system. It is set up not to include names, email addresses, form contents or
-              recordings of the page, and it is stored in Sentry&rsquo;s EU region (Frankfurt). We use it to find and
+              report goes to Sentry: the error message and where in the code it happened, the page address, the
+              browser and operating system, and the country, which Sentry derives from the connection. It is set up not
+              to include names, email addresses, IP addresses, form contents or recordings of the page, and it is
+              stored in Sentry&rsquo;s EU region (Frankfurt). We use it to find and
               fix faults. Legal basis: our legitimate interest in a site that works (Art. 6(1)(f) GDPR).
             </li>
             <li>
