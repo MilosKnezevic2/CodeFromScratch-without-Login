@@ -23,6 +23,21 @@ export default function TermsPage() {
           </p>
         </section>
 
+        <section id="comments">
+          <h2 className="text-lg font-bold text-foreground">Comments</h2>
+          <p className="mt-2">
+            Signed-in readers can comment under the articles. Questions, corrections and your own experience are
+            welcome. Not allowed: insults or harassment, anything illegal, other people&rsquo;s personal data, advertising
+            and spam, and copying text you have no right to share. A first comment appears after a person has read it;
+            comments that break these rules are removed and accounts that keep breaking them are blocked. You stay
+            responsible for what you write. To report a comment, use its Report link or write to{" "}
+            <a href="mailto:office@codefromscratch.org" className="text-accent underline underline-offset-2">
+              office@codefromscratch.org
+            </a>
+            .
+          </p>
+        </section>
+
         <section>
           <h2 className="text-lg font-bold text-foreground">2. Using the content</h2>
           <ul className="mt-2 list-disc space-y-1 pl-5">

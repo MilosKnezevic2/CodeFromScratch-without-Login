@@ -21,20 +21,12 @@ export default function UserMenu() {
 
   if (!session?.user) {
     return (
-      <div className="flex items-center gap-3">
-        <Link
-          href="/login"
-          className="text-sm font-medium text-muted hover:text-foreground transition"
-        >
-          Sign In
-        </Link>
-        <Link
-          href="/register"
-          className="rounded-lg gradient-btn px-4 py-1.5 text-sm font-medium transition"
-        >
-          Sign Up
-        </Link>
-      </div>
+      <Link
+        href="/login"
+        className="inline-flex min-h-11 items-center text-sm font-medium text-muted transition hover:text-foreground"
+      >
+        Sign in
+      </Link>
     );
   }
 
@@ -50,13 +42,20 @@ export default function UserMenu() {
   return (
     <div className="relative" ref={menuRef}>
       <button
+        type="button"
         onClick={() => setOpen(!open)}
-        className="flex h-8 w-8 items-center justify-center rounded-full gradient-btn text-xs font-medium transition"
+        aria-label="Your account"
+        aria-expanded={open}
+        className="flex h-11 w-11 items-center justify-center rounded-full text-xs font-medium transition"
       >
         {session.user.image ? (
+          // eslint-disable-next-line @next/next/no-img-element -- a 32 px avatar from Google or GitHub; the optimizer adds nothing
           <img
             src={session.user.image}
             alt=""
+            width={32}
+            height={32}
+            referrerPolicy="no-referrer"
             className="h-8 w-8 rounded-full"
           />
         ) : (
@@ -74,25 +73,16 @@ export default function UserMenu() {
           </div>
 
           <Link
-            href="/dashboard"
+            href="/account"
             onClick={() => setOpen(false)}
             className="block px-4 py-2 text-sm text-muted hover:bg-surface-2/50 hover:text-accent transition"
           >
-            Dashboard
+            Your account
           </Link>
 
-          {session.user.role === "ADMIN" && (
-            <Link
-              href="/portal-cfs-admin"
-              onClick={() => setOpen(false)}
-              className="block px-4 py-2 text-sm text-muted hover:bg-surface-2/50 hover:text-accent transition"
-            >
-              Admin Panel
-            </Link>
-          )}
-
           <button
-            onClick={() => signOut({ callbackUrl: "/" })}
+            type="button"
+            onClick={() => signOut({ callbackUrl: window.location.pathname })}
             className="block w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-surface-2/50 transition"
           >
             Sign Out

@@ -409,9 +409,10 @@ export default async function PostPage({ params }: PageProps) {
                   <NewsletterCTA />
                 </div>
               )}
-              {features.commentsEnabled && (
+              {/* Comments need reader accounts as well; both switches are in Settings > Features. */}
+              {features.commentsEnabled && features.registrationOpen && (
                 <div className="mt-12">
-                  <Comments />
+                  <Comments slug={slug} />
                 </div>
               )}
 

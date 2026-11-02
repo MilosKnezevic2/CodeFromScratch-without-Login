@@ -312,7 +312,7 @@ export const SECTION_INFO: Record<Section, SectionInfo> = {
         name: "commentsEnabled",
         label: "Comments under articles",
         type: "toggle",
-        help: "Uses Giscus (GitHub Discussions). It only appears once the Giscus keys are set on Vercel.",
+        help: "Readers who signed in with Google or GitHub can comment; everyone can read. Needs reader accounts (below) on as well. A reader's first comment waits for your approval in Comments.",
       },
       {
         name: "courseWaitlistOpen",
@@ -323,9 +323,9 @@ export const SECTION_INFO: Record<Section, SectionInfo> = {
       { name: "showSocialLinks", label: "Show social links in the footer and on the contact page", type: "toggle" },
       {
         name: "registrationOpen",
-        label: "Allow visitors to create user accounts",
+        label: "Reader accounts (sign in with Google or GitHub)",
         type: "toggle",
-        help: "Keep off. The privacy policy says the site has no user accounts; it must be rewritten before this goes on.",
+        help: "Opens /login and /account. No passwords: the privacy policy covers what the sign-in stores. Switching it off closes sign-in at once; existing accounts stay until deleted.",
       },
     ],
   },

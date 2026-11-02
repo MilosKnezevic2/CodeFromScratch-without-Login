@@ -6,6 +6,8 @@ import { useState, useEffect } from "react";
 import ThemeToggle from "./ThemeToggle";
 import SearchModal from "./blog/SearchModal";
 import Logo from "./Logo";
+import UserMenu from "./auth/UserMenu";
+import { useSession } from "next-auth/react";
 
 // Public-facing nav. Ebooks, Courses, and the user menu are wired up in
 // code (routes still exist under app/*) but hidden from this list while
@@ -17,8 +19,10 @@ const navLinks = [
   { href: "/contact", label: "Contact" },
 ];
 
-export default function Navbar() {
+/** `accounts`: reader sign-in is switched on in Settings, so the header offers it. */
+export default function Navbar({ accounts }: { accounts: boolean }) {
   const pathname = usePathname();
+  const { data: session } = useSession();
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -72,6 +76,7 @@ export default function Navbar() {
           </nav>
           <SearchModal />
           <ThemeToggle />
+          {accounts && <UserMenu />}
         </div>
 
         {/* Mobile hamburger */}
@@ -138,6 +143,14 @@ export default function Navbar() {
                 </Link>
               );
             })}
+            {accounts && (
+              <Link
+                href={session?.user ? "/account" : `/login?callbackUrl=${encodeURIComponent(pathname)}`}
+                className="rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-surface/50 hover:text-foreground"
+              >
+                {session?.user ? "Your account" : "Sign in"}
+              </Link>
+            )}
           </nav>
         </div>
       )}
