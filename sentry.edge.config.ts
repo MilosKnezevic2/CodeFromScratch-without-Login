@@ -1,6 +1,5 @@
 import * as Sentry from "@sentry/nextjs";
-
-const dsn = process.env.SENTRY_DSN ?? process.env.NEXT_PUBLIC_SENTRY_DSN;
+import { SENTRY_DSN, shouldReport } from "@/lib/sentry-dsn";
 
 /**
  * Edge-runtime Sentry — runs inside Next.js middleware and any
@@ -8,9 +7,9 @@ const dsn = process.env.SENTRY_DSN ?? process.env.NEXT_PUBLIC_SENTRY_DSN;
  * Limited API surface compared to the Node server runtime.
  * Gated on DSN — no DSN, no initialisation.
  */
-if (dsn) {
+if (shouldReport({ vercelEnv: process.env.VERCEL_ENV })) {
   Sentry.init({
-    dsn,
+    dsn: process.env.SENTRY_DSN || SENTRY_DSN,
     environment:
       process.env.VERCEL_ENV ?? process.env.NODE_ENV ?? "unknown",
     tracesSampleRate: 0.1,
