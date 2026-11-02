@@ -2,10 +2,13 @@
  * Sends one newsletter letter through the same service the portal uses, for
  * sends the operator approves in chat (the portal needs a browser login).
  *
- *   npx tsx scripts/send-letter.mts --post <slug> --subject "..." [--preheader "..."] [--note-file path]
+ *   npx tsx scripts/send-letter.mts --post <slug> --letter-file content-drafts/letter-<slug>.json
  *     (dry run: prints the plain-text letter and the recipient count, sends nothing)
  *   ... --test you@example.com          (one test email; a subscribed address gets its real unsubscribe link)
  *   ... --apply --confirm <count>       (sends to every confirmed subscriber; the count must match)
+ *   ... --apply --confirm auto          (the publish script's form: the count is read, not typed)
+ *   The letter file holds {"subject", "preheader", "note"}; --subject, --preheader and
+ *   --note-file override its fields.
  *
  * The guards are the portal's: the confirmed count must be typed back, a
  * letter with the same subject within 24 hours is refused, a running send
@@ -44,11 +47,15 @@ const [{ parseLetterInput, isValidEmail }, service, { prisma }, letter, { sendEm
   import("@/lib/send-email"),
 ]);
 
+const letterFile = flag("--letter-file");
+const fromFile = letterFile
+  ? (JSON.parse(readFileSync(letterFile, "utf8")) as { subject?: string; preheader?: string; note?: string })
+  : {};
 const noteFile = flag("--note-file");
 const parsed = parseLetterInput({
-  subject: flag("--subject") ?? "",
-  preheader: flag("--preheader") ?? "",
-  note: noteFile ? readFileSync(noteFile, "utf8") : "",
+  subject: flag("--subject") ?? fromFile.subject ?? "",
+  preheader: flag("--preheader") ?? fromFile.preheader ?? "",
+  note: noteFile ? readFileSync(noteFile, "utf8") : (fromFile.note ?? ""),
   postSlug: flag("--post") ?? "",
 });
 if (!parsed.ok) {
@@ -105,7 +112,9 @@ if (!APPLY) {
   process.exit(0);
 }
 
-const confirm = Number(flag("--confirm"));
+const confirmFlag = flag("--confirm");
+const confirm = confirmFlag === "auto" ? recipients.length : Number(confirmFlag);
+if (confirmFlag === "auto") console.log(`--confirm auto: ${recipients.length} confirmed subscriber(s)`);
 if (recipients.length === 0) {
   console.error("There are no confirmed subscribers.");
   process.exit(1);
