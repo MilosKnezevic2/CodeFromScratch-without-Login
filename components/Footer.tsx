@@ -116,7 +116,7 @@ export default function Footer({
 
       {/* Bottom bar */}
       <div className="border-t border-border">
-        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-4 py-5 sm:flex-row sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-3 px-4 pb-20 pt-5 sm:flex-row sm:px-6 sm:py-5 lg:px-8">
           <p className="text-xs text-muted-foreground">
             &copy; {year} {siteName}. All rights reserved.
           </p>
