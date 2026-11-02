@@ -217,7 +217,9 @@ model NewsletterCampaign {
   preheader      String?
   note           String?   @db.Text
   postSlug       String?
-  /// SENDING | SENT | PARTIAL | FAILED
+  /// SENDING | SENT | PARTIAL | FAILED. In production the column is still the
+  /// Postgres enum "CampaignStatus" from an earlier schema; every value written
+  /// here must exist there (PARTIAL was added by hand on 2026-11-02).
   status         String    @default("SENT")
   recipientCount Int       @default(0)
   failedCount    Int       @default(0)
@@ -225,6 +227,9 @@ model NewsletterCampaign {
   sentCount      Int       @default(0)
   openCount      Int       @default(0)
   createdAt      DateTime  @default(now())
+  // The production table has this NOT NULL column; without it here every
+  // insert failed and no letter could be sent.
+  updatedAt      DateTime  @default(now()) @updatedAt
 }
 
 model ContactSubmission {
