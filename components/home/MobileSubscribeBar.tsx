@@ -42,9 +42,9 @@ export default function MobileSubscribeBar() {
       <div className="flex items-center gap-3">
         <div className="min-w-0 flex-1">
           <p className="text-sm font-bold text-foreground">
-            New issues, straight to your inbox.
+            Get the free Production Checklist.
           </p>
-          <p className="editorial-meta">No fluff. Unsubscribe in a click.</p>
+          <p className="editorial-meta">24 checks before you ship. Unsubscribe in a click.</p>
         </div>
         <Link
           href="#newsletter"

@@ -53,11 +53,6 @@ export default function Footer({
                 </Link>
               </li>
               <li>
-                <Link href="/production-checklist" className="text-muted transition hover:text-accent">
-                  Production checklist
-                </Link>
-              </li>
-              <li>
                 <Link href="/course-waitlist" className="text-muted transition hover:text-accent">
                   Course waitlist
                 </Link>
@@ -105,7 +100,8 @@ export default function Footer({
               Stay Updated
             </p>
             <p className="mt-4 text-sm text-muted">
-              New tutorials and deep dives, straight to your inbox. No spam, unsubscribe anytime.
+              Subscribe and get <span className="font-semibold text-foreground">The Production Checklist</span> free:
+              24 checks to run before a web app meets real users. Then one short email per new article.
             </p>
             <div className="mt-4">
               <SubscribeForm />

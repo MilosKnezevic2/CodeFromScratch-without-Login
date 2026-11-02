@@ -12,6 +12,7 @@ const links = [
   { href: "/portal-cfs-admin/newsletter", label: "Newsletter" },
   { href: "/portal-cfs-admin/ebooks", label: "Ebooks" },
   { href: "/portal-cfs-admin/courses", label: "Courses" },
+  { href: "/portal-cfs-admin/waitlist", label: "Waitlist" },
   { href: "/portal-cfs-admin/contacts", label: "Contact Messages" },
   { href: "/portal-cfs-admin/analytics", label: "Analytics" },
 ];

@@ -8,6 +8,9 @@ export const metadata: Metadata = {
   description:
     "A free, printable checklist for web apps: input validation, errors, rate limits, logging, tests, secrets and deploys. Tick it off before anything goes live.",
   alternates: { canonical: `${SITE_URL}/production-checklist` },
+  // A subscriber's copy: linked from the confirmation page and the welcome
+  // letter, kept out of search so the sign-up is what leads here.
+  robots: { index: false, follow: true },
 };
 
 interface Item {

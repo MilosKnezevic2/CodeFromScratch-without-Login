@@ -95,6 +95,30 @@ export default function Navbar() {
       {/* Mobile menu */}
       {mobileOpen && (
         <div className="animate-fade-in border-t border-border bg-background/98 backdrop-blur-md px-4 pb-4 md:hidden">
+          {/* A plain GET form to the journal's search page: works before any script loads. */}
+          <form action="/blog/search" method="get" role="search" className="pt-3">
+            <label htmlFor="mobile-search" className="sr-only">
+              Search articles
+            </label>
+            <div className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 focus-within:border-accent/50">
+              <svg className="h-4 w-4 shrink-0 text-muted-foreground" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+              <input
+                id="mobile-search"
+                name="q"
+                type="search"
+                inputMode="search"
+                enterKeyHint="search"
+                autoComplete="off"
+                minLength={2}
+                maxLength={100}
+                required
+                placeholder="Search articles..."
+                className="h-11 min-w-0 flex-1 bg-transparent text-base text-foreground placeholder:text-muted-foreground outline-none"
+              />
+            </div>
+          </form>
           <nav className="flex flex-col gap-1 pt-2">
             {navLinks.map((link) => {
               const isActive = link.href === "/"

@@ -25,11 +25,9 @@ export default function NewsletterPage() {
       <ul className="mt-8 max-w-2xl list-disc space-y-2 pl-5 text-sm leading-relaxed text-muted">
         <li>The new article, with one line on who it is for.</li>
         <li>
-          A free copy of{" "}
-          <Link href="/production-checklist" className="text-accent underline underline-offset-2">
-            The Production Checklist
-          </Link>
-          , available to everyone, subscribed or not.
+          <span className="font-semibold text-foreground">The Production Checklist</span>, free:
+          24 checks to run before a web app meets real users, each linked to the
+          article that explains it. You get the link as soon as you confirm.
         </li>
         <li>
           Your address is used for this letter only. Every email has a one-click
