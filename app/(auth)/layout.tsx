@@ -24,7 +24,7 @@ export default async function AuthLayout({
           </p>
 
           <ul className="mt-8 space-y-2 text-left text-sm text-muted-foreground">
-            <li>No password: Google or GitHub signs you in.</li>
+            <li>No password: Google, GitHub or a link to your email.</li>
             <li>Your email address is never shown.</li>
             <li>Delete your account and comments at any time.</li>
           </ul>

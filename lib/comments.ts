@@ -46,13 +46,16 @@ export function linkCount(body: string): number {
  * A reader's first comment is held for approval; once one of theirs has been
  * approved, later ones go live at once, unless they carry many links.
  */
-export function initialStatus(hasApprovedBefore: boolean, body: string): "PENDING" | "APPROVED" {
-  if (!hasApprovedBefore) return "PENDING";
-  return linkCount(body) > 2 ? "PENDING" : "APPROVED";
+export function initialStatus(hasApprovedBefore: boolean, body: string, holdFirst = true): "PENDING" | "APPROVED" {
+  if (linkCount(body) > 2) return "PENDING";
+  if (!hasApprovedBefore && holdFirst) return "PENDING";
+  return "APPROVED";
 }
 
 export interface PublicComment {
   id: string;
+  /** The comment this one answers, or null for a top-level comment. */
+  parentId: string | null;
   body: string;
   createdAt: string;
   author: { name: string; image: string | null };
@@ -64,4 +67,61 @@ export interface PublicComment {
 export function displayName(name: string | null | undefined): string {
   const clean = (name ?? "").trim();
   return clean ? clean.slice(0, 60) : "Reader";
+}
+
+export interface CommentNode extends PublicComment {
+  /** True for a removed comment kept only so its replies stay in place. */
+  removed: boolean;
+  depth: number;
+  replies: CommentNode[];
+}
+
+/** Visual indentation stops here so deep threads stay readable on a phone; the thread itself goes on. */
+export const MAX_INDENT_DEPTH = 5;
+
+/**
+ * Turns the flat list into threads. A reply whose parent is not in the list
+ * (removed, rejected, or not yet approved) hangs under a "removed" stand-in,
+ * so a conversation never loses its context. Order within a level is the
+ * order of the list (oldest first).
+ */
+export function buildThreads(comments: PublicComment[]): CommentNode[] {
+  const nodes = new Map<string, CommentNode>();
+  for (const c of comments) nodes.set(c.id, { ...c, removed: false, depth: 0, replies: [] });
+
+  const roots: CommentNode[] = [];
+  for (const c of comments) {
+    const node = nodes.get(c.id)!;
+    if (!c.parentId) {
+      roots.push(node);
+      continue;
+    }
+    let parent = nodes.get(c.parentId);
+    if (!parent) {
+      parent = {
+        id: c.parentId,
+        parentId: null,
+        body: "",
+        createdAt: c.createdAt,
+        author: { name: "", image: null },
+        mine: false,
+        pending: false,
+        removed: true,
+        depth: 0,
+        replies: [],
+      };
+      nodes.set(c.parentId, parent);
+      roots.push(parent);
+    }
+    parent.replies.push(node);
+  }
+
+  const setDepth = (list: CommentNode[], depth: number) => {
+    for (const n of list) {
+      n.depth = depth;
+      setDepth(n.replies, depth + 1);
+    }
+  };
+  setDepth(roots, 0);
+  return roots;
 }

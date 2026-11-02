@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { safeCallbackPath } from "@/lib/auth-callback";
+import EmailSignIn from "./EmailSignIn";
 import ProviderButtons from "./ProviderButtons";
 
 export const metadata: Metadata = {
@@ -11,7 +12,10 @@ export const metadata: Metadata = {
 const ERRORS: Record<string, string> = {
   AccessDenied: "Sign-in is not open right now, or this account cannot sign in.",
   OAuthAccountNotLinked:
-    "This email address already belongs to an account that signs in another way. Use the provider you used the first time.",
+    "This email address already belongs to an account that signs in another way. Use the way you signed in the first time.",
+  Verification: "That sign-in link has expired or was already used. Ask for a new one below.",
+  TooManyLinks: "Several links were sent to this address in the last half hour. Use the newest one, or try again later.",
+  EmailSignin: "The sign-in email could not be sent. Check the address and try again.",
   Configuration: "Sign-in is not available at the moment. Try again later.",
 };
 
@@ -28,8 +32,8 @@ export default async function LoginPage({
     <div className="rounded-xl border border-border bg-surface p-8 shadow-xl">
       <h1 className="text-2xl font-bold text-foreground">Sign in</h1>
       <p className="mt-2 text-sm text-muted">
-        An account lets you comment under the articles. There is no password: you sign in with Google or GitHub, and we
-        get your name, email address and profile picture from them, nothing else.
+        An account lets you comment under the articles. There is no password: sign in with Google or GitHub, or with a
+        link we email to you. We store your name, email address and profile picture, nothing else.
       </p>
 
       {message && (
@@ -41,6 +45,14 @@ export default async function LoginPage({
       <div className="mt-6">
         <ProviderButtons callbackUrl={next} />
       </div>
+
+      <div className="my-6 flex items-center gap-3 text-xs uppercase tracking-wider text-muted-foreground" aria-hidden="true">
+        <span className="h-px flex-1 bg-border" />
+        or
+        <span className="h-px flex-1 bg-border" />
+      </div>
+
+      <EmailSignIn callbackUrl={next} />
 
       <p className="mt-6 text-xs leading-relaxed text-muted-foreground">
         By signing in you agree to the{" "}

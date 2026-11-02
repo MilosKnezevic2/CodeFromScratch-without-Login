@@ -8,12 +8,15 @@ const m = vi.hoisted(() => ({
   count: vi.fn(),
   create: vi.fn(),
   send: vi.fn(),
+  findFirst: vi.fn(),
 }));
 vi.mock("@/lib/comments-store", () => ({ commentsOpen: m.open, currentReader: m.reader, listComments: m.list }));
 vi.mock("@/lib/analytics/store", () => ({ publishedSlugs: m.slugs }));
-vi.mock("@/lib/prisma", () => ({ prisma: { postComment: { count: m.count, create: m.create } } }));
+vi.mock("@/lib/prisma", () => ({ prisma: { postComment: { count: m.count, create: m.create, findFirst: m.findFirst } } }));
 vi.mock("@/lib/send-email", () => ({ sendEmail: m.send }));
-vi.mock("@/lib/settings/store", () => ({ getSettings: async () => ({ general: { contactEmail: "office@codefromscratch.org" } }) }));
+vi.mock("@/lib/settings/store", () => ({
+  getSettings: async () => ({ general: { contactEmail: "office@codefromscratch.org" }, features: { holdFirstComment: true } }),
+}));
 
 import { GET, POST } from "./route";
 
@@ -60,7 +63,7 @@ describe("/api/comments/[postSlug]", () => {
     expect(res.status).toBe(201);
     expect(await res.json()).toEqual({ id: "c1", status: "PENDING" });
     expect(m.create).toHaveBeenCalledWith({
-      data: { postSlug: "real-post", userId: "u1", body: "Great article", status: "PENDING" },
+      data: { postSlug: "real-post", userId: "u1", body: "Great article", status: "PENDING", parentId: null },
       select: { id: true },
     });
     expect(m.send).toHaveBeenCalledTimes(1);
@@ -87,6 +90,24 @@ describe("/api/comments/[postSlug]", () => {
 
   it("refuses an empty body", async () => {
     expect((await POST(post({ body: " " }), params("real-post"))).status).toBe(400);
+  });
+
+  it("files a reply under a published comment of the same article", async () => {
+    m.findFirst.mockResolvedValue({ id: "parent1" });
+    const res = await POST(post({ body: "I agree", parentId: "parent1" }), params("real-post"));
+    expect(res.status).toBe(201);
+    expect(m.findFirst).toHaveBeenCalledWith({
+      where: { id: "parent1", postSlug: "real-post", status: "APPROVED", deletedAt: null },
+      select: { id: true },
+    });
+    expect(m.create.mock.calls[0][0].data.parentId).toBe("parent1");
+  });
+
+  it("refuses a reply to a comment that is not published here", async () => {
+    m.findFirst.mockResolvedValue(null);
+    expect((await POST(post({ body: "I agree", parentId: "elsewhere" }), params("real-post"))).status).toBe(400);
+    expect((await POST(post({ body: "I agree", parentId: 42 }), params("real-post"))).status).toBe(400);
+    expect(m.create).not.toHaveBeenCalled();
   });
 
   it("keeps the comment when the notification fails", async () => {

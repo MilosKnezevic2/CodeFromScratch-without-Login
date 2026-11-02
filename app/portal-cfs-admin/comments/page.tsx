@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings/store";
-import { moderateAction } from "./actions";
+import { approveAllAction, moderateAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Comments",
@@ -38,7 +38,15 @@ export default async function AdminCommentsPage() {
         where: { status: "PENDING", deletedAt: null },
         orderBy: { createdAt: "asc" },
         take: 100,
-        select: { id: true, postSlug: true, body: true, reportedCount: true, createdAt: true, user: { select: { name: true, email: true } } },
+        select: {
+          id: true,
+          postSlug: true,
+          body: true,
+          reportedCount: true,
+          createdAt: true,
+          user: { select: { name: true, email: true } },
+          parent: { select: { body: true, user: { select: { name: true } } } },
+        },
       })
       .catch(() => null),
     prisma.postComment
@@ -62,8 +70,11 @@ export default async function AdminCommentsPage() {
       <div>
         <h1 className="text-2xl font-bold text-foreground">Comments</h1>
         <p className="mt-1 text-sm text-muted">
-          {open ? "Comments are on." : "Comments are off for readers."} A reader&rsquo;s first comment waits here; once one is
-          approved, the next ones go live at once. Three reports send a published comment back here. Switches:{" "}
+          {open ? "Comments are on." : "Comments are off for readers."}{" "}
+          {features.holdFirstComment
+            ? "Only a reader's first comment waits here; once you approve one, their next comments go live at once."
+            : "Comments go live at once; only link-heavy ones wait here."}{" "}
+          Three reports send a published comment back here. Switches:{" "}
           <Link href="/portal-cfs-admin/settings?tab=features" className="text-accent underline-offset-2 hover:underline">
             Settings &gt; Features
           </Link>
@@ -72,9 +83,18 @@ export default async function AdminCommentsPage() {
       </div>
 
       <section aria-labelledby="waiting-heading">
-        <h2 id="waiting-heading" className="text-lg font-semibold text-foreground">
-          Waiting for approval ({waiting.length})
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h2 id="waiting-heading" className="text-lg font-semibold text-foreground">
+            Waiting for approval ({waiting.length})
+          </h2>
+          {waiting.length > 1 && (
+            <form action={approveAllAction}>
+              <button type="submit" className="min-h-9 rounded-lg border border-border px-3 text-xs font-semibold text-foreground hover:border-accent/40">
+                Approve all {waiting.length}
+              </button>
+            </form>
+          )}
+        </div>
         {waiting.length === 0 ? (
           <p className="mt-2 text-sm text-muted">Nothing waiting.</p>
         ) : (
@@ -89,6 +109,11 @@ export default async function AdminCommentsPage() {
                   · {when(c.createdAt)}
                   {c.reportedCount > 0 && <span className="ml-2 text-red-400">reported {c.reportedCount}×</span>}
                 </p>
+                {c.parent && (
+                  <p className="mt-2 line-clamp-2 border-l-2 border-border pl-3 text-xs text-muted-foreground">
+                    Reply to {c.parent.user.name ?? "a reader"}: {c.parent.body}
+                  </p>
+                )}
                 <p className="mt-2 whitespace-pre-line break-words text-sm text-foreground">{c.body}</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Decision id={c.id} decision="approve" label="Approve" tone="ok" />

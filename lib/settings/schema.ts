@@ -54,6 +54,7 @@ export interface NewsletterSettings {
 
 export interface FeatureSettings {
   commentsEnabled: boolean;
+  holdFirstComment: boolean;
   articleNewsletterCard: boolean;
   courseWaitlistOpen: boolean;
   registrationOpen: boolean;
@@ -124,6 +125,7 @@ export const DEFAULTS: Settings = {
   },
   features: {
     commentsEnabled: false,
+    holdFirstComment: true,
     articleNewsletterCard: true,
     courseWaitlistOpen: true,
     registrationOpen: false,
@@ -313,6 +315,12 @@ export const SECTION_INFO: Record<Section, SectionInfo> = {
         label: "Comments under articles",
         type: "toggle",
         help: "Readers who signed in with Google or GitHub can comment; everyone can read. Needs reader accounts (below) on as well. A reader's first comment waits for your approval in Comments.",
+      },
+      {
+        name: "holdFirstComment",
+        label: "Hold a reader's first comment for approval",
+        type: "toggle",
+        help: "Only a reader's first comment waits; after you approve one, their next comments go live at once. Comments with more than two links always wait. Turn off to publish everything at once and rely on reports and blocking.",
       },
       {
         name: "courseWaitlistOpen",

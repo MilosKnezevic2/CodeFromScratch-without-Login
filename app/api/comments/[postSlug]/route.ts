@@ -38,8 +38,21 @@ export async function POST(request: Request, { params }: Params) {
   const slugs = await publishedSlugs();
   if (slugs && !slugs.has(postSlug)) return json({ error: "Not found" }, 404);
 
-  const parsed = parseCommentBody(((await request.json().catch(() => null)) as { body?: unknown } | null)?.body);
+  const input = (await request.json().catch(() => null)) as { body?: unknown; parentId?: unknown } | null;
+  const parsed = parseCommentBody(input?.body);
   if (!parsed.ok) return json({ error: parsed.error }, 400);
+
+  // A reply answers a published comment on the same article; anything else is refused.
+  let parentId: string | null = null;
+  if (input?.parentId !== undefined && input.parentId !== null) {
+    if (typeof input.parentId !== "string" || input.parentId.length > 40) return json({ error: "That comment does not exist." }, 400);
+    const parent = await prisma.postComment.findFirst({
+      where: { id: input.parentId, postSlug, status: "APPROVED", deletedAt: null },
+      select: { id: true },
+    });
+    if (!parent) return json({ error: "That comment does not exist any more." }, 400);
+    parentId = parent.id;
+  }
 
   const now = Date.now();
   const [burst, daily, approvedBefore] = await Promise.all([
@@ -51,9 +64,10 @@ export async function POST(request: Request, { params }: Params) {
     return json({ error: "That is a lot of comments in a short time. Try again a little later." }, 429);
   }
 
-  const status = initialStatus(approvedBefore > 0, parsed.body);
+  const { features } = await getSettings();
+  const status = initialStatus(approvedBefore > 0, parsed.body, features.holdFirstComment);
   const comment = await prisma.postComment.create({
-    data: { postSlug, userId: reader.id, body: parsed.body, status },
+    data: { postSlug, userId: reader.id, body: parsed.body, status, parentId },
     select: { id: true },
   });
 
