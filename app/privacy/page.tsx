@@ -100,8 +100,8 @@ export default function PrivacyPage() {
               Your name and picture appear next to your comments; your email address is never shown. A reader&rsquo;s
               first comment is checked by a person before it appears. We use the data to run your account and show your
               comments. Legal basis: providing the account you asked for (Art. 6(1)(b) GDPR). You can see everything we
-              store and delete your account, with all your comments, at any time on the{" "}
-              <a href="/account" className={LINK}>account page</a>; we then delete it from our database at once.
+              store and delete your account, with all your comments, at any time on your account page (Your account in
+              the menu once you are signed in); we then delete it from our database at once.
               Google or GitHub process your sign-in under their own privacy policies.
             </li>
           </ul>
