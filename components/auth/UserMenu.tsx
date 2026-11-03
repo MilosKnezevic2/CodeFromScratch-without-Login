@@ -25,7 +25,7 @@ export default function UserMenu() {
         href="/login"
         className="inline-flex min-h-11 items-center text-sm font-medium text-muted transition hover:text-foreground"
       >
-        Sign in
+        Log in / Sign up
       </Link>
     );
   }
@@ -44,7 +44,7 @@ export default function UserMenu() {
       <button
         type="button"
         onClick={() => setOpen(!open)}
-        aria-label="Your account"
+        aria-label="Your dashboard and account"
         aria-expanded={open}
         className="flex h-11 w-11 items-center justify-center rounded-full text-xs font-medium transition"
       >
@@ -73,11 +73,11 @@ export default function UserMenu() {
           </div>
 
           <Link
-            href="/account"
+            href="/dashboard"
             onClick={() => setOpen(false)}
             className="block px-4 py-2 text-sm text-muted hover:bg-surface-2/50 hover:text-accent transition"
           >
-            Your account
+            Dashboard
           </Link>
 
           <button

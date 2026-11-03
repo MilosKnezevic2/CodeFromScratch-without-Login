@@ -8,8 +8,8 @@ export default function DeleteAccount() {
   return (
     <form action={action} className="mt-4 space-y-3">
       <label htmlFor="confirm-delete" className="block text-sm text-muted">
-        Type <strong className="text-foreground">delete</strong> to remove your account and every comment you wrote. This cannot be
-        undone.
+        Type <strong className="text-foreground">delete</strong> to remove your account, every comment you wrote, your saved articles, folders
+        and reading history. This cannot be undone.
       </label>
       <input
         id="confirm-delete"

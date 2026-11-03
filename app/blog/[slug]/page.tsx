@@ -20,6 +20,8 @@ import UpNextCard from "@/components/blog/UpNextCard";
 import ReadingProgress from "@/components/blog/ReadingProgress";
 import { shareImageUrl } from "@/lib/share-image";
 import ShareButtons from "@/components/blog/ShareButtons";
+import SavePostButton from "@/components/blog/SavePostButton";
+import ReadingTracker from "@/components/blog/ReadingTracker";
 import BackToTop from "@/components/blog/BackToTop";
 import PostNavigation from "@/components/blog/PostNavigation";
 import AuthorCard from "@/components/blog/AuthorCard";
@@ -152,6 +154,7 @@ export default async function PostPage({ params }: PageProps) {
   return (
     <>
       <ReadingProgress />
+      {features.registrationOpen && <ReadingTracker slug={slug} />}
       <BackToTop />
       <TextSelectionShare slug={slug} />
       <KeyboardNav headings={headings} />
@@ -332,6 +335,11 @@ export default async function PostPage({ params }: PageProps) {
                     {post.excerpt}
                   </p>
                 )}
+                {features.registrationOpen && (
+                  <div className="mt-6 flex justify-center">
+                    <SavePostButton postSlug={slug} showSignedOut />
+                  </div>
+                )}
               </FadeUp>
             </header>
 
@@ -383,6 +391,7 @@ export default async function PostPage({ params }: PageProps) {
 
               {/* Share row — reactions + save hidden during launch */}
               <div className="mt-10 flex flex-wrap items-center justify-end gap-6 border-t border-border pt-8">
+                {features.registrationOpen && <SavePostButton postSlug={slug} />}
                 <ShareButtons title={post.title} slug={slug} />
               </div>
 

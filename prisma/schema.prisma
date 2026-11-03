@@ -56,6 +56,8 @@ model User {
   // Hashed single-use backup codes (bcrypt). Populated at enrol time.
   mfaBackupCodes String[]  @default([])
   mfaVerifiedAt DateTime?
+  /// The reader's choice on the dashboard: record which articles they read, how far and how long.
+  trackReading  Boolean   @default(true)
 
   accounts      Account[]
   sessions      Session[]
@@ -330,7 +332,14 @@ model ReadingHistory {
   postSlug      String
   readAt        DateTime  @default(now())
   completedAt   DateTime?
+  /// The furthest point reached, 0-100. Only ever grows.
   scrollPercent Int       @default(0)
+  /// Where the reader was last time, 0-100, for "continue where you left off".
+  lastPercent   Int       @default(0)
+  /// Time spent on the article while the page was visible, in seconds.
+  secondsRead   Int       @default(0)
+  /// Present in production from an earlier schema; not written by this code.
+  referer       String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 

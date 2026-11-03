@@ -311,7 +311,7 @@ export default function Comments({ slug }: { slug: string }) {
         sessionStatus !== "loading" && (
           <p className="mt-6 text-sm text-muted">
             <Link href={loginHref} className="font-semibold text-accent underline underline-offset-2">
-              Sign in
+              Log in or sign up
             </Link>{" "}
             with Google, GitHub or your email address to join the conversation.
           </p>

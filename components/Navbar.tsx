@@ -145,10 +145,10 @@ export default function Navbar({ accounts }: { accounts: boolean }) {
             })}
             {accounts && (
               <Link
-                href={session?.user ? "/account" : `/login?callbackUrl=${encodeURIComponent(pathname)}`}
+                href={session?.user ? "/dashboard" : `/login?callbackUrl=${encodeURIComponent(pathname)}`}
                 className="rounded-lg px-3 py-2 text-sm text-muted transition hover:bg-surface/50 hover:text-foreground"
               >
-                {session?.user ? "Your account" : "Sign in"}
+                {session?.user ? "Dashboard" : "Log in / Sign up"}
               </Link>
             )}
           </nav>

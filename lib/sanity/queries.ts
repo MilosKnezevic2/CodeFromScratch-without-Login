@@ -361,3 +361,23 @@ export async function getPostsBySlugList(slugs: string[]): Promise<PostSummary[]
     { slugs }
   );
 }
+
+export interface PostCard {
+  slug: string;
+  title: string;
+  readingTime?: number;
+  featuredImage?: { asset: { _ref: string }; alt?: string };
+  category?: string;
+}
+
+/** Title, cover and reading time for a set of articles, for a reader's dashboard. Unpublished ones drop out. */
+export async function getPostCards(slugs: string[]): Promise<Map<string, PostCard>> {
+  if (!isSanityConfigured || slugs.length === 0) return new Map();
+  const rows = await client.fetch<PostCard[]>(
+    `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && slug.current in $slugs] {
+      "slug": slug.current, title, readingTime, featuredImage, "category": categories[0]->title
+    }`,
+    { slugs },
+  );
+  return new Map(rows.map((r) => [r.slug, r]));
+}
