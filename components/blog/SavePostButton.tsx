@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { useSession } from "next-auth/react";
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useSavedPosts } from "./SavedPostsProvider";
 
 async function call(url: string, body: unknown): Promise<Response> {
@@ -37,6 +38,7 @@ export default function SavePostButton({
   const [newFolder, setNewFolder] = useState("");
   const [error, setError] = useState<string | null>(null);
   const box = useRef<HTMLDivElement>(null);
+  const panel = useRef<HTMLDivElement>(null);
   const popoverId = useId();
 
   useEffect(() => {
@@ -46,13 +48,45 @@ export default function SavePostButton({
   useEffect(() => {
     if (!open) return;
     const close = (e: MouseEvent | KeyboardEvent) => {
-      if (e instanceof KeyboardEvent ? e.key === "Escape" : !box.current?.contains(e.target as Node)) setOpen(false);
+      if (e instanceof KeyboardEvent) {
+        if (e.key === "Escape") setOpen(false);
+        return;
+      }
+      const target = e.target as Node;
+      if (!box.current?.contains(target) && !panel.current?.contains(target)) setOpen(false);
     };
     document.addEventListener("mousedown", close);
     document.addEventListener("keydown", close);
     return () => {
       document.removeEventListener("mousedown", close);
       document.removeEventListener("keydown", close);
+    };
+  }, [open]);
+
+  // The panel lives in <body> (a card's thumbnail clips anything inside it), placed by the button:
+  // below it, or above when the screen ends first, and never past the screen's edges. It follows on scroll.
+  useLayoutEffect(() => {
+    if (!open) return;
+    const place = () => {
+      const button = box.current?.getBoundingClientRect();
+      const el = panel.current;
+      if (!button || !el) return;
+      const gutter = 12;
+      const width = Math.min(288, window.innerWidth - gutter * 2);
+      el.style.width = `${width}px`;
+      const left = Math.min(Math.max(button.right - width, gutter), window.innerWidth - gutter - width);
+      const below = button.bottom + 8;
+      const above = button.top - 8 - el.offsetHeight;
+      const top = below + el.offsetHeight > window.innerHeight - gutter && above > gutter ? above : below;
+      el.style.left = `${left}px`;
+      el.style.top = `${top}px`;
+    };
+    place();
+    window.addEventListener("scroll", place, { passive: true, capture: true });
+    window.addEventListener("resize", place);
+    return () => {
+      window.removeEventListener("scroll", place, { capture: true });
+      window.removeEventListener("resize", place);
     };
   }, [open]);
 
@@ -145,13 +179,14 @@ export default function SavePostButton({
         {!iconOnly && (isSaved ? "Saved" : "Save")}
       </button>
 
-      {open && isSaved && (
+      {open && isSaved && createPortal(
         <div
+          ref={panel}
           id={popoverId}
           role="dialog"
           aria-label="Folders for this article"
           onClick={(e) => e.stopPropagation()}
-          className="absolute right-0 top-full z-50 mt-2 w-72 rounded-xl border border-border bg-surface p-3 text-left shadow-xl"
+          className="fixed z-[300] rounded-xl border border-border bg-surface p-3 text-left shadow-2xl"
         >
           <p className="mb-2 text-xs font-medium text-muted-foreground">Saved. Put it in a folder:</p>
           {folders.length > 0 && (
@@ -196,7 +231,8 @@ export default function SavePostButton({
               Remove from saved
             </button>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
       {error && !open && (
         <p role="alert" className="absolute right-0 top-full mt-1 w-56 text-xs text-red-400">
