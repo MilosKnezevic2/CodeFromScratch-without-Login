@@ -1,115 +1,118 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import type { TocHeading } from "@/lib/portable-text-utils";
+import { groupHeadings, sectionIndexOf, type TocHeading } from "@/lib/portable-text-utils";
 
-const indentMap = { h2: "ml-0", h3: "ml-3", h4: "ml-6" };
-
+/**
+ * "On this page" on wide screens: one numbered line per section (long titles
+ * end in "…", the full title is in the tooltip), read sections fade, and the
+ * subheadings show only under the section being read. Short enough to fit
+ * the screen on long articles; if it still does not, the list scrolls inside.
+ */
 export default function TableOfContents({ headings }: { headings: TocHeading[] }) {
   const [activeId, setActiveId] = useState("");
   const [readProgress, setReadProgress] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
+  const sections = useMemo(() => groupHeadings(headings), [headings]);
+  const activeIndex = sectionIndexOf(sections, activeId);
 
   useEffect(() => {
-    const ids = headings.map((h) => h.id);
     const observer = new IntersectionObserver(
       (entries) => {
         for (const entry of entries) {
-          if (entry.isIntersecting) {
-            setActiveId(entry.target.id);
-          }
+          if (entry.isIntersecting) setActiveId(entry.target.id);
         }
       },
-      { rootMargin: "-80px 0px -60% 0px", threshold: 0.1 }
+      { rootMargin: "-80px 0px -60% 0px", threshold: 0.1 },
     );
-
-    for (const id of ids) {
-      const el = document.getElementById(id);
+    for (const h of headings) {
+      const el = document.getElementById(h.id);
       if (el) observer.observe(el);
     }
-
     return () => observer.disconnect();
   }, [headings]);
 
   useEffect(() => {
     function onScroll() {
       const el = document.documentElement;
-      const pct = el.scrollHeight - el.clientHeight;
-      setReadProgress(pct > 0 ? Math.round((el.scrollTop / pct) * 100) : 0);
+      const max = el.scrollHeight - el.clientHeight;
+      setReadProgress(max > 0 ? Math.round((el.scrollTop / max) * 100) : 0);
     }
-
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // A long list scrolls inside the sidebar; keep the heading being read in view there.
-  // Only the list moves, never the page.
+  // Should the list still be taller than the screen, keep the section being read in view. Only the list moves, never the page.
   useEffect(() => {
     const list = listRef.current;
-    const link = activeId ? list?.querySelector<HTMLElement>(`a[href="#${CSS.escape(activeId)}"]`) : null;
-    if (!list || !link) return;
+    const link = activeIndex >= 0 ? list?.querySelector<HTMLElement>(`a[data-section="${activeIndex}"]`) : null;
+    if (!list || !link || list.scrollHeight <= list.clientHeight) return;
     const top = link.getBoundingClientRect().top - list.getBoundingClientRect().top + list.scrollTop;
     if (top < list.scrollTop + 8 || top + link.offsetHeight > list.scrollTop + list.clientHeight - 8) {
       list.scrollTo({ top: Math.max(0, top - list.clientHeight / 3), behavior: "smooth" });
     }
-  }, [activeId]);
+  }, [activeIndex]);
 
-  // Calculate which headings have been passed
-  const activeIndex = useMemo(() => {
-    const idx = headings.findIndex((h) => h.id === activeId);
-    return idx >= 0 ? idx : -1;
-  }, [headings, activeId]);
+  if (sections.length === 0) return null;
 
-  if (headings.length === 0) return null;
+  const jump = (id: string) => (e: React.MouseEvent) => {
+    e.preventDefault();
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
 
   return (
     <nav aria-label="On this page" className="flex min-h-0 flex-col">
-      <p className="mb-1 shrink-0 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-        On this page
-      </p>
-      <div className="mb-4 flex shrink-0 items-center gap-2">
-        <div className="h-1 flex-1 rounded-full bg-surface-3">
-          <div
-            className="h-1 rounded-full bg-gradient-to-r from-accent to-accent-2 transition-all duration-300"
-            style={{ width: `${readProgress}%` }}
-          />
-        </div>
-        <span className="text-[11px] tabular-nums text-muted-foreground">
-          {readProgress}%
-        </span>
+      <div className="mb-3 flex shrink-0 items-center justify-between">
+        <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">On this page</p>
+        <span className="font-mono text-[11px] tabular-nums text-muted-foreground">{readProgress}%</span>
+      </div>
+      <div className="mb-3 h-[3px] shrink-0 overflow-hidden rounded-full bg-surface-3">
+        <div className="h-full rounded-full bg-accent transition-[width] duration-300" style={{ width: `${readProgress}%` }} />
       </div>
 
-      <div ref={listRef} className="relative min-h-0 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
-        <div className="toc-track space-y-0.5 pl-3.5">
-          {/* Active progress bar on the track */}
-          {activeIndex >= 0 && (
-            <div
-              className="absolute left-0 w-0.5 rounded-full bg-gradient-to-b from-accent to-accent-2 transition-all duration-300"
-              style={{
-                top: `${(activeIndex / headings.length) * 100}%`,
-                height: `${(1 / headings.length) * 100}%`,
-              }}
-            />
-          )}
-
-          {headings.map((h) => (
-            <a
-              key={h.id}
-              href={`#${h.id}`}
-              onClick={(e) => {
-                e.preventDefault();
-                document.getElementById(h.id)?.scrollIntoView({ behavior: "smooth" });
-              }}
-              className={`block rounded-md px-3 py-1.5 text-[13px] leading-snug transition ${indentMap[h.level]} ${
-                activeId === h.id
-                  ? "bg-accent/10 font-medium text-accent"
-                  : "text-muted hover:text-foreground"
-              }`}
-            >
-              {h.text}
-            </a>
-          ))}
-        </div>
+      <div ref={listRef} className="min-h-0 overflow-y-auto overscroll-contain pr-1 [scrollbar-width:thin]">
+        <ol className="space-y-px">
+          {sections.map((s, i) => {
+            const current = i === activeIndex;
+            const read = activeIndex >= 0 && i < activeIndex;
+            return (
+              <li key={s.id}>
+                <a
+                  href={`#${s.id}`}
+                  data-section={i}
+                  title={s.text}
+                  aria-current={current ? "location" : undefined}
+                  onClick={jump(s.id)}
+                  className={`flex items-baseline gap-2.5 rounded-lg px-2.5 py-1 text-[13px] leading-snug transition ${
+                    current ? "bg-accent/12 font-bold text-foreground" : read ? "text-muted-foreground hover:text-foreground" : "text-muted hover:text-foreground"
+                  }`}
+                >
+                  <span aria-hidden="true" className={`w-4 shrink-0 font-mono text-[10px] ${current ? "text-accent" : "text-muted-foreground"}`}>
+                    {s.num}
+                  </span>
+                  <span className="truncate">{s.text}</span>
+                </a>
+                {current && s.subs.length > 0 && (
+                  <ol className="mb-1 ml-[1.625rem] mt-0.5 space-y-px border-l border-border pl-2.5">
+                    {s.subs.map((sub) => (
+                      <li key={sub.id}>
+                        <a
+                          href={`#${sub.id}`}
+                          title={sub.text}
+                          aria-current={sub.id === activeId ? "location" : undefined}
+                          onClick={jump(sub.id)}
+                          className={`block truncate rounded-md px-2 py-0.5 text-xs transition ${sub.id === activeId ? "text-accent" : "text-muted hover:text-foreground"}`}
+                        >
+                          {sub.text}
+                        </a>
+                      </li>
+                    ))}
+                  </ol>
+                )}
+              </li>
+            );
+          })}
+        </ol>
       </div>
     </nav>
   );
