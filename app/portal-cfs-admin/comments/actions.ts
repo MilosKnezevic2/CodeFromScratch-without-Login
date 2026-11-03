@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { isAdminRequest } from "@/lib/admin-guard";
 import { recordAudit } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
+import { removeUploadedAvatar } from "@/lib/reader/avatar-store";
 import { notifyReplies } from "@/lib/reader/notify";
 
 const PAGE = "/portal-cfs-admin/comments";
@@ -21,6 +22,16 @@ export async function approveAllAction(): Promise<void> {
   await recordAudit("comment.approve-all", { count });
   // Only replies published for the first time reach the person they answer.
   await notifyReplies(waiting.filter((c) => c.reportedCount === 0).map((c) => c.id));
+  revalidatePath(PAGE);
+}
+
+/** Takes down a reader's uploaded profile picture; the Google or GitHub one it replaced comes back. */
+export async function removeAvatarAction(form: FormData): Promise<void> {
+  if (!(await isAdminRequest())) return;
+  const userId = String(form.get("userId") ?? "");
+  const { removed } = await removeUploadedAvatar(userId);
+  if (!removed) return;
+  await recordAudit("avatar.remove", { ref: userId });
   revalidatePath(PAGE);
 }
 

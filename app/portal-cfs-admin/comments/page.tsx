@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { getSettings } from "@/lib/settings/store";
-import { approveAllAction, moderateAction } from "./actions";
+import { approveAllAction, moderateAction, removeAvatarAction } from "./actions";
 
 export const metadata: Metadata = {
   title: "Comments",
@@ -31,7 +31,7 @@ function Decision({ id, decision, label, tone }: { id: string; decision: string;
 }
 
 export default async function AdminCommentsPage() {
-  const [{ features }, waiting, recent] = await Promise.all([
+  const [{ features }, waiting, recent, pictures] = await Promise.all([
     getSettings(),
     prisma.postComment
       .findMany({
@@ -57,9 +57,16 @@ export default async function AdminCommentsPage() {
         select: { id: true, postSlug: true, body: true, reportedCount: true, createdAt: true, user: { select: { name: true, email: true } } },
       })
       .catch(() => null),
+    prisma.userAvatar
+      .findMany({
+        orderBy: { updatedAt: "desc" },
+        take: 60,
+        select: { userId: true, updatedAt: true, user: { select: { name: true, email: true, image: true } } },
+      })
+      .catch(() => null),
   ]);
 
-  if (!waiting || !recent) {
+  if (!waiting || !recent || !pictures) {
     return <p className="text-muted">The database did not answer. It may be waking up; reload in a minute.</p>;
   }
 
@@ -148,6 +155,39 @@ export default async function AdminCommentsPage() {
                   <Decision id={c.id} decision="delete" label="Remove" tone="plain" />
                   <Decision id={c.id} decision="ban" label="Block this reader" tone="danger" />
                 </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section aria-labelledby="pictures-heading">
+        <h2 id="pictures-heading" className="text-lg font-semibold text-foreground">
+          Uploaded profile pictures ({pictures.length})
+        </h2>
+        <p className="mt-1 text-sm text-muted">
+          Pictures readers uploaded themselves, newest first. They show next to comments. Removing one puts back the reader&rsquo;s Google or GitHub picture
+          (or their initial); the reader can upload again, so block a reader who keeps doing it.
+        </p>
+        {pictures.length === 0 ? (
+          <p className="mt-2 text-sm text-muted">No uploaded pictures.</p>
+        ) : (
+          <ul className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+            {pictures.map((p) => (
+              <li key={p.userId} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-surface p-3 text-center">
+                {p.user.image && (
+                  // eslint-disable-next-line @next/next/no-img-element -- a 256 px picture served by our own /api/avatar route
+                  <img src={p.user.image} alt={`Profile picture of ${p.user.name ?? p.user.email}`} width={96} height={96} className="h-24 w-24 rounded-full object-cover" />
+                )}
+                <p className="w-full truncate text-xs font-semibold text-foreground">{p.user.name ?? "Reader"}</p>
+                <p className="w-full truncate text-[11px] text-muted-foreground">{p.user.email}</p>
+                <p className="text-[11px] text-muted-foreground">{when(p.updatedAt)}</p>
+                <form action={removeAvatarAction}>
+                  <input type="hidden" name="userId" value={p.userId} />
+                  <button type="submit" className="min-h-9 rounded-lg border border-red-500/40 px-3 text-xs font-semibold text-red-400 transition hover:bg-red-500/10">
+                    Remove picture
+                  </button>
+                </form>
               </li>
             ))}
           </ul>
