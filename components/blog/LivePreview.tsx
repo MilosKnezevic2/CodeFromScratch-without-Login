@@ -1,7 +1,8 @@
 "use client";
 
 import { useId, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import CodeBlock from "./CodeBlock";
+import CodeBlock, { CodeView } from "./CodeBlock";
+import FullscreenDialog, { FullscreenButton } from "./FullscreenDialog";
 import { buildPreviewDocument } from "@/lib/live-preview";
 
 type Tab = "result" | "html" | "css" | "js";
@@ -61,6 +62,11 @@ export default function LivePreview({
   }, [html, css, js]);
   const [active, setActive] = useState<Tab>("result");
   const [runKey, setRunKey] = useState(0);
+  const [fullscreen, setFullscreen] = useState(false);
+  // In full screen the source sits beside the result on wide screens; on a phone one pane shows at a time.
+  const sources = tabs.filter((t): t is Exclude<Tab, "result"> => t !== "result");
+  const [fsSource, setFsSource] = useState<Exclude<Tab, "result">>(sources[0] ?? "html");
+  const [fsPhonePane, setFsPhonePane] = useState<"result" | "source">("result");
   const tabRefs = useRef<Partial<Record<Tab, HTMLButtonElement | null>>>({});
 
   const srcDoc = useMemo(() => buildPreviewDocument({ html, css, js }), [html, css, js]);
@@ -90,7 +96,7 @@ export default function LivePreview({
           role="tablist"
           aria-label={`${label}: result and source`}
           onKeyDown={onKeyDown}
-          className="ml-auto flex gap-1"
+          className="ml-auto flex flex-wrap gap-1"
         >
           {tabs.map((tab) => {
             const selected = tab === active;
@@ -118,6 +124,7 @@ export default function LivePreview({
             );
           })}
         </div>
+        <FullscreenButton onClick={() => setFullscreen(true)} label={`Show ${label} full screen`} />
       </div>
 
       {tabs.map((tab) => (
@@ -154,10 +161,91 @@ export default function LivePreview({
               code={{ html, css, js }[tab]}
               language={LANGUAGES[tab]}
               highlightedHtml={highlighted?.[tab]}
+              fullscreen={false}
             />
           )}
         </div>
       ))}
+
+      <FullscreenDialog
+        open={fullscreen}
+        onClose={() => setFullscreen(false)}
+        title={label}
+        meta="Live example"
+        actions={
+          <button
+            type="button"
+            onClick={() => setRunKey((n) => n + 1)}
+            className="min-h-10 rounded-lg px-3 text-xs font-semibold text-[#94a3b8] transition hover:bg-[#1e293b] hover:text-white"
+          >
+            Reset
+          </button>
+        }
+      >
+        <div className="flex h-full flex-col lg:grid lg:grid-cols-2">
+          <section aria-label="Source" className={`min-h-0 flex-1 flex-col lg:flex lg:border-r lg:border-[#334155] ${fsPhonePane === "source" ? "flex" : "hidden"}`}>
+            <PaneBar>
+              <PhonePaneSwitch pane={fsPhonePane} onChange={setFsPhonePane} />
+              {sources.map((t) => (
+                <PaneTab key={t} on={fsSource === t} onClick={() => setFsSource(t)}>
+                  {LABELS[t]}
+                </PaneTab>
+              ))}
+            </PaneBar>
+            <div className="min-h-0 flex-1">
+              <CodeView code={{ html, css, js }[fsSource]} highlightedHtml={highlighted?.[fsSource]} large />
+            </div>
+          </section>
+          <section aria-label="Result" className={`min-h-0 flex-1 flex-col lg:flex ${fsPhonePane === "result" ? "flex" : "hidden"}`}>
+            <PaneBar>
+              <PhonePaneSwitch pane={fsPhonePane} onChange={setFsPhonePane} />
+              <span className="hidden px-1 text-xs font-semibold text-[#94a3b8] lg:inline">Result</span>
+            </PaneBar>
+            <div className="min-h-0 flex-1 bg-white">
+              {fullscreen && (
+                <iframe
+                  key={runKey}
+                  title={`${label}: result, full screen`}
+                  sandbox="allow-scripts allow-forms"
+                  srcDoc={srcDoc}
+                  className="block h-full w-full border-0"
+                />
+              )}
+            </div>
+          </section>
+        </div>
+      </FullscreenDialog>
     </figure>
+  );
+}
+
+function PaneBar({ children }: { children: React.ReactNode }) {
+  return <div className="flex shrink-0 flex-wrap items-center gap-1 border-b border-[#334155] bg-[#111a2c] px-3 py-1.5">{children}</div>;
+}
+
+function PaneTab({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      onClick={onClick}
+      className={`min-h-9 rounded-md px-3 text-xs font-semibold transition ${on ? "bg-[#1e293b] text-white" : "text-[#94a3b8] hover:text-white"}`}
+    >
+      {children}
+    </button>
+  );
+}
+
+/** Phones only: switch between the result and the source, which share the screen on wide displays. */
+function PhonePaneSwitch({ pane, onChange }: { pane: "result" | "source"; onChange: (pane: "result" | "source") => void }) {
+  return (
+    <div className="mr-2 flex gap-1 rounded-lg bg-[#0b1220] p-0.5 lg:hidden">
+      <PaneTab on={pane === "result"} onClick={() => onChange("result")}>
+        Result
+      </PaneTab>
+      <PaneTab on={pane === "source"} onClick={() => onChange("source")}>
+        Code
+      </PaneTab>
+    </div>
   );
 }
