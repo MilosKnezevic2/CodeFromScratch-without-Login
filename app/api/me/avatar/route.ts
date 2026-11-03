@@ -3,6 +3,7 @@ import { currentReader } from "@/lib/comments-store";
 import { prisma } from "@/lib/prisma";
 import { rateLimit } from "@/lib/rate-limit";
 import { AVATAR_MAX_BYTES, avatarPath, isUploadedAvatar, processAvatar } from "@/lib/reader/avatar";
+import { removeUploadedAvatar } from "@/lib/reader/avatar-store";
 
 export const dynamic = "force-dynamic";
 
@@ -41,11 +42,6 @@ export async function POST(request: Request) {
 export async function DELETE() {
   const reader = await currentReader();
   if (!reader) return json({ error: "Log in first." }, 401);
-  const avatar = await prisma.userAvatar.findUnique({ where: { userId: reader.id }, select: { previousImage: true } });
-  if (!avatar) return json({ image: null });
-  await prisma.$transaction([
-    prisma.userAvatar.delete({ where: { userId: reader.id } }),
-    prisma.user.update({ where: { id: reader.id }, data: { image: avatar.previousImage } }),
-  ]);
-  return json({ image: avatar.previousImage });
+  const { image } = await removeUploadedAvatar(reader.id);
+  return json({ image });
 }
