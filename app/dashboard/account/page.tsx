@@ -22,7 +22,7 @@ const STATUS_LABEL: Record<string, string> = {
 export default async function AccountPage() {
   const session = await auth();
   const id = session?.user?.id;
-  if (!id) redirect("/login?callbackUrl=/account");
+  if (!id) redirect("/login?callbackUrl=/dashboard/account");
 
   const user = await prisma.user.findUnique({
     where: { id },
@@ -39,7 +39,7 @@ export default async function AccountPage() {
       },
     },
   });
-  if (!user) redirect("/login?callbackUrl=/account");
+  if (!user) redirect("/login?callbackUrl=/dashboard/account");
 
   const providers = user.accounts.map((a) => PROVIDER_NAMES[a.provider] ?? a.provider).join(", ") || "Email link";
 
@@ -65,7 +65,8 @@ export default async function AccountPage() {
           </dd>
         </dl>
         <p className="mt-4 text-xs text-muted-foreground">
-          Your name and picture are shown next to your comments; your email address is never shown. Details are in the{" "}
+          Your name and picture are shown next to your comments; your email address is never shown. Your saved articles,
+          folders and reading history are listed under Saved and Reading. Details are in the{" "}
           <Link href="/privacy" className="underline underline-offset-2">
             privacy policy
           </Link>

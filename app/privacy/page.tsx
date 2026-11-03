@@ -101,9 +101,18 @@ export default function PrivacyPage() {
               Your name and picture appear next to your comments; your email address is never shown. A reader&rsquo;s
               first comment is checked by a person before it appears. We use the data to run your account and show your
               comments. Legal basis: providing the account you asked for (Art. 6(1)(b) GDPR). You can see everything we
-              store and delete your account, with all your comments, at any time on your account page (Your account in
-              the menu once you are signed in); we then delete it from our database at once.
+              store and delete your account, with all your comments, at any time on your account page (Dashboard, then
+              Account, once you are logged in); we then delete it from our database at once.
               Google or GitHub process your sign-in under their own privacy policies.
+            </li>
+            <li id="reading">
+              <strong>Your library and reading history.</strong> While you are logged in, we store the articles you save
+              and the folders you sort them into, and, for each article you open, how far you got, where you stopped and
+              how long it was open on your screen. This powers your dashboard (&ldquo;continue reading&rdquo;, how much of
+              the site you have read) and is visible only to you. Legal basis: providing the account features you use
+              (Art. 6(1)(b) GDPR). You can switch reading tracking off, delete your reading history, or remove saved
+              articles at any time in the dashboard; deleting your account deletes all of it. Visitors who are not logged
+              in are never tracked this way.
             </li>
           </ul>
         </section>

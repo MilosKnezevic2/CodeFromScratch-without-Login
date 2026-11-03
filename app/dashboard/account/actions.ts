@@ -15,7 +15,7 @@ export type DeleteState = { error?: string };
 export async function deleteAccountAction(_prev: DeleteState, form: FormData): Promise<DeleteState> {
   const session = await auth();
   const id = session?.user?.id;
-  if (!id) redirect("/login?callbackUrl=/account");
+  if (!id) redirect("/login?callbackUrl=/dashboard/account");
   if (String(form.get("confirm") ?? "").trim().toLowerCase() !== "delete") {
     return { error: "Type delete to confirm." };
   }

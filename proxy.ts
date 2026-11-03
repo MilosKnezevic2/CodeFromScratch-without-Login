@@ -78,7 +78,7 @@ export async function proxy(request: NextRequest) {
 
   // Redirect logged-in users away from auth pages
   if (isLoggedIn && pathname === "/login") {
-    return NextResponse.redirect(new URL("/account", request.nextUrl.origin));
+    return NextResponse.redirect(new URL("/dashboard", request.nextUrl.origin));
   }
 
   return NextResponse.next();

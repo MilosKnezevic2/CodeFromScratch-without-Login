@@ -5,7 +5,7 @@ import EmailSignIn from "./EmailSignIn";
 import ProviderButtons from "./ProviderButtons";
 
 export const metadata: Metadata = {
-  title: "Sign in",
+  title: "Log in or sign up",
   robots: { index: false, follow: false },
 };
 
@@ -30,9 +30,10 @@ export default async function LoginPage({
 
   return (
     <div className="rounded-xl border border-border bg-surface p-8 shadow-xl">
-      <h1 className="text-2xl font-bold text-foreground">Sign in</h1>
+      <h1 className="text-2xl font-bold text-foreground">Log in or sign up</h1>
+      <p className="mt-1 text-sm text-foreground">New here? The same buttons create your account; there is no separate sign-up form.</p>
       <p className="mt-2 text-sm text-muted">
-        An account lets you comment under the articles. There is no password: sign in with Google or GitHub, or with a
+        An account lets you comment, save articles into folders and keep track of your reading. There is no password: sign in with Google or GitHub, or with a
         link we email to you. We store your name, email address and profile picture, nothing else.
       </p>
 
