@@ -96,7 +96,8 @@ export default function PrivacyPage() {
             <li id="accounts">
               <strong>Reader account and comments.</strong> You can sign in with Google or GitHub, or with a one-time link
               we email to you; there is no password on this site. We store your name, email address and profile picture
-              (from Google or GitHub, if you use them) and a technical link to your account with them. A sign-in link is
+              (from Google or GitHub, if you use them, or one you upload in your profile, which we shrink to 256 pixels and
+              strip of camera and location data) and a technical link to your account with them. A sign-in link is
               stored in hashed form until it is used or expires after 30 minutes. If you comment, we store the text, the article and the time.
               Your name and picture appear next to your comments; your email address is never shown. A reader&rsquo;s
               first comment is checked by a person before it appears. We use the data to run your account and show your

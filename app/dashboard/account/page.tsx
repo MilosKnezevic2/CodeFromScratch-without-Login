@@ -6,7 +6,8 @@ import { prisma } from "@/lib/prisma";
 import { SectionCard } from "../_ui/parts";
 import TrackingControls from "../reading/TrackingControls";
 import DeleteAccount from "./DeleteAccount";
-import { EmailChoices, GoalPicker, NameForm } from "./ProfileForms";
+import { isUploadedAvatar } from "@/lib/reader/avatar";
+import { AvatarPicker, EmailChoices, GoalPicker, NameForm } from "./ProfileForms";
 
 export const metadata: Metadata = {
   title: "Profile and settings",
@@ -84,16 +85,7 @@ export default async function ProfilePage() {
 
       <SectionCard className="scroll-mt-28">
         <div id="profile" className="flex flex-col gap-5 sm:flex-row sm:items-start sm:gap-6">
-          <div className="flex flex-col items-start gap-2 sm:items-center">
-            {user.image ? (
-              // eslint-disable-next-line @next/next/no-img-element -- an 88 px avatar from Google or GitHub; the optimizer adds nothing
-              <img src={user.image} alt="" width={88} height={88} referrerPolicy="no-referrer" className="h-16 w-16 rounded-full sm:h-22 sm:w-22" />
-            ) : (
-              <span aria-hidden="true" className="flex h-16 w-16 items-center justify-center rounded-full bg-accent/20 text-2xl font-extrabold text-accent sm:h-22 sm:w-22 sm:text-3xl">
-                {initial}
-              </span>
-            )}
-          </div>
+          <AvatarPicker image={user.image} initial={initial} uploaded={isUploadedAvatar(user.image)} />
           <div className="min-w-0 flex-1 space-y-4">
             <h2 className="text-lg font-extrabold text-foreground">Profile</h2>
             <NameForm name={user.name ?? ""} />
