@@ -9,9 +9,11 @@ interface AuthorCardProps {
   github?: string;
   website?: string;
   linkedin?: string;
+  /** "Graz · November 2026": where and when the article was written. */
+  meta?: string;
 }
 
-export default function AuthorCard({ name, bio, image, twitter, github, website, linkedin }: AuthorCardProps) {
+export default function AuthorCard({ name, bio, image, twitter, github, website, linkedin, meta }: AuthorCardProps) {
   const hasSocial = twitter || github || website || linkedin;
 
   return (
@@ -34,6 +36,7 @@ export default function AuthorCard({ name, bio, image, twitter, github, website,
           Written by
         </p>
         <p className="mt-0.5 text-base font-semibold text-foreground">{name}</p>
+        {meta && <p className="mt-0.5 text-xs text-muted-foreground">{meta}</p>}
         {bio && (
           <p className="mt-1.5 text-sm leading-relaxed text-muted">{bio}</p>
         )}

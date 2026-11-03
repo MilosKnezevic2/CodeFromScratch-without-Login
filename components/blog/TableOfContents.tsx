@@ -9,7 +9,7 @@ import { groupHeadings, sectionIndexOf, type TocHeading } from "@/lib/portable-t
  * subheadings show only under the section being read. Short enough to fit
  * the screen on long articles; if it still does not, the list scrolls inside.
  */
-export default function TableOfContents({ headings }: { headings: TocHeading[] }) {
+export default function TableOfContents({ headings, comments = false }: { headings: TocHeading[]; comments?: boolean }) {
   const [activeId, setActiveId] = useState("");
   const [readProgress, setReadProgress] = useState(0);
   const listRef = useRef<HTMLDivElement>(null);
@@ -25,12 +25,12 @@ export default function TableOfContents({ headings }: { headings: TocHeading[] }
       },
       { rootMargin: "-80px 0px -60% 0px", threshold: 0.1 },
     );
-    for (const h of headings) {
-      const el = document.getElementById(h.id);
+    for (const id of [...headings.map((h) => h.id), ...(comments ? ["comments"] : [])]) {
+      const el = document.getElementById(id);
       if (el) observer.observe(el);
     }
     return () => observer.disconnect();
-  }, [headings]);
+  }, [headings, comments]);
 
   useEffect(() => {
     function onScroll() {
@@ -113,6 +113,21 @@ export default function TableOfContents({ headings }: { headings: TocHeading[] }
             );
           })}
         </ol>
+        {comments && (
+          <a
+            href="#comments"
+            aria-current={activeId === "comments" ? "location" : undefined}
+            onClick={jump("comments")}
+            className={`mt-2 flex items-center gap-2.5 rounded-lg border-t border-border px-2.5 pb-1 pt-2.5 text-[13px] transition ${
+              activeId === "comments" ? "font-bold text-accent" : "text-muted hover:text-foreground"
+            }`}
+          >
+            <svg aria-hidden="true" viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.8A8 8 0 1 1 21 12z" />
+                </svg>
+            Comments
+          </a>
+        )}
       </div>
     </nav>
   );

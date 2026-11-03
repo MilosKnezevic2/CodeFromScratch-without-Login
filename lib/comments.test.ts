@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildThreads, COMMENT_MAX, displayName, initialStatus, isPostSlug, linkCount, parseCommentBody } from "./comments";
+import { buildThreads, COMMENT_MAX, flattenThread, threadRoots, displayName, initialStatus, isPostSlug, linkCount, parseCommentBody } from "./comments";
 
 describe("parseCommentBody", () => {
   it("trims, unifies line endings and folds blank lines", () => {
@@ -73,5 +73,23 @@ describe("buildThreads", () => {
     expect(threads[0].removed).toBe(true);
     expect(threads[0].replies.map((n) => n.id)).toEqual(["b", "c"]);
     expect(threads[0].replies[0].depth).toBe(1);
+  });
+
+  it("flattens a deep conversation into one level, oldest first, naming whom each reply answers", () => {
+    const named = (id: string, parentId: string | null, t: string, name: string) => ({ ...c(id, parentId, t), author: { name, image: null } });
+    const [root] = buildThreads([
+      named("a", null, "00", "Ana"),
+      named("b", "a", "01", "Ben"),
+      named("c", "b", "03", "Ana"),
+      named("d", "a", "02", "Cleo"),
+      named("e", "c", "04", "Ben"),
+    ]);
+    expect(flattenThread(root).map((r) => [r.node.id, r.replyingTo])).toEqual([
+      ["b", null],
+      ["d", null],
+      ["c", "Ben"],
+      ["e", "Ana"],
+    ]);
+    expect(threadRoots([root]).get("e")).toBe("a");
   });
 });
