@@ -82,10 +82,10 @@ export default function UserMenu() {
 
           <button
             type="button"
-            onClick={() => signOut({ callbackUrl: window.location.pathname })}
+            onClick={() => signOut({ callbackUrl: window.location.pathname.startsWith("/dashboard") ? "/" : window.location.pathname })}
             className="block w-full px-4 py-2 text-left text-sm text-red-400 hover:bg-surface-2/50 transition"
           >
-            Sign Out
+            Log out
           </button>
         </div>
       )}
