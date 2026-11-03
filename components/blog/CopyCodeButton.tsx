@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 
-export default function CopyCodeButton({ code }: { code: string }) {
+export default function CopyCodeButton({ code, className = "ml-auto" }: { code: string; className?: string }) {
   const [copied, setCopied] = useState(false);
 
   function copy() {
@@ -13,8 +13,9 @@ export default function CopyCodeButton({ code }: { code: string }) {
 
   return (
     <button
+      type="button"
       onClick={copy}
-      className="ml-auto flex items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground transition hover:bg-surface-3 hover:text-foreground"
+      className={`${className} flex min-h-9 items-center gap-1 rounded px-2 py-1 text-xs text-muted-foreground transition hover:bg-surface-3 hover:text-foreground`}
       title="Copy code"
     >
       {copied ? (
