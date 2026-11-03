@@ -78,6 +78,7 @@ model User {
   contactSubmissions   ContactSubmission[]
   readingHistory ReadingHistory[]
   readingDays    ReadingDay[]
+  avatar         UserAvatar?
   reactions      PostReaction[]
   comments       PostComment[]
 }
@@ -200,6 +201,17 @@ model EbookPurchase {
   ebook Ebook @relation(fields: [ebookId], references: [id], onDelete: Cascade)
 
   @@unique([userId, ebookId])
+}
+
+/// A picture the reader uploaded, re-encoded as a 256 px WebP. User.image points at /api/avatar/<id>.
+model UserAvatar {
+  userId        String   @id
+  data          Bytes
+  /// The Google or GitHub picture in use before the upload, put back when the reader removes theirs.
+  previousImage String?
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 /// Seconds of reading per reader per UTC day: the activity calendar on the dashboard.

@@ -83,6 +83,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         // A deleted or banned reader is signed out on their next request.
         if (!dbUser || dbUser.banned) return null;
         token.role = dbUser.role;
+        // An uploaded or removed profile picture shows in the header on the next request.
+        token.picture = dbUser.image;
         token.plan = dbUser.subscription?.plan ?? "FREE";
         token.banned = dbUser.banned;
       }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { GOAL_MAX, GOAL_MIN, NAME_MAX } from "@/lib/reader/rules";
 import { setDisplayName, setEmailChoice, setGoal } from "../actions";
@@ -204,6 +205,107 @@ export function EmailChoices({
         on={reminder}
         onChange={(on) => choose("reminder", on, setReminder)}
       />
+    </div>
+  );
+}
+
+/** Shrinks a photo in the browser before upload: Vercel refuses bodies over 4.5 MB. The server re-encodes it anyway. */
+async function shrink(file: File): Promise<Blob> {
+  try {
+    const bitmap = await createImageBitmap(file);
+    const scale = Math.min(1, 1024 / Math.max(bitmap.width, bitmap.height));
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(bitmap.width * scale);
+    canvas.height = Math.round(bitmap.height * scale);
+    canvas.getContext("2d")?.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+    bitmap.close();
+    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", 0.9));
+    return blob ?? file;
+  } catch {
+    // A format this browser cannot decode (HEIC outside Safari): send it as it is, the server can read it.
+    return file;
+  }
+}
+
+export function AvatarPicker({ image: initialImage, initial, uploaded: initialUploaded }: { image: string | null; initial: string; uploaded: boolean }) {
+  const { update } = useSession();
+  const router = useRouter();
+  const [image, setImage] = useState(initialImage);
+  const [uploaded, setUploaded] = useState(initialUploaded);
+  const [busy, setBusy] = useState(false);
+  const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const input = useRef<HTMLInputElement>(null);
+
+  async function done(next: string | null, text: string, isUploaded: boolean) {
+    setImage(next);
+    setUploaded(isUploaded);
+    setMessage({ ok: true, text });
+    // The header reads the picture from the session.
+    await update({});
+    router.refresh();
+  }
+
+  async function upload(file: File) {
+    setBusy(true);
+    setMessage(null);
+    const body = new FormData();
+    body.append("file", await shrink(file), file.name);
+    const res = await fetch("/api/me/avatar", { method: "POST", body }).catch(() => null);
+    const data = (await res?.json().catch(() => null)) as { image?: string; error?: string } | null;
+    setBusy(false);
+    if (!res?.ok || !data?.image) return setMessage({ ok: false, text: data?.error ?? "The upload did not work. Try again." });
+    await done(data.image, "New picture saved.", true);
+  }
+
+  async function remove() {
+    setBusy(true);
+    const res = await fetch("/api/me/avatar", { method: "DELETE" }).catch(() => null);
+    const data = (await res?.json().catch(() => null)) as { image?: string | null } | null;
+    setBusy(false);
+    if (!res?.ok) return setMessage({ ok: false, text: "That did not work. Try again." });
+    await done(data?.image ?? null, data?.image ? "Back to your Google or GitHub picture." : "Picture removed.", false);
+  }
+
+  return (
+    <div className="flex items-center gap-4 sm:flex-col sm:items-center sm:gap-3">
+      {image ? (
+        // eslint-disable-next-line @next/next/no-img-element -- an 88 px avatar (ours or from Google/GitHub); the optimizer adds nothing
+        <img src={image} alt="" width={88} height={88} referrerPolicy="no-referrer" className={`h-20 w-20 rounded-full object-cover sm:h-22 sm:w-22 ${busy ? "opacity-50" : ""}`} />
+      ) : (
+        <span aria-hidden="true" className="flex h-20 w-20 items-center justify-center rounded-full bg-accent/20 text-3xl font-extrabold text-accent sm:h-22 sm:w-22">
+          {initial}
+        </span>
+      )}
+      <div className="flex flex-col items-start gap-1.5 sm:items-center">
+        <input
+          ref={input}
+          id="avatar-file"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif,image/avif,image/heic,image/heif"
+          className="sr-only"
+          onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = "";
+            if (file) void upload(file);
+          }}
+        />
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => input.current?.click()}
+          className="min-h-10 rounded-xl border border-border px-3.5 text-sm font-bold text-foreground transition hover:border-accent/50 disabled:opacity-50"
+        >
+          {busy ? "Saving…" : "Change picture"}
+        </button>
+        {uploaded && (
+          <button type="button" disabled={busy} onClick={() => void remove()} className="min-h-9 text-xs text-muted hover:text-red-500 disabled:opacity-50">
+            Remove picture
+          </button>
+        )}
+        <p role="status" className={`max-w-44 text-xs sm:text-center ${message?.ok ? "text-accent" : "text-red-600 dark:text-red-300"}`}>
+          {message?.text ?? ""}
+        </p>
+      </div>
     </div>
   );
 }

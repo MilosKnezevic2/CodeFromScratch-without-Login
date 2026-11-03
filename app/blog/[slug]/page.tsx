@@ -196,12 +196,10 @@ export default async function PostPage({ params }: PageProps) {
         <div className="relative flex justify-center gap-8 2xl:gap-20">
           {/* ── Left sidebar — TOC (desktop) ── */}
           <aside className="hidden w-48 shrink-0 2xl:block 2xl:pr-8">
-            <div className="sticky top-24">
-              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
-                On this page
-              </p>
+            {/* Never taller than the screen: a long contents list scrolls inside, the font control stays in reach. */}
+            <div className="sticky top-24 flex max-h-[calc(100dvh-9rem)] flex-col">
               <TableOfContents headings={headings} />
-              <div className="mt-8 space-y-3 border-t border-border/30 pt-5">
+              <div className="mt-6 shrink-0 space-y-3 border-t border-border/30 pt-5">
                 <FontSizeToggle />
                 <p className="text-[11px] text-muted-foreground">
                   <kbd className="rounded border border-border/50 px-1 py-0.5 text-[10px]">
