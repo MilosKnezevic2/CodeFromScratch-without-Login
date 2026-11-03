@@ -1340,15 +1340,6 @@ html {
   font-weight: 400;
 }
 
-/* Author signature block — appears at the end of the article. */
-.post-signoff {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding-top: 2rem;
-  border-top: 1px solid var(--color-border);
-  font-family: var(--font-sans);
-}
 
 /* ─── Full-screen view for code blocks and live examples (FullscreenDialog) ─── */
 .fs-dialog {

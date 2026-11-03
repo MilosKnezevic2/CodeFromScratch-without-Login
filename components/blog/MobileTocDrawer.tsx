@@ -9,7 +9,7 @@ interface TocHeading {
   level: "h2" | "h3" | "h4";
 }
 
-export default function MobileTocDrawer({ headings }: { headings: TocHeading[] }) {
+export default function MobileTocDrawer({ headings, comments = false }: { headings: TocHeading[]; comments?: boolean }) {
   const [open, setOpen] = useState(false);
 
   useEffect(() => {
@@ -53,6 +53,18 @@ export default function MobileTocDrawer({ headings }: { headings: TocHeading[] }
               {h.text}
             </a>
           ))}
+          {comments && (
+            <a
+              href="#comments"
+              onClick={() => setOpen(false)}
+              className="mt-2 flex items-center gap-2 rounded-lg border-t border-border px-3 pb-2 pt-3 text-sm font-medium text-foreground transition hover:bg-surface-2 hover:text-accent"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" className="h-3.5 w-3.5 shrink-0" fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12a8 8 0 0 1-11.6 7.1L4 20.5l1.4-4.8A8 8 0 1 1 21 12z" />
+                </svg>
+              Comments
+            </a>
+          )}
         </nav>
       </div>
     </>,

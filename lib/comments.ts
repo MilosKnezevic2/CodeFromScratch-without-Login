@@ -76,8 +76,6 @@ export interface CommentNode extends PublicComment {
   replies: CommentNode[];
 }
 
-/** Visual indentation stops here so deep threads stay readable on a phone; the thread itself goes on. */
-export const MAX_INDENT_DEPTH = 5;
 
 /**
  * Turns the flat list into threads. A reply whose parent is not in the list
@@ -124,4 +122,38 @@ export function buildThreads(comments: PublicComment[]): CommentNode[] {
   };
   setDepth(roots, 0);
   return roots;
+}
+
+export interface ThreadReply {
+  node: CommentNode;
+  /** Whom this reply answers, when that is not the comment that opened the thread. */
+  replyingTo: string | null;
+}
+
+/**
+ * Every reply in a thread, at one level and oldest first: a page indents a
+ * conversation once, however deep it goes, and names the person a reply
+ * answers instead of indenting it further.
+ */
+export function flattenThread(root: CommentNode): ThreadReply[] {
+  const out: ThreadReply[] = [];
+  const walk = (parent: CommentNode) => {
+    for (const reply of parent.replies) {
+      out.push({ node: reply, replyingTo: parent === root || parent.removed ? null : parent.author.name });
+      walk(reply);
+    }
+  };
+  walk(root);
+  return out.sort((a, b) => a.node.createdAt.localeCompare(b.node.createdAt));
+}
+
+/** Which thread (top-level comment) each comment belongs to, to open the right one for a link or a new reply. */
+export function threadRoots(roots: CommentNode[]): Map<string, string> {
+  const map = new Map<string, string>();
+  const walk = (node: CommentNode, rootId: string) => {
+    map.set(node.id, rootId);
+    for (const r of node.replies) walk(r, rootId);
+  };
+  for (const root of roots) walk(root, root.id);
+  return map;
 }

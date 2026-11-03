@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useSession } from "next-auth/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { buildThreads, COMMENT_MAX, MAX_INDENT_DEPTH, type CommentNode, type PublicComment } from "@/lib/comments";
+import { buildThreads, COMMENT_MAX, flattenThread, threadRoots, type CommentNode, type PublicComment } from "@/lib/comments";
 
 type Load = { state: "idle" | "loading" | "error" } | { state: "ready"; comments: PublicComment[] };
 type Notice = { kind: "ok" | "error"; text: string } | null;
@@ -14,15 +14,13 @@ const when = (iso: string) =>
 const PENDING_TEXT =
   "Thanks. Your comment will appear once it is approved; after your first approved comment, the next ones go live straight away.";
 
-function Avatar({ name, image }: { name: string; image: string | null }) {
+function Avatar({ name, image, size = 32 }: { name: string; image: string | null; size?: 20 | 32 }) {
+  const box = size === 20 ? "h-5 w-5 text-[9px]" : "h-8 w-8 text-xs";
   return image ? (
-    // eslint-disable-next-line @next/next/no-img-element -- a 32 px avatar from the sign-in provider
-    <img src={image} alt="" width={32} height={32} referrerPolicy="no-referrer" className="h-8 w-8 shrink-0 rounded-full" />
+    // eslint-disable-next-line @next/next/no-img-element -- a small avatar from the sign-in provider or our own /api/avatar
+    <img src={image} alt="" width={size} height={size} referrerPolicy="no-referrer" className={`${box} shrink-0 rounded-full object-cover`} />
   ) : (
-    <span
-      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-accent/15 text-xs font-bold text-accent"
-      aria-hidden="true"
-    >
+    <span className={`flex ${box} shrink-0 items-center justify-center rounded-full bg-accent/15 font-bold text-accent`} aria-hidden="true">
       {name.charAt(0).toUpperCase() || "?"}
     </span>
   );
@@ -116,17 +114,21 @@ function Composer({
 }
 
 /**
- * Comments under an article, as threads: a reply sits indented under the
- * comment it answers, a reply to that reply one step further, and so on.
- * Indentation stops growing after a few levels so a phone keeps a readable
- * column; deeper replies say whom they answer. Nothing is fetched until the
- * reader scrolls near the section, so the article never waits on the database.
+ * Comments under an article, as threads. Each top-level comment opens a
+ * thread; all its replies, however deep, sit one step indented, oldest
+ * first, and a reply to a reply names whom it answers. A thread's replies
+ * stay folded behind "Show N replies" so one long discussion does not bury
+ * the rest; a link to a comment, or a reply just written, opens its thread.
+ * Nothing is fetched until the reader scrolls near the section, so the
+ * article never waits on the database.
  */
 export default function Comments({ slug }: { slug: string }) {
   const { data: session, status: sessionStatus } = useSession();
   const [load, setLoad] = useState<Load>({ state: "idle" });
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [notice, setNotice] = useState<Notice>(null);
+  // Threads the reader opened or closed themselves; the rest follow the defaults below.
+  const [toggled, setToggled] = useState<Map<string, boolean>>(() => new Map());
   const root = useRef<HTMLElement>(null);
   const signedIn = sessionStatus === "authenticated";
 
@@ -158,18 +160,29 @@ export default function Comments({ slug }: { slug: string }) {
     return () => observer.disconnect();
   }, [fetchComments]);
 
-  // After a link to one comment (a reply email) loads the list, scroll to that comment.
+  const comments = useMemo(() => (load.state === "ready" ? load.comments : []), [load]);
+  const threads = useMemo(() => buildThreads(comments), [comments]);
+  const rootOf = useMemo(() => threadRoots(threads), [threads]);
+  // A link to one comment (a reply email) opens the thread it sits in.
+  const linkedRoot = useMemo(
+    () => (load.state === "ready" && window.location.hash.startsWith("#comment-") ? rootOf.get(window.location.hash.slice("#comment-".length)) : undefined),
+    [load.state, rootOf],
+  );
+  const isOpen = (rootId: string) => toggled.get(rootId) ?? rootId === linkedRoot;
+  const setOpen = (rootId: string, open: boolean) => setToggled((prev) => new Map(prev).set(rootId, open));
+
+  // After a link to one comment loads the list (and opens its thread), scroll to that comment.
   useEffect(() => {
     if (load.state !== "ready" || !window.location.hash.startsWith("#comment-")) return;
     document.getElementById(window.location.hash.slice(1))?.scrollIntoView({ block: "start" });
   }, [load.state]);
-
-  const comments = useMemo(() => (load.state === "ready" ? load.comments : []), [load]);
-  const threads = useMemo(() => buildThreads(comments), [comments]);
   const published = comments.filter((c) => !c.pending).length;
   const loginHref = `/login?callbackUrl=${encodeURIComponent(`/blog/${slug}#comments`)}`;
 
   async function sent(status: string) {
+    // A reply just written stays in sight: its thread opens.
+    const thread = replyTo ? rootOf.get(replyTo) : undefined;
+    if (thread) setOpen(thread, true);
     setReplyTo(null);
     setNotice({ kind: "ok", text: status === "PENDING" ? PENDING_TEXT : "Thanks, it is live." });
     await fetchComments();
@@ -185,82 +198,119 @@ export default function Comments({ slug }: { slug: string }) {
     if (res.ok) setNotice({ kind: "ok", text: "Thanks, the comment was reported and will be looked at." });
   }
 
-  function renderNode(node: CommentNode, parentName: string | null): React.ReactNode {
-    const indent = node.depth > 0 && node.depth <= MAX_INDENT_DEPTH;
+  function renderComment(node: CommentNode, replyingTo: string | null): React.ReactNode {
     return (
-      <li key={node.id} id={`comment-${node.id}`} className={indent ? "scroll-mt-24 ml-3 border-l-2 border-border pl-3 sm:ml-5 sm:pl-5" : "scroll-mt-24"}>
-        <article
-          aria-label={node.removed ? "Removed comment" : `Comment by ${node.author.name}`}
-          className={`rounded-xl border p-4 ${
-            node.removed
-              ? "border-dashed border-border/60"
-              : node.pending
-                ? "border-dashed border-border"
-                : "border-border bg-surface"
-          }`}
-        >
-          {node.removed ? (
-            <p className="text-sm italic text-muted-foreground">This comment was removed.</p>
-          ) : (
-            <>
-              <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                <Avatar name={node.author.name} image={node.author.image} />
-                <p className="text-sm font-semibold text-foreground">{node.author.name}</p>
-                <time dateTime={node.createdAt} className="text-xs text-muted-foreground">
-                  {when(node.createdAt)}
-                </time>
-                {node.pending && (
-                  <span className="rounded bg-surface-2 px-2 py-0.5 text-xs text-muted-foreground">Waiting for approval</span>
-                )}
-              </div>
-              {node.depth > MAX_INDENT_DEPTH && parentName && (
-                <p className="mt-2 text-xs text-muted-foreground">↳ replying to {parentName}</p>
+      <article
+        aria-label={node.removed ? "Removed comment" : `Comment by ${node.author.name}`}
+        className={`rounded-xl border p-4 ${
+          node.removed
+            ? "border-dashed border-border/60"
+            : node.pending
+              ? "border-dashed border-border"
+              : "border-border bg-surface"
+        }`}
+      >
+        {node.removed ? (
+          <p className="text-sm italic text-muted-foreground">This comment was removed.</p>
+        ) : (
+          <>
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+              <Avatar name={node.author.name} image={node.author.image} />
+              <p className="text-sm font-semibold text-foreground">{node.author.name}</p>
+              <time dateTime={node.createdAt} className="text-xs text-muted-foreground">
+                {when(node.createdAt)}
+              </time>
+              {node.pending && (
+                <span className="rounded bg-surface-2 px-2 py-0.5 text-xs text-muted-foreground">Waiting for approval</span>
               )}
-              <p className="mt-3 whitespace-pre-line break-words text-[15px] leading-relaxed text-foreground">{node.body}</p>
-              <div className="mt-2 flex flex-wrap gap-4 text-xs">
-                {!node.pending &&
-                  (signedIn ? (
-                    <button
-                      type="button"
-                      onClick={() => setReplyTo(replyTo === node.id ? null : node.id)}
-                      aria-expanded={replyTo === node.id}
-                      className="min-h-8 font-semibold text-accent hover:underline"
-                    >
-                      Reply
+            </div>
+            {replyingTo && <p className="mt-2 text-xs text-muted-foreground">↳ replying to {replyingTo}</p>}
+            <p className="mt-3 whitespace-pre-line break-words text-[15px] leading-relaxed text-foreground">{node.body}</p>
+            <div className="mt-2 flex flex-wrap gap-4 text-xs">
+              {!node.pending &&
+                (signedIn ? (
+                  <button
+                    type="button"
+                    onClick={() => setReplyTo(replyTo === node.id ? null : node.id)}
+                    aria-expanded={replyTo === node.id}
+                    className="min-h-8 font-semibold text-accent hover:underline"
+                  >
+                    Reply
+                  </button>
+                ) : (
+                  <Link href={loginHref} className="inline-flex min-h-8 items-center font-semibold text-accent hover:underline">
+                    Reply
+                  </Link>
+                ))}
+              {signedIn &&
+                (node.mine ? (
+                  <button type="button" onClick={() => void remove(node.id)} className="min-h-8 text-muted-foreground hover:text-red-400">
+                    Delete
+                  </button>
+                ) : (
+                  !node.pending && (
+                    <button type="button" onClick={() => void report(node.id)} className="min-h-8 text-muted-foreground hover:text-foreground">
+                      Report
                     </button>
-                  ) : (
-                    <Link href={loginHref} className="inline-flex min-h-8 items-center font-semibold text-accent hover:underline">
-                      Reply
-                    </Link>
+                  )
+                ))}
+            </div>
+            {replyTo === node.id && (
+              <Composer
+                slug={slug}
+                parentId={node.id}
+                label={`Reply to ${node.author.name}`}
+                autoFocus
+                onDone={(status) => void sent(status)}
+                onCancel={() => setReplyTo(null)}
+              />
+            )}
+          </>
+        )}
+      </article>
+    );
+  }
+
+  function renderThread(root: CommentNode): React.ReactNode {
+    const replies = flattenThread(root);
+    const open = isOpen(root.id);
+    const label = `${replies.length} ${replies.length === 1 ? "reply" : "replies"}`;
+    return (
+      <li key={root.id} id={`comment-${root.id}`} className="scroll-mt-24">
+        {renderComment(root, null)}
+        {replies.length > 0 && (
+          <div className="ml-3 mt-2 sm:ml-5">
+            <button
+              type="button"
+              onClick={() => setOpen(root.id, !open)}
+              aria-expanded={open}
+              aria-controls={`replies-${root.id}`}
+              className="inline-flex min-h-10 items-center gap-2 rounded-lg px-2 text-sm font-semibold text-accent transition hover:bg-accent/10"
+            >
+              <svg aria-hidden="true" viewBox="0 0 24 24" className={`h-4 w-4 transition-transform ${open ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round">
+                <path d="m6 9 6 6 6-6" />
+              </svg>
+              {open ? "Hide replies" : `Show ${label}`}
+              {!open && (
+                <span aria-hidden="true" className="flex -space-x-1.5">
+                  {[...new Map(replies.map((r) => [r.node.author.name, r.node.author])).values()].slice(0, 3).map((a) => (
+                    <span key={a.name} className="rounded-full ring-2 ring-background">
+                      <Avatar name={a.name} image={a.image} size={20} />
+                    </span>
                   ))}
-                {signedIn &&
-                  (node.mine ? (
-                    <button type="button" onClick={() => void remove(node.id)} className="min-h-8 text-muted-foreground hover:text-red-400">
-                      Delete
-                    </button>
-                  ) : (
-                    !node.pending && (
-                      <button type="button" onClick={() => void report(node.id)} className="min-h-8 text-muted-foreground hover:text-foreground">
-                        Report
-                      </button>
-                    )
-                  ))}
-              </div>
-              {replyTo === node.id && (
-                <Composer
-                  slug={slug}
-                  parentId={node.id}
-                  label={`Reply to ${node.author.name}`}
-                  autoFocus
-                  onDone={(status) => void sent(status)}
-                  onCancel={() => setReplyTo(null)}
-                />
+                </span>
               )}
-            </>
-          )}
-        </article>
-        {node.replies.length > 0 && (
-          <ol className="mt-3 space-y-3">{node.replies.map((r) => renderNode(r, node.removed ? null : node.author.name))}</ol>
+            </button>
+            {open && (
+              <ol id={`replies-${root.id}`} className="mt-2 space-y-3 border-l-2 border-border pl-3 sm:pl-5">
+                {replies.map((r) => (
+                  <li key={r.node.id} id={`comment-${r.node.id}`} className="scroll-mt-24">
+                    {renderComment(r.node, r.replyingTo)}
+                  </li>
+                ))}
+              </ol>
+            )}
+          </div>
         )}
       </li>
     );
@@ -290,7 +340,7 @@ export default function Comments({ slug }: { slug: string }) {
         <p className="mt-4 text-sm text-muted">No comments yet. Questions, corrections and your own experience are welcome.</p>
       )}
 
-      {threads.length > 0 && <ol className="mt-6 space-y-4">{threads.map((n) => renderNode(n, null))}</ol>}
+      {threads.length > 0 && <ol className="mt-6 space-y-5">{threads.map((n) => renderThread(n))}</ol>}
 
       {notice && (
         <p role={notice.kind === "error" ? "alert" : "status"} className={`mt-6 text-sm ${notice.kind === "error" ? "text-red-400" : "text-emerald-400"}`}>
