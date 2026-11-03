@@ -381,3 +381,20 @@ export async function getPostCards(slugs: string[]): Promise<Map<string, PostCar
   );
   return new Map(rows.map((r) => [r.slug, r]));
 }
+
+export interface DeskPostCard extends PostCard {
+  publishedAt?: string;
+}
+
+/**
+ * Every published article as a card, for a reader's dashboard: the share of
+ * the site read, topics, picks. About one card per article, so one query.
+ */
+export async function getDeskPosts(): Promise<DeskPostCard[]> {
+  if (!isSanityConfigured) return [];
+  return client.fetch<DeskPostCard[]>(
+    `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] | order(publishedAt desc) {
+      "slug": slug.current, title, readingTime, featuredImage, publishedAt, "category": categories[0]->title
+    }`,
+  );
+}

@@ -8,12 +8,13 @@ const m = vi.hoisted(() => ({
   saved: { upsert: vi.fn(), deleteMany: vi.fn(), count: vi.fn(), findMany: vi.fn() },
   folder: { findFirst: vi.fn(), findMany: vi.fn(), count: vi.fn(), create: vi.fn() },
   link: { upsert: vi.fn(), deleteMany: vi.fn() },
+  day: { upsert: vi.fn() },
 }));
 vi.mock("@/lib/comments-store", () => ({ currentReader: m.reader }));
 vi.mock("@/lib/analytics/store", () => ({ publishedSlugs: m.slugs }));
 vi.mock("@/lib/rate-limit", () => ({ rateLimit: () => ({ success: true, remaining: 1 }) }));
 vi.mock("@/lib/prisma", () => ({
-  prisma: { user: m.user, readingHistory: m.history, savedPost: m.saved, collection: m.folder, savedPostCollection: m.link },
+  prisma: { user: m.user, readingHistory: m.history, savedPost: m.saved, collection: m.folder, savedPostCollection: m.link, readingDay: m.day },
 }));
 
 import { POST as reading } from "./reading/route";
@@ -54,6 +55,10 @@ describe("POST /api/me/reading", () => {
       data: { scrollPercent: 95 },
     });
     expect(m.history.updateMany.mock.calls[1][0].where).toMatchObject({ completedAt: null });
+    // The same capped seconds go to today's row of the activity calendar.
+    const day = m.day.upsert.mock.calls[0][0];
+    expect(day.update).toEqual({ seconds: { increment: 120 } });
+    expect(day.where.userId_day.day.toISOString()).toMatch(/T00:00:00\.000Z$/);
   });
 
   it("refuses an article that is not published", async () => {
@@ -86,10 +91,12 @@ describe("POST /api/me/saved", () => {
 describe("POST /api/me/folders", () => {
   it("creates a tidy, unique folder and caps the count", async () => {
     m.folder.findFirst.mockResolvedValue(null);
+    m.folder.findMany.mockResolvedValue([{ color: "teal" }]);
     m.folder.create.mockResolvedValue({ id: "f1", name: "Later" });
     expect((await folders(req({ name: "  Later  " }))).status).toBe(201);
-    expect(m.folder.create.mock.calls[0][0].data).toEqual({ userId: "u1", name: "Later" });
-    m.folder.count.mockResolvedValue(30);
+    // A new folder takes the next colour, so it differs from the one before.
+    expect(m.folder.create.mock.calls[0][0].data).toEqual({ userId: "u1", name: "Later", color: "amber" });
+    m.folder.findMany.mockResolvedValue(Array.from({ length: 30 }, () => ({ color: "teal" })));
     expect((await folders(req({ name: "One more" }))).status).toBe(409);
   });
 });

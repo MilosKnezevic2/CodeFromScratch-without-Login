@@ -3,7 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { publishedSlugs } from "@/lib/analytics/store";
 import { currentReader } from "@/lib/comments-store";
 import { rateLimit } from "@/lib/rate-limit";
-import { isSlug, parseProgress, READ_AT_PERCENT } from "@/lib/reader/rules";
+import { READ_AT_PERCENT, isSlug, parseProgress, utcDay } from "@/lib/reader/rules";
 
 export const dynamic = "force-dynamic";
 
@@ -56,6 +56,14 @@ export async function POST(request: Request) {
     },
     update: { readAt: new Date(), lastPercent: progress.percent, secondsRead: { increment: progress.seconds } },
   });
+  if (progress.seconds > 0) {
+    const day = utcDay(new Date());
+    await prisma.readingDay.upsert({
+      where: { userId_day: { userId: reader.id, day } },
+      create: { userId: reader.id, day, seconds: progress.seconds },
+      update: { seconds: { increment: progress.seconds } },
+    });
+  }
   // The furthest point and the "read" stamp only move forward.
   await prisma.readingHistory.updateMany({
     where: { userId: reader.id, postSlug: progress.slug, scrollPercent: { lt: progress.percent } },

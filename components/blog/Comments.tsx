@@ -151,11 +151,18 @@ export default function Comments({ slug }: { slug: string }) {
           void fetchComments();
         }
       },
-      { rootMargin: "600px 0px" },
+      // A link to one comment (a reply email) loads the list at once, wherever it is on the page.
+      { rootMargin: window.location.hash.startsWith("#comment-") ? "100000px 0px" : "600px 0px" },
     );
     observer.observe(el);
     return () => observer.disconnect();
   }, [fetchComments]);
+
+  // After a link to one comment (a reply email) loads the list, scroll to that comment.
+  useEffect(() => {
+    if (load.state !== "ready" || !window.location.hash.startsWith("#comment-")) return;
+    document.getElementById(window.location.hash.slice(1))?.scrollIntoView({ block: "start" });
+  }, [load.state]);
 
   const comments = useMemo(() => (load.state === "ready" ? load.comments : []), [load]);
   const threads = useMemo(() => buildThreads(comments), [comments]);
@@ -181,7 +188,7 @@ export default function Comments({ slug }: { slug: string }) {
   function renderNode(node: CommentNode, parentName: string | null): React.ReactNode {
     const indent = node.depth > 0 && node.depth <= MAX_INDENT_DEPTH;
     return (
-      <li key={node.id} className={indent ? "ml-3 border-l-2 border-border pl-3 sm:ml-5 sm:pl-5" : ""}>
+      <li key={node.id} id={`comment-${node.id}`} className={indent ? "scroll-mt-24 ml-3 border-l-2 border-border pl-3 sm:ml-5 sm:pl-5" : "scroll-mt-24"}>
         <article
           aria-label={node.removed ? "Removed comment" : `Comment by ${node.author.name}`}
           className={`rounded-xl border p-4 ${

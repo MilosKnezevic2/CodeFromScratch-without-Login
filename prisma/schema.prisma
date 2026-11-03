@@ -58,6 +58,15 @@ model User {
   mfaVerifiedAt DateTime?
   /// The reader's choice on the dashboard: record which articles they read, how far and how long.
   trackReading  Boolean   @default(true)
+  /// Articles per week the reader aims for (1-7); reaching it extends the streak.
+  weeklyGoal    Int       @default(3)
+  /// Opt-in: an email when someone replies to one of the reader's comments.
+  notifyReplies Boolean   @default(false)
+  /// Opt-in: a Sunday email with unfinished articles and the week's goal.
+  weeklyReminder Boolean  @default(false)
+  lastReminderAt DateTime?
+  /// When the reader last opened the dashboard home, for "new since your last visit".
+  dashboardSeenAt DateTime?
 
   accounts      Account[]
   sessions      Session[]
@@ -68,6 +77,7 @@ model User {
   newsletterSubscriber NewsletterSubscriber?
   contactSubmissions   ContactSubmission[]
   readingHistory ReadingHistory[]
+  readingDays    ReadingDay[]
   reactions      PostReaction[]
   comments       PostComment[]
 }
@@ -140,6 +150,8 @@ model Collection {
   id        String   @id @default(cuid())
   userId    String
   name      String
+  /// A key from FOLDER_COLORS in lib/reader/rules.ts.
+  color     String   @default("teal")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -188,6 +200,18 @@ model EbookPurchase {
   ebook Ebook @relation(fields: [ebookId], references: [id], onDelete: Cascade)
 
   @@unique([userId, ebookId])
+}
+
+/// Seconds of reading per reader per UTC day: the activity calendar on the dashboard.
+model ReadingDay {
+  id      String   @id @default(cuid())
+  userId  String
+  day     DateTime @db.Date
+  seconds Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, day])
 }
 
 model NewsletterSubscriber {

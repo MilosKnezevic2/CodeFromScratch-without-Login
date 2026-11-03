@@ -108,11 +108,20 @@ export default function PrivacyPage() {
             <li id="reading">
               <strong>Your library and reading history.</strong> While you are logged in, we store the articles you save
               and the folders you sort them into, and, for each article you open, how far you got, where you stopped and
-              how long it was open on your screen. This powers your dashboard (&ldquo;continue reading&rdquo;, how much of
-              the site you have read) and is visible only to you. Legal basis: providing the account features you use
+              how long it was open on your screen, plus the minutes you read on each day and the weekly goal you set. This
+              powers your dashboard (&ldquo;continue reading&rdquo;, your weekly goal and streak, the reading calendar, how
+              much of the site you have read) and is visible only to you. Legal basis: providing the account features you use
               (Art. 6(1)(b) GDPR). You can switch reading tracking off, delete your reading history, or remove saved
               articles at any time in the dashboard; deleting your account deletes all of it. Visitors who are not logged
               in are never tracked this way.
+            </li>
+            <li id="reader-emails">
+              <strong>Reply emails and the Sunday reminder.</strong> Both are off until you turn them on in your profile.
+              With reply emails on, we email you when a reply to one of your comments is published, with the reply and a
+              link to it. With the Sunday reminder on, we email you on Sunday evenings the articles you left unfinished or
+              saved and your progress toward your weekly goal; when there is nothing to list, no email is sent. Legal basis:
+              your consent (Art. 6(1)(a) GDPR), which you can withdraw at any time with the link in every such email or the
+              switch in your profile. They are sent through the same email provider as the newsletter.
             </li>
           </ul>
         </section>

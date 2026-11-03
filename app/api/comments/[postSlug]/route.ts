@@ -4,6 +4,7 @@ import { publishedSlugs } from "@/lib/analytics/store";
 import { BURST, DAILY, initialStatus, isPostSlug, parseCommentBody } from "@/lib/comments";
 import { commentsOpen, currentReader, listComments } from "@/lib/comments-store";
 import { sendEmail } from "@/lib/send-email";
+import { notifyReplies } from "@/lib/reader/notify";
 import { getSettings } from "@/lib/settings/store";
 import { escapeHtml } from "@/lib/emails/newsletter-letter";
 
@@ -81,6 +82,8 @@ export async function POST(request: Request, { params }: Params) {
       html: `<p>${escapeHtml(reader.name ?? "A reader")} wrote on <a href="${site}/blog/${postSlug}">${postSlug}</a>:</p><blockquote>${escapeHtml(parsed.body).replace(/\n/g, "<br>")}</blockquote><p><a href="${site}/portal-cfs-admin/comments">Approve or reject it in the portal</a>.</p>`,
     }).catch((error: unknown) => console.error("Comment notification failed:", error));
   }
+
+  if (status === "APPROVED" && parentId) await notifyReplies([comment.id]);
 
   return json({ id: comment.id, status }, 201);
 }
