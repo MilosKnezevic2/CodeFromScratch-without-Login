@@ -7,7 +7,7 @@ import ThemeToggle from "./ThemeToggle";
 import SearchModal from "./blog/SearchModal";
 import Logo from "./Logo";
 import UserMenu from "./auth/UserMenu";
-import { useSession } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 
 // Public-facing nav. Ebooks, Courses, and the user menu are wired up in
 // code (routes still exist under app/*) but hidden from this list while
@@ -150,6 +150,15 @@ export default function Navbar({ accounts }: { accounts: boolean }) {
               >
                 {session?.user ? "Dashboard" : "Log in / Sign up"}
               </Link>
+            )}
+            {accounts && session?.user && (
+              <button
+                type="button"
+                onClick={() => signOut({ callbackUrl: pathname.startsWith("/dashboard") ? "/" : pathname })}
+                className="rounded-lg px-3 py-2 text-left text-sm text-muted transition hover:bg-surface/50 hover:text-foreground"
+              >
+                Log out
+              </button>
             )}
           </nav>
         </div>
