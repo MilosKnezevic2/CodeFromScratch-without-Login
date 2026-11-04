@@ -80,7 +80,7 @@ export default async function AreaPage({ params }: PageProps) {
             .
           </p>
         ) : (
-          <div className="mt-10 grid gap-x-6 gap-y-5 sm:grid-cols-2 sm:gap-y-12 lg:grid-cols-3">
+          <div className="mt-10 grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {posts.map((p) => (
               <FrontCard key={p._id} post={p} showExcerpt />
             ))}
