@@ -398,3 +398,25 @@ export async function getDeskPosts(): Promise<DeskPostCard[]> {
     }`,
   );
 }
+
+export interface FrontPostCard {
+  _id: string;
+  slug: string;
+  title: string;
+  excerpt?: string;
+  readingTime?: number;
+  publishedAt?: string;
+  featuredImage?: { asset: { _ref: string }; alt?: string };
+  category?: { title: string; slug: string };
+}
+
+/** Every published article, newest first, with what a front-page card shows. One query for the whole journal. */
+export async function getFrontPosts(): Promise<FrontPostCard[]> {
+  if (!isSanityConfigured) return [];
+  return client.fetch<FrontPostCard[]>(
+    `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] | order(publishedAt desc) {
+      _id, "slug": slug.current, title, excerpt, readingTime, publishedAt, featuredImage,
+      "category": categories[0]->{ title, "slug": slug.current }
+    }`,
+  );
+}

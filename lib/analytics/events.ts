@@ -150,6 +150,7 @@ export function classifyPath(rawPath: string, slugs: ReadonlySet<string> | null)
   if (STATIC_PATHS.has(path)) return { kind: "known", key: path };
   if (path.startsWith("/blog/category/")) return { kind: "known", key: "/blog/category/*" };
   if (path.startsWith("/blog/tag/")) return { kind: "known", key: "/blog/tag/*" };
+  if (path.startsWith("/blog/area/")) return { kind: "known", key: "/blog/area/*" };
 
   const article = /^\/blog\/([a-z0-9-]+)$/.exec(path);
   if (article) {

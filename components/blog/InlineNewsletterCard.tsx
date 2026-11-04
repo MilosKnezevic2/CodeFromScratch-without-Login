@@ -1,47 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { trackGoal } from "@/lib/analytics/client";
+import { useNewsletterSignup } from "./useNewsletterSignup";
 
 export default function InlineNewsletterCard() {
-  const [email, setEmail] = useState("");
-  const [honeypot, setHoneypot] = useState("");
-  const [status, setStatus] = useState<
-    "idle" | "loading" | "success" | "error"
-  >("idle");
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
-
-  async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setStatus("loading");
-    setErrorMessage(null);
-    try {
-      const res = await fetch("/api/newsletter/subscribe", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, honeypot }),
-      });
-      if (res.ok) {
-        const body = (await res.json().catch(() => null)) as {
-          message?: string;
-        } | null;
-        setSuccessMessage(body?.message ?? "Check your inbox.");
-        setStatus("success");
-        trackGoal("signup");
-        setEmail("");
-      } else {
-        const body = (await res.json().catch(() => null)) as {
-          error?: string;
-        } | null;
-        setErrorMessage(body?.error ?? "Something went wrong. Try again.");
-        setStatus("error");
-      }
-    } catch {
-      setErrorMessage("Network error. Try again.");
-      setStatus("error");
-    }
-  }
+  const { email, setEmail, honeypot, setHoneypot, status, message, submit: onSubmit } = useNewsletterSignup();
+  const successMessage = status === "success" ? message : null;
+  const errorMessage = status === "error" ? message : null;
 
   return (
     <aside

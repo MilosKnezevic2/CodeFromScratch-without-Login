@@ -88,6 +88,7 @@ describe("classifyPath", () => {
   it("folds category and tag pages so their number of keys stays fixed", () => {
     expect(classifyPath("/blog/category/anything", slugs)).toEqual({ kind: "known", key: "/blog/category/*" });
     expect(classifyPath("/blog/tag/anything", slugs)).toEqual({ kind: "known", key: "/blog/tag/*" });
+    expect(classifyPath("/blog/area/frontend", slugs)).toEqual({ kind: "known", key: "/blog/area/*" });
   });
 
   it("calls an unknown address missing and never stores it", () => {
