@@ -129,7 +129,7 @@ export default async function BlogFront() {
                 View all {s.total} →
               </Link>
             </div>
-            <div className="mt-6 grid gap-x-6 gap-y-5 sm:grid-cols-2 sm:gap-y-10 lg:grid-cols-3">
+            <div className="mt-6 grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
               {s.items.map((p) => (
                 <FrontCard key={p._id} post={p} />
               ))}
