@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
-import { getAllPostSlugs, getCategoriesWithCounts } from "@/lib/sanity/queries";
+import { AREAS, areaOfCategory } from "@/lib/blog/front";
+import { getAllPostSlugs, getCategoriesWithCounts, getFrontPosts } from "@/lib/sanity/queries";
 
 // Re-generated every five minutes, so a new post reaches crawlers without a
 // redeploy. Five minutes rather than an hour because the on-demand purge from
@@ -59,5 +60,18 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Tag pages carry a noindex tag (thin lists), so advertising them here sent
   // Google two opposite signals for 101 of 154 URLs. Categories stay: they are
   // indexed and rank.
-  return [...staticPages, ...postPages, ...categoryPages];
+  // The journal's areas (lib/blog/front.ts): only those with enough articles to be indexed.
+  let areaPages: MetadataRoute.Sitemap = [];
+  try {
+    const posts = await getFrontPosts();
+    areaPages = AREAS.filter((a) => posts.filter((p) => areaOfCategory(p.category?.slug) === a).length > 2).map((a) => ({
+      url: `${baseUrl}/blog/area/${a.slug}`,
+      changeFrequency: "weekly" as const,
+      priority: 0.7,
+    }));
+  } catch {
+    // Sanity may not be configured yet
+  }
+
+  return [...staticPages, ...postPages, ...areaPages, ...categoryPages];
 }

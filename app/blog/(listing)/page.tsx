@@ -1,25 +1,25 @@
 import type { Metadata } from "next";
-import BlogListing, { LISTING_DESCRIPTION, LISTING_TITLE } from "@/components/blog/listing/BlogListing";
-import { EMPTY_QUERY } from "@/lib/blog-url";
+import BlogFront, { FRONT_DESCRIPTION, FRONT_TITLE } from "@/components/blog/front/BlogFront";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
 
 /**
- * The journal's first page. It reads no query string on purpose: that keeps
- * it prerendered and served from the edge cache, while /blog/page/N holds the
- * rest and /blog/search?... every filtered view. Old /blog?page=2 style
- * addresses are redirected by the proxy.
+ * The journal's front page, laid out like a magazine (BlogFront). It reads no
+ * query string on purpose: that keeps it prerendered and served from the
+ * edge cache, while /blog/area/*, /blog/category/*, /blog/page/N and
+ * /blog/search?... hold every other view. Old /blog?page=2 style addresses
+ * are redirected by the proxy.
  */
 export const revalidate = 60;
 
 export const metadata: Metadata = {
   // Root layout template appends "| CodeFromScratch" — pass the bare name
   // here or the brand doubles in the tab title.
-  title: LISTING_TITLE,
-  description: LISTING_DESCRIPTION,
+  title: FRONT_TITLE,
+  description: FRONT_DESCRIPTION,
   openGraph: {
-    title: `${LISTING_TITLE} | CodeFromScratch`,
-    description: LISTING_DESCRIPTION,
+    title: `${FRONT_TITLE} | CodeFromScratch`,
+    description: FRONT_DESCRIPTION,
     url: `${SITE_URL}/blog`,
     type: "website",
     siteName: "CodeFromScratch",
@@ -37,5 +37,5 @@ export const metadata: Metadata = {
 };
 
 export default function BlogPage() {
-  return <BlogListing query={EMPTY_QUERY} canonicalUrl={`${SITE_URL}/blog`} />;
+  return <BlogFront />;
 }
