@@ -233,14 +233,37 @@ async function main() {
   // content-drafts/letter-<slug>.json, written by the weekly cycle and approved
   // with the article; --no-letter skips it (a re-flip, a rewrite).
   if (!args.includes("--no-letter")) {
-    for (const j of todo) sendLetter(j.slug);
+    for (const j of todo) await sendLetter(j.slug);
   }
 }
 
 /** The brand mailbox gets a copy before the list does. */
 const LETTER_TEST_ADDRESS = "office@codefromscratch.org";
 
-function sendLetter(slug) {
+/**
+ * The letter looks the article up the way the site does: through the Sanity
+ * CDN, published and dated no later than Sanity's own now(). Straight after
+ * publishing, that can still miss: publishedAt comes from this computer's
+ * clock and the CDN briefly keeps the empty answer. On 2026-11-10 the letter
+ * failed with "That article does not exist" while the page answered 200.
+ * So wait until that same lookup finds the article (up to 2 minutes).
+ */
+async function waitUntilListed(slug) {
+  const cdn = createClient({
+    projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
+    dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
+    apiVersion: "2024-01-01",
+    useCdn: true,
+  });
+  const query = `count(*[_type == "post" && slug.current == $slug && status == "published" && (!defined(publishedAt) || publishedAt <= now())])`;
+  for (let attempt = 0; attempt < 24; attempt++) {
+    if ((await cdn.fetch(query, { slug }).catch(() => 0)) > 0) return true;
+    await new Promise((r) => setTimeout(r, 5000));
+  }
+  return false;
+}
+
+async function sendLetter(slug) {
   const file = `content-drafts/letter-${slug}.json`;
   if (!existsSync(file)) {
     console.log(
@@ -260,6 +283,10 @@ function sendLetter(slug) {
     console.log(`
 newsletter for ${slug} (dry run):`);
     run([]);
+    return;
+  }
+  if (!(await waitUntilListed(slug))) {
+    console.error(`newsletter: Sanity does not list ${slug} as published yet, so nothing was mailed. Send it later with: npx tsx scripts/send-letter.mts --post ${slug} --letter-file ${file} --apply --confirm auto`);
     return;
   }
   if (!run(["--test", LETTER_TEST_ADDRESS])) {
