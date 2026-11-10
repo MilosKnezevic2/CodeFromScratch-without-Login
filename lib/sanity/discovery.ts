@@ -82,14 +82,15 @@ export async function getTrendingPosts(
 
 /**
  * Operator-curated picks. Surfaces published posts where the
- * `editorPick` flag is set in Sanity, ordered by most recent.
+ * `editorPick` flag is set in Sanity, in the editor's reading order
+ * (`pickOrder`), then newest first for picks without a position.
  */
 export async function getEditorPicks(limit = 3): Promise<DiscoveryPost[]> {
   if (!isSanityConfigured) return [];
   try {
     return await client.fetch<DiscoveryPost[]>(
       `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && editorPick == true]
-        | order(publishedAt desc) [0...$limit] { ${compactPostFields} }`,
+        | order(coalesce(pickOrder, 1000) asc, publishedAt desc) [0...$limit] { ${compactPostFields} }`,
       { limit },
     );
   } catch {

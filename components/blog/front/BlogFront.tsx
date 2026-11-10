@@ -13,7 +13,8 @@ import TopicsMenu from "./TopicsMenu";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
 
-export const FRONT_TITLE = "Journal";
+/** The search title of /blog (the masthead on the page itself still reads "The Journal"). */
+export const FRONT_TITLE = "Web Development Tutorials and Guides";
 export const FRONT_DESCRIPTION = "In-depth web development tutorials, from your first page to production: frontend, backend and data, deployment and security.";
 
 /** The masthead shared by the front page and the area pages: title, areas, every topic, search. */

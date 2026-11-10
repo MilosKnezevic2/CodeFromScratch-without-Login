@@ -20,9 +20,9 @@ const SITE_URL =
 const METADATA: Metadata = {
   // `absolute` opts out of the root "%s | CodeFromScratch" template — the
   // brand is already in this title, the template would double it.
-  title: { absolute: "CodeFromScratch — A journal for serious web developers" },
+  title: { absolute: "CodeFromScratch — Learn Web Development From Scratch" },
   description:
-    "Tutorials, guides, and deep dives on modern web development. Thoughtful, carefully researched pieces — free, with code you can read in your own repo.",
+    "Free, in-depth web development tutorials, from your first HTML page to a production app: frontend, backend, deployment and security, with real code.",
 };
 
 export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {

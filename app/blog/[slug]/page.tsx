@@ -381,12 +381,11 @@ export default async function PostPage({ params }: PageProps) {
                     github={post.author.github}
                     website={post.author.website}
                     linkedin={post.author.linkedin}
-                    meta={[
-                      "Graz",
-                      post.publishedAt && new Date(post.publishedAt).toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
-                    ]
-                      .filter(Boolean)
-                      .join(" · ")}
+                    meta={
+                      post.publishedAt
+                        ? new Date(post.publishedAt).toLocaleDateString("en-GB", { month: "long", year: "numeric" })
+                        : undefined
+                    }
                   />
                 </div>
               )}

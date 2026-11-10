@@ -37,7 +37,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const canonical = `${SITE_URL}/blog/area/${area.slug}`;
   const ogImage = shareImageUrl(area.name, area.name, `Area · ${articleCount(posts.length)}`);
   return {
-    title: `${area.name} tutorials`,
+    title: area.searchTitle ?? `${area.name} tutorials`,
     description: `${posts.length} in-depth ${area.name.toLowerCase()} tutorials: ${area.why.toLowerCase()}.`,
     alternates: { canonical },
     openGraph: { url: canonical, images: [{ url: ogImage, width: 1200, height: 630 }] },

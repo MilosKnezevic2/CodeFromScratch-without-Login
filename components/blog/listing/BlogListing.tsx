@@ -21,7 +21,7 @@ import { itemListJsonLd, blogCollectionJsonLd, breadcrumbJsonLd } from "@/lib/se
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
 
-export const LISTING_TITLE = "Journal";
+export const LISTING_TITLE = "Web Development Tutorials";
 export const LISTING_DESCRIPTION =
   "Tutorials, guides, and deep dives — a journal of practical web-development writing.";
 

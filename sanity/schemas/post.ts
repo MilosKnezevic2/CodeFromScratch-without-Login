@@ -170,6 +170,15 @@ export const post = defineType({
       initialValue: false,
     }),
     defineField({
+      name: "pickOrder",
+      title: "Position in Start here",
+      type: "number",
+      description:
+        "Where this pick sits in the numbered 'Start here' reading order on the home page (1 = first). Picks without a number come after, newest first.",
+      hidden: ({ document }) => !document?.editorPick,
+      validation: (rule) => rule.integer().min(1).max(20),
+    }),
+    defineField({
       name: "difficulty",
       title: "Difficulty",
       type: "string",

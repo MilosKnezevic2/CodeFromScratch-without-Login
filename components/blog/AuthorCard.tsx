@@ -9,7 +9,7 @@ interface AuthorCardProps {
   github?: string;
   website?: string;
   linkedin?: string;
-  /** "Graz · November 2026": where and when the article was written. */
+  /** "November 2026": when the article was written. */
   meta?: string;
 }
 
