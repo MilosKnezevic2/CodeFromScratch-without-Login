@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { urlFor } from "@/lib/sanity/image";
-import type { SanityPost } from "@/lib/sanity/queries";
+import type { AuthorWithPostCount, SanityPost } from "@/lib/sanity/queries";
 import type { HomeStats } from "@/lib/sanity/home-stats";
 
 const formatNumber = (n: number) =>
@@ -33,13 +33,20 @@ function issueLine(): string {
   return `Vol. ${now.getFullYear() - 2024} · Issue ${String(week).padStart(2, "0")} · ${month}`;
 }
 
+/** Shown when Sanity cannot be reached: the same name the author document carries. */
+const EDITOR_FALLBACK = "Milos Knezevic";
+
 export default function HomeHero({
   featured,
   stats,
+  editor,
 }: {
   featured: SanityPost | null;
   stats: HomeStats;
+  /** The journal's main author, from Sanity: the same name and photo as under every article. */
+  editor: Pick<AuthorWithPostCount, "name" | "image"> | null;
 }) {
+  const editorName = editor?.name ?? EDITOR_FALLBACK;
   const imageUrl = featured?.featuredImage?.asset
     ? urlFor(featured.featuredImage).width(1200).quality(85).url()
     : null;
@@ -86,18 +93,28 @@ export default function HomeHero({
             {/* Author intro + CTAs */}
             <div className="mt-10">
               <div className="flex items-center gap-3 border-t border-border/60 pt-6">
-                <span
-                  aria-hidden
-                  className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-surface-2 text-sm font-bold text-foreground"
-                >
-                  M
-                </span>
+                {editor?.image?.asset ? (
+                  <Image
+                    src={urlFor(editor.image).width(80).height(80).url()}
+                    alt=""
+                    width={40}
+                    height={40}
+                    className="h-10 w-10 shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <span
+                    aria-hidden
+                    className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full border border-border bg-surface-2 text-sm font-bold text-foreground"
+                  >
+                    {editorName.charAt(0)}
+                  </span>
+                )}
                 <div className="min-w-0 flex-1">
                   <p className="text-sm font-semibold text-foreground">
-                    By Miloš Knežević
+                    By {editorName}
                   </p>
                   <p className="editorial-meta">
-                    Solo developer · Graz, Austria
+                    Founder and editor · Graz, Austria
                   </p>
                 </div>
               </div>

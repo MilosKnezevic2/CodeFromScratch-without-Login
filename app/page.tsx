@@ -1,8 +1,6 @@
 import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
-import {
-  getPostsAdvanced,
-} from "@/lib/sanity/queries";
+import { getFeaturedAuthors, getPostsAdvanced } from "@/lib/sanity/queries";
 import { buildSafe } from "@/lib/sanity/build-safe";
 import { getEditorPicks } from "@/lib/sanity/discovery";
 import { getHomeStats } from "@/lib/sanity/home-stats";
@@ -47,7 +45,7 @@ export default async function HomePage() {
    */
   // getHomeStats/getEditorPicks degrade internally; the posts read is
   // build-safe so a Sanity outage during deploy can't fail the build.
-  const [latestResult, stats, editorPicks] = await Promise.all([
+  const [latestResult, stats, editorPicks, [editor]] = await Promise.all([
     buildSafe(getPostsAdvanced({ page: 1, limit: 1, sort: "newest" }), {
       posts: [],
       total: 0,
@@ -55,6 +53,7 @@ export default async function HomePage() {
     }),
     getHomeStats(),
     getEditorPicks(5),
+    buildSafe(getFeaturedAuthors(1), []),
   ]);
 
   const featured = latestResult.posts[0] ?? null;
@@ -74,7 +73,7 @@ export default async function HomePage() {
         }}
       />
 
-      <HomeHero featured={featured} stats={stats} />
+      <HomeHero featured={featured} stats={stats} editor={editor ?? null} />
 
       <div className="mx-auto max-w-7xl px-4 pb-32 sm:px-6 lg:px-8">
         {/* Newsletter — high-priority capture */}
@@ -91,7 +90,7 @@ export default async function HomePage() {
 
         {/* From the editor — personal note */}
         <div className="mt-24">
-          <HomeAuthorLetter />
+          <HomeAuthorLetter editor={editor ?? null} />
         </div>
 
         {/* Browse the archive — handoff to /blog */}
