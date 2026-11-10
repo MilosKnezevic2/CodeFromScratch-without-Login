@@ -6,6 +6,12 @@ Project versioning: semver (applied once first production release ships).
 
 ## [Unreleased]
 
+### Added (2026-11-10 distribution)
+- `scripts/crosspost.mts`: turns a published article into Markdown for dev.to
+  (canonical URL to our site, live demos become links back, Liquid in code is
+  protected) and creates or updates a dev.to draft; public only after 48 hours.
+  Converter in `lib/crosspost/markdown.ts` with tests.
+
 ### Added (2026-10-30/31 platform round)
 - Cookieless analytics: daily counters per page, referrer, device, country,
   reading depth and time; Search Console numbers synced daily; the admin
