@@ -13,10 +13,11 @@
 
 import { createClient } from "@sanity/client";
 import dotenv from "dotenv";
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "fs";
+import { existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from "fs";
 import { execFileSync } from "child_process";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
+import { syncDrafts } from "./lib/drafts-sync.mjs";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 dotenv.config({ path: join(root, ".env.local"), quiet: true });
@@ -47,23 +48,37 @@ console.log(`sanity: ${docs.length} documents exported`);
 const exports = readdirSync(backup).filter((f) => /^sanity-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort();
 for (const old of exports.slice(0, Math.max(0, exports.length - KEEP))) rmSync(join(backup, old));
 
-rmSync(join(backup, "content-drafts"), { recursive: true, force: true });
-cpSync(join(root, "content-drafts"), join(backup, "content-drafts"), { recursive: true });
+// Drafts are written both here and by the scheduled GitHub run: take the
+// other side's commits first, then sync both ways instead of mirroring.
+const git = (...args) => execFileSync("git", args, { cwd: brain, encoding: "utf8" }).trim();
+const dirty = git("status", "--porcelain") !== "";
+if (dirty) git("stash", "push", "--include-untracked", "-m", "backup: before pull");
+git("pull", "--rebase", "origin", "HEAD");
+if (dirty) git("stash", "pop");
+const synced = syncDrafts(root);
+console.log(`drafts: ${synced.toBackup.length} backed up, ${synced.toLocal.length} brought here from the private repo`);
 
 // The database has no backup of its own on the free tier; the encrypted dump
 // goes into the same private repository (see scripts/backup-db.mjs).
-try {
-  console.log(execFileSync(process.execPath, [join(root, "scripts", "backup-db.mjs")], { cwd: root, encoding: "utf8" }).trim());
-} catch (error) {
-  console.error(`database backup failed, continuing with the rest: ${error.message}`);
+// The GitHub Actions cycle (cfs-brand-private) has no database credentials on
+// purpose and sets BACKUP_SKIP_DB; the local backups keep taking the dump.
+if (process.env.BACKUP_SKIP_DB) {
+  console.log("database: skipped (BACKUP_SKIP_DB)");
+} else {
+  try {
+    console.log(execFileSync(process.execPath, [join(root, "scripts", "backup-db.mjs")], { cwd: root, encoding: "utf8" }).trim());
+  } catch (error) {
+    console.error(`database backup failed, continuing with the rest: ${error.message}`);
+  }
 }
 
-const git = (...args) => execFileSync("git", args, { cwd: brain, encoding: "utf8" }).trim();
 git("add", "-A");
 if (git("status", "--porcelain") === "") {
   console.log("nothing changed since the last backup");
 } else {
   git("commit", "-m", `backup ${day}`);
+  // This computer and the GitHub Actions cycle both push here: take the other side's commits first.
+  git("pull", "--rebase", "origin", "HEAD");
   console.log(git("push", "origin", "HEAD"));
 }
 console.log("backup done");
