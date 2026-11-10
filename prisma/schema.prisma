@@ -18,6 +18,14 @@ enum Plan {
   PRO_PLUS
 }
 
+/// Matches the production enum created with the April 2026 comment schema.
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SPAM
+}
+
 enum SubscriptionStatus {
   ACTIVE
   CANCELED
@@ -48,6 +56,17 @@ model User {
   // Hashed single-use backup codes (bcrypt). Populated at enrol time.
   mfaBackupCodes String[]  @default([])
   mfaVerifiedAt DateTime?
+  /// The reader's choice on the dashboard: record which articles they read, how far and how long.
+  trackReading  Boolean   @default(true)
+  /// Articles per week the reader aims for (1-7); reaching it extends the streak.
+  weeklyGoal    Int       @default(3)
+  /// Opt-in: an email when someone replies to one of the reader's comments.
+  notifyReplies Boolean   @default(false)
+  /// Opt-in: a Sunday email with unfinished articles and the week's goal.
+  weeklyReminder Boolean  @default(false)
+  lastReminderAt DateTime?
+  /// When the reader last opened the dashboard home, for "new since your last visit".
+  dashboardSeenAt DateTime?
 
   accounts      Account[]
   sessions      Session[]
@@ -58,7 +77,10 @@ model User {
   newsletterSubscriber NewsletterSubscriber?
   contactSubmissions   ContactSubmission[]
   readingHistory ReadingHistory[]
+  readingDays    ReadingDay[]
+  avatar         UserAvatar?
   reactions      PostReaction[]
+  comments       PostComment[]
 }
 
 model Account {
@@ -129,6 +151,8 @@ model Collection {
   id        String   @id @default(cuid())
   userId    String
   name      String
+  /// A key from FOLDER_COLORS in lib/reader/rules.ts.
+  color     String   @default("teal")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -177,6 +201,29 @@ model EbookPurchase {
   ebook Ebook @relation(fields: [ebookId], references: [id], onDelete: Cascade)
 
   @@unique([userId, ebookId])
+}
+
+/// A picture the reader uploaded, re-encoded as a 256 px WebP. User.image points at /api/avatar/<id>.
+model UserAvatar {
+  userId        String   @id
+  data          Bytes
+  /// The Google or GitHub picture in use before the upload, put back when the reader removes theirs.
+  previousImage String?
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+/// Seconds of reading per reader per UTC day: the activity calendar on the dashboard.
+model ReadingDay {
+  id      String   @id @default(cuid())
+  userId  String
+  day     DateTime @db.Date
+  seconds Int      @default(0)
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, day])
 }
 
 model NewsletterSubscriber {
@@ -321,7 +368,14 @@ model ReadingHistory {
   postSlug      String
   readAt        DateTime  @default(now())
   completedAt   DateTime?
+  /// The furthest point reached, 0-100. Only ever grows.
   scrollPercent Int       @default(0)
+  /// Where the reader was last time, 0-100, for "continue where you left off".
+  lastPercent   Int       @default(0)
+  /// Time spent on the article while the page was visible, in seconds.
+  secondsRead   Int       @default(0)
+  /// Present in production from an earlier schema; not written by this code.
+  referer       String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -356,4 +410,29 @@ model EmailSequenceStatus {
 
   @@unique([subscriberId, sequenceName])
   @@index([nextSendAt, completed])
+}
+
+/// A reader's comment under an article. The table already existed in
+/// production (empty, from the April 2026 schema); this model mirrors it
+/// column for column, so no migration was needed. A reader's first comment
+/// waits for approval; once one is approved, later ones publish at once.
+model PostComment {
+  id            String        @id @default(cuid())
+  postSlug      String
+  userId        String
+  parentId      String?
+  body          String
+  status        CommentStatus @default(PENDING)
+  reportedCount Int           @default(0)
+  deletedAt     DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user    User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  parent  PostComment?  @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies PostComment[] @relation("CommentReplies")
+
+  @@index([postSlug, status, createdAt])
+  @@index([userId, createdAt])
+  @@index([status, createdAt])
 }

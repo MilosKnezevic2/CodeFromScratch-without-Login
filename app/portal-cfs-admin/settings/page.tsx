@@ -9,6 +9,7 @@ import { getAdminState } from "@/lib/admin-auth";
 import { readAdminSession } from "@/lib/admin-session";
 import { listAudit, type AuditEntry } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
+import { SENTRY_DSN } from "@/lib/sentry-dsn";
 import { clientFields, flatten, SECTION_INFO, SECTIONS, stripeKeyMode, type Section } from "@/lib/settings/schema";
 import { loadSettings } from "@/lib/settings/store";
 import { saveSettingsAction } from "./actions";
@@ -40,6 +41,7 @@ const DASHBOARDS = [
   { label: "Resend (email)", href: "https://resend.com/emails" },
   { label: "Supabase (database)", href: "https://supabase.com/dashboard" },
   { label: "Stripe (payments)", href: "https://dashboard.stripe.com" },
+  { label: "Sentry (errors)", href: "https://codefromscratch.sentry.io/issues/" },
   { label: "GitHub (code)", href: "https://github.com/MilosKnezevic2/CodeFromScratch-without-Login" },
 ];
 
@@ -57,6 +59,11 @@ const ACTION_LABELS: Record<string, string> = {
   "person.looked-up": "Reader data searched",
   "person.exported": "Reader data copied",
   "person.erased": "Reader data deleted",
+  "comment.approve": "Comment approved",
+  "comment.reject": "Comment rejected",
+  "comment.delete": "Comment removed",
+  "comment.ban": "Reader blocked",
+  "comment.approve-all": "All waiting comments approved",
 };
 
 const when = (value: Date) =>
@@ -129,8 +136,9 @@ async function SystemTab() {
     { label: "Articles (Sanity)", ok: Boolean(process.env.NEXT_PUBLIC_SANITY_PROJECT_ID), note: "the CMS behind every article" },
     { label: "Cache refresh from Sanity", ok: Boolean(process.env.SANITY_REVALIDATE_SECRET), note: "published articles appear without a redeploy" },
     { label: "Daily cron protected", ok: Boolean(process.env.CRON_SECRET), note: "keeps the database awake, deletes unconfirmed sign-ups" },
-    { label: "Error tracking (Sentry)", ok: Boolean(process.env.SENTRY_DSN || process.env.NEXT_PUBLIC_SENTRY_DSN), note: "optional" },
-    { label: "Comments (Giscus)", ok: Boolean(process.env.NEXT_PUBLIC_GISCUS_REPO_ID && process.env.NEXT_PUBLIC_GISCUS_CATEGORY_ID), note: "optional; needed before comments can be switched on" },
+    { label: "Error tracking (Sentry)", ok: Boolean(SENTRY_DSN), note: "codefromscratch-web, EU region; reports from the live site only" },
+    { label: "Sign-in (Google)", ok: Boolean(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET), note: "reader accounts; needed before comments" },
+    { label: "Sign-in (GitHub)", ok: Boolean(process.env.GITHUB_ID && process.env.GITHUB_SECRET), note: "reader accounts; needed before comments" },
     { label: "Payments (Stripe)", ok: Boolean(process.env.STRIPE_SECRET_KEY), note: "see the Payments tab" },
   ];
   let database: string;
@@ -178,6 +186,16 @@ async function SystemTab() {
             <div className="mt-4">
               <RefreshCacheButton />
             </div>
+            <p className="mt-4 text-xs text-muted-foreground">
+              <a href="/api/admin/sentry-test" target="_blank" rel="noopener noreferrer" className="text-accent underline-offset-2 hover:underline">
+                Send a test error to Sentry
+              </a>{" "}
+              (answers &ldquo;sent: true&rdquo; with an event id; it appears under Sentry &gt; Issues within a minute).{" "}
+              <a href="/api/admin/sentry-test?throw=1" target="_blank" rel="noopener noreferrer" className="text-accent underline-offset-2 hover:underline">
+                Throw one like a real bug
+              </a>{" "}
+              (shows a 500 page on purpose).
+            </p>
           </div>
           <div className="glow-border rounded-xl bg-surface p-5">
             <h3 className="text-sm font-semibold text-foreground">Other dashboards</h3>

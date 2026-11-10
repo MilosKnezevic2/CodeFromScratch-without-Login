@@ -4,19 +4,8 @@ import { DEFAULTS, fromStored, SECTIONS, type Section, type Settings } from "./s
 
 export const SETTINGS_TAG = "site-settings";
 
-/**
- * Reads every section straight from the database. Public pages must never fail
- * because Postgres is asleep, so any error means the defaults, which are the
- * values the site shipped with.
- */
-export async function loadSettings(): Promise<Settings> {
+function fromRows(rows: { key: string; value: unknown }[]): Settings {
   const settings = {} as Settings;
-  let rows: { key: string; value: unknown }[] = [];
-  try {
-    rows = await prisma.siteSetting.findMany();
-  } catch (error) {
-    console.error("Settings could not be read, using defaults:", error);
-  }
   for (const section of SECTIONS) {
     const row = rows.find((r) => r.key === section);
     settings[section] = fromStored(section, row?.value ?? DEFAULTS[section]) as never;
@@ -24,22 +13,48 @@ export async function loadSettings(): Promise<Settings> {
   return settings;
 }
 
+/** Throws when the database cannot be read, so a failed read is never cached. */
+async function readSettings(): Promise<Settings> {
+  return fromRows(await prisma.siteSetting.findMany());
+}
+
+/** The last successful read in this server instance, the fallback before the defaults. */
+let lastGood: Settings | null = null;
+
+/**
+ * Reads every section straight from the database. Public pages must never fail
+ * because Postgres is asleep, so an error means the last values this instance
+ * read, or the defaults (the values the site shipped with) if it has none.
+ */
+export async function loadSettings(): Promise<Settings> {
+  try {
+    lastGood = await readSettings();
+    return lastGood;
+  } catch (error) {
+    console.error("Settings could not be read, using the last known values or defaults:", error);
+    return lastGood ?? fromRows([]);
+  }
+}
+
 /**
  * The read for public pages and API routes: cached for a few minutes and
  * refreshed the moment something is saved, so a page never waits on Postgres
- * for a value that changes a few times a year.
+ * for a value that changes a few times a year. The cached function throws on
+ * a failed read: caching the defaults instead once kept /login a 404 for every
+ * visitor after a single database timeout (accounts default to off).
  */
-const cachedSettings = unstable_cache(loadSettings, [SETTINGS_TAG], {
+const cachedSettings = unstable_cache(readSettings, [SETTINGS_TAG, "strict"], {
   tags: [SETTINGS_TAG],
   revalidate: 300,
 });
 
 export async function getSettings(): Promise<Settings> {
   try {
-    return await cachedSettings();
+    lastGood = await cachedSettings();
+    return lastGood;
   } catch {
-    // Outside a Next request (tests, scripts) there is no cache to use; the
-    // direct read already degrades to the defaults when the database is away.
+    // A failed read, or no Next request (tests, scripts) and so no cache:
+    // read directly, which degrades to the last known values or the defaults.
     return loadSettings();
   }
 }

@@ -1,66 +1,71 @@
 "use client";
 
-import { createContext, useContext, useState, useCallback, useRef } from "react";
+import { createContext, useCallback, useContext, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 
-type SavedPost = {
-  id: string;
-  postSlug: string;
-  collections: { collectionId: string }[];
-};
+export type SavedEntry = { slug: string; folderIds: string[] };
+export type Folder = { id: string; name: string };
 
-type SavedPostsContextType = {
-  savedPosts: SavedPost[];
-  isLoaded: boolean;
+type Library = {
+  saved: SavedEntry[];
+  folders: Folder[];
+  loaded: boolean;
+  /** Loads the library once, the first time a save button needs it. */
   ensureLoaded: () => void;
   refetch: () => Promise<void>;
-  updateLocal: (fn: (prev: SavedPost[]) => SavedPost[]) => void;
+  /** Optimistic local change; the next refetch corrects it if the server disagreed. */
+  update: (fn: (prev: { saved: SavedEntry[]; folders: Folder[] }) => { saved: SavedEntry[]; folders: Folder[] }) => void;
 };
 
-const SavedPostsContext = createContext<SavedPostsContextType>({
-  savedPosts: [],
-  isLoaded: false,
+const LibraryContext = createContext<Library>({
+  saved: [],
+  folders: [],
+  loaded: false,
   ensureLoaded: () => {},
   refetch: async () => {},
-  updateLocal: () => {},
+  update: () => {},
 });
 
 export function useSavedPosts() {
-  return useContext(SavedPostsContext);
+  return useContext(LibraryContext);
 }
 
+/**
+ * The signed-in reader's saved articles and folders, shared by every save
+ * button on a page so a listing of twenty cards makes one request, not twenty.
+ * Nothing is fetched for visitors who are not signed in.
+ */
 export default function SavedPostsProvider({ children }: { children: React.ReactNode }) {
-  const { data: session } = useSession();
-  const [savedPosts, setSavedPosts] = useState<SavedPost[]>([]);
-  const [isLoaded, setIsLoaded] = useState(false);
-  const fetchedRef = useRef(false);
+  const { status } = useSession();
+  const [state, setState] = useState<{ saved: SavedEntry[]; folders: Folder[] }>({ saved: [], folders: [] });
+  const [loaded, setLoaded] = useState(false);
+  const fetched = useRef(false);
 
   const refetch = useCallback(async () => {
-    if (!session) {
-      setSavedPosts([]);
-      setIsLoaded(true);
+    if (status !== "authenticated") {
+      setLoaded(true);
       return;
     }
-    const res = await fetch("/api/user/saved-posts");
-    if (res.ok) {
-      setSavedPosts(await res.json());
+    try {
+      const res = await fetch("/api/me/saved", { cache: "no-store" });
+      if (res.ok) {
+        const data = (await res.json()) as { saved: SavedEntry[]; folders: Folder[] };
+        setState({ saved: data.saved, folders: data.folders });
+      }
+    } finally {
+      setLoaded(true);
     }
-    setIsLoaded(true);
-  }, [session]);
+  }, [status]);
 
   const ensureLoaded = useCallback(() => {
-    if (fetchedRef.current) return;
-    fetchedRef.current = true;
-    refetch();
-  }, [refetch]);
-
-  const updateLocal = useCallback((fn: (prev: SavedPost[]) => SavedPost[]) => {
-    setSavedPosts(fn);
-  }, []);
+    if (fetched.current || status !== "authenticated") return;
+    fetched.current = true;
+    void refetch();
+  }, [refetch, status]);
 
   return (
-    <SavedPostsContext.Provider value={{ savedPosts, isLoaded, ensureLoaded, refetch, updateLocal }}>
+    <LibraryContext.Provider value={{ ...state, loaded, ensureLoaded, refetch, update: setState }}>
       {children}
-    </SavedPostsContext.Provider>
+    </LibraryContext.Provider>
   );
 }

@@ -18,30 +18,16 @@ export default async function AuthLayout({
               CodeFromScratch
             </span>
           </Link>
-          <p className="mt-4 text-lg font-semibold text-foreground">
-            Master web development with hands-on tutorials
-          </p>
+          <p className="mt-4 text-lg font-semibold text-foreground">Join the conversation under the articles</p>
           <p className="mt-2 text-sm text-muted">
-            Join developers who are leveling up their skills with in-depth guides, premium resources, and a supportive community.
+            Ask a question, point out a mistake, share how you solved it. Reading stays free and needs no account.
           </p>
 
-          {/* Social proof */}
-          <div className="mt-8 flex items-center justify-center gap-6 text-xs text-muted-foreground">
-            <div className="text-center">
-              <p className="text-lg font-bold text-foreground">Free</p>
-              <p>to start</p>
-            </div>
-            <div className="h-8 w-px bg-border" />
-            <div className="text-center">
-              <p className="text-lg font-bold text-foreground">10+</p>
-              <p>articles</p>
-            </div>
-            <div className="h-8 w-px bg-border" />
-            <div className="text-center">
-              <p className="text-lg font-bold text-foreground">Pro</p>
-              <p>content</p>
-            </div>
-          </div>
+          <ul className="mt-8 space-y-2 text-left text-sm text-muted-foreground">
+            <li>No password: Google, GitHub or a link to your email.</li>
+            <li>Your email address is never shown.</li>
+            <li>Delete your account and comments at any time.</li>
+          </ul>
         </div>
       </div>
 

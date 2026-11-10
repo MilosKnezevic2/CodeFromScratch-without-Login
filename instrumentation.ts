@@ -17,7 +17,13 @@ export async function register() {
 }
 
 /**
- * Forward nested request errors to Sentry so they aren't swallowed by
- * Next's default error handling. No-op when Sentry's DSN is unset.
+ * Forwards errors thrown while rendering or in route handlers to Sentry and
+ * waits until the report has left. On Vercel the function can be frozen as
+ * soon as the response is out; a deliberate server error from the admin
+ * portal was initialised-and-captured but never arrived until this waited.
+ * No-op when Sentry is not initialised.
  */
-export const onRequestError = Sentry.captureRequestError;
+export const onRequestError: typeof Sentry.captureRequestError = async (...args) => {
+  Sentry.captureRequestError(...args);
+  await Sentry.flush(2000);
+};

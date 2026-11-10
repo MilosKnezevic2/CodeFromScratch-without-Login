@@ -20,6 +20,8 @@ import UpNextCard from "@/components/blog/UpNextCard";
 import ReadingProgress from "@/components/blog/ReadingProgress";
 import { shareImageUrl } from "@/lib/share-image";
 import ShareButtons from "@/components/blog/ShareButtons";
+import SavePostButton from "@/components/blog/SavePostButton";
+import ReadingTracker from "@/components/blog/ReadingTracker";
 import BackToTop from "@/components/blog/BackToTop";
 import PostNavigation from "@/components/blog/PostNavigation";
 import AuthorCard from "@/components/blog/AuthorCard";
@@ -31,7 +33,6 @@ import FontSizeToggle from "@/components/blog/FontSizeToggle";
 import TextSelectionShare from "@/components/blog/TextSelectionShare";
 import KeyboardNav from "@/components/blog/KeyboardNav";
 import MobileTocDrawer from "@/components/blog/MobileTocDrawer";
-import PostSignoff from "@/components/blog/PostSignoff";
 import FadeUp from "@/components/animations/FadeUp";
 
 import NewsletterCTA from "@/components/newsletter/NewsletterCTA";
@@ -152,6 +153,7 @@ export default async function PostPage({ params }: PageProps) {
   return (
     <>
       <ReadingProgress />
+      {features.registrationOpen && <ReadingTracker slug={slug} />}
       <BackToTop />
       <TextSelectionShare slug={slug} />
       <KeyboardNav headings={headings} />
@@ -187,29 +189,17 @@ export default async function PostPage({ params }: PageProps) {
       <div className="article-ambient mx-auto max-w-[1600px] px-0 pb-24 sm:px-6 sm:pt-8 lg:px-8">
         {/* Mobile TOC — sticky bar (save button hidden during launch) */}
         <div className="sticky top-[64px] z-30 mb-4 flex gap-2 border-b border-border bg-background/95 px-4 py-3 backdrop-blur-md sm:static sm:border-0 sm:bg-transparent sm:px-0 sm:py-0 sm:backdrop-blur-none 2xl:hidden">
-          <MobileTocDrawer headings={headings} />
+          <MobileTocDrawer headings={headings} comments={features.commentsEnabled && features.registrationOpen} />
         </div>
 
         <div className="relative flex justify-center gap-8 2xl:gap-20">
           {/* ── Left sidebar — TOC (desktop) ── */}
-          <aside className="hidden w-48 shrink-0 2xl:block 2xl:pr-8">
-            <div className="sticky top-24">
-              <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.15em] text-muted-foreground">
-                On this page
-              </p>
-              <TableOfContents headings={headings} />
-              <div className="mt-8 space-y-3 border-t border-border/30 pt-5">
+          <aside className="hidden w-64 shrink-0 2xl:block 2xl:pr-2">
+            {/* Never taller than the screen: a long contents list scrolls inside, the font control stays in reach. */}
+            <div className="sticky top-24 flex max-h-[calc(100dvh-9rem)] flex-col">
+              <TableOfContents headings={headings} comments={features.commentsEnabled && features.registrationOpen} />
+              <div className="mt-4 shrink-0 border-t border-border/30 pt-4">
                 <FontSizeToggle />
-                <p className="text-[11px] text-muted-foreground">
-                  <kbd className="rounded border border-border/50 px-1 py-0.5 text-[10px]">
-                    j
-                  </kbd>{" "}
-                  /{" "}
-                  <kbd className="rounded border border-border/50 px-1 py-0.5 text-[10px]">
-                    k
-                  </kbd>{" "}
-                  navigate headings
-                </p>
               </div>
             </div>
           </aside>
@@ -332,6 +322,11 @@ export default async function PostPage({ params }: PageProps) {
                     {post.excerpt}
                   </p>
                 )}
+                {features.registrationOpen && (
+                  <div className="mt-6 flex justify-center">
+                    <SavePostButton postSlug={slug} showSignedOut />
+                  </div>
+                )}
               </FadeUp>
             </header>
 
@@ -344,7 +339,7 @@ export default async function PostPage({ params }: PageProps) {
             </div>
 
             {/* ── End-of-read footer ── */}
-            <footer className="mt-16">
+            <footer className="mt-16 px-4 sm:px-0">
               {/* Tags */}
               {post.tags && post.tags.length > 0 && (
                 <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2 border-t border-border pt-8">
@@ -370,25 +365,14 @@ export default async function PostPage({ params }: PageProps) {
                 </div>
               )}
 
-              {/* Author sign-off */}
-              {post.author && (
-                <div className="mt-8">
-                  <PostSignoff
-                    author={post.author}
-                    publishedAt={post.publishedAt}
-                    location="Graz"
-                  />
-                </div>
-              )}
 
-              {/* Share row — reactions + save hidden during launch */}
-              <div className="mt-10 flex flex-wrap items-center justify-end gap-6 border-t border-border pt-8">
-                <ShareButtons title={post.title} slug={slug} />
-              </div>
+
+
+
 
               {/* Author bio card */}
               {post.author && (
-                <div className="mt-12">
+                <div className="mt-8">
                   <AuthorCard
                     name={post.author.name}
                     bio={post.author.bio}
@@ -397,24 +381,34 @@ export default async function PostPage({ params }: PageProps) {
                     github={post.author.github}
                     website={post.author.website}
                     linkedin={post.author.linkedin}
+                    meta={[
+                      "Graz",
+                      post.publishedAt && new Date(post.publishedAt).toLocaleDateString("en-GB", { month: "long", year: "numeric" }),
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
                   />
                 </div>
               )}
-
+              {/* Share row — reactions + save hidden during launch */}
+              <div className="mt-8 flex flex-wrap items-center justify-end gap-6 border-t border-border pt-8">
+                {features.registrationOpen && <SavePostButton postSlug={slug} />}
+                <ShareButtons title={post.title} slug={slug} />
+              </div>
+              {/* Comments come straight after the article they discuss; they need reader accounts too (Settings > Features). */}
+              {features.commentsEnabled && features.registrationOpen && (
+                <div className="mt-12">
+                  <Comments slug={slug} />
+                </div>
+              )}
               <KeepReading picks={picks} />
 
-              {/* Newsletter CTA and comments: switched in the portal (Settings, Features). */}
+              {/* Newsletter CTA: switched in the portal (Settings, Features). */}
               {features.articleNewsletterCard && (
                 <div className="mt-12">
                   <NewsletterCTA />
                 </div>
               )}
-              {features.commentsEnabled && (
-                <div className="mt-12">
-                  <Comments />
-                </div>
-              )}
-
               {/* Prev/next */}
               <PostNavigation prev={prev} next={next} />
             </footer>

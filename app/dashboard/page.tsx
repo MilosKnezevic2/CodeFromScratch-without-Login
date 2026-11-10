@@ -1,379 +1,243 @@
-import { requireAuth } from "@/lib/auth-helpers";
-import { prisma } from "@/lib/prisma";
-import { getPostsBySlugList } from "@/lib/sanity/queries";
-import { getRecommendationsForUser, getTrendingPosts } from "@/lib/recommendations";
+import type { Metadata } from "next";
 import Link from "next/link";
-import Image from "next/image";
-import { urlFor } from "@/lib/sanity/image";
+import { after } from "next/server";
+import { prisma } from "@/lib/prisma";
+import { loadDesk } from "@/lib/reader/desk";
+import { formatDuration, minutesLeft, pickForYou } from "@/lib/reader/rules";
+import { requireReader } from "@/lib/reader/session";
+import Greeting from "./Greeting";
+import { ActivityCalendar, Bar, Cover, Eyebrow, GoalRing, SectionCard } from "./_ui/parts";
 
-function calculateStreak(dates: Date[]): number {
-  if (dates.length === 0) return 0;
-  const uniqueDays = [...new Set(dates.map((d) => d.toISOString().split("T")[0]))].sort().reverse();
-  const today = new Date().toISOString().split("T")[0];
-  const yesterday = new Date(Date.now() - 86400000).toISOString().split("T")[0];
+export const metadata: Metadata = {
+  title: "Your dashboard",
+  robots: { index: false, follow: false },
+};
 
-  if (uniqueDays[0] !== today && uniqueDays[0] !== yesterday) return 0;
-
-  let streak = 1;
-  for (let i = 1; i < uniqueDays.length; i++) {
-    const prev = new Date(uniqueDays[i - 1]);
-    const curr = new Date(uniqueDays[i]);
-    const diff = (prev.getTime() - curr.getTime()) / 86400000;
-    if (diff === 1) streak++;
-    else break;
-  }
-  return streak;
+function plural(n: number, one: string, many = `${one}s`): string {
+  return `${n} ${n === 1 ? one : many}`;
 }
 
-export default async function DashboardPage() {
-  const user = await requireAuth();
+export default async function DashboardHome() {
+  const reader = await requireReader("/dashboard");
+  const desk = await loadDesk(reader.id);
+  const { user, week, stats, bySlug } = desk;
 
-  const [subscription, savedCount, collectionsCount, ebooksCount, readingHistory] =
-    await Promise.all([
-      prisma.subscription.findUnique({ where: { userId: user.id } }),
-      prisma.savedPost.count({ where: { userId: user.id } }),
-      prisma.collection.count({ where: { userId: user.id } }),
-      prisma.ebookPurchase.count({ where: { userId: user.id } }),
-      prisma.readingHistory.findMany({
-        where: { userId: user.id },
-        orderBy: { readAt: "desc" },
-        take: 20,
-      }),
-    ]);
+  // "New since your last visit" compares with the visit before this one.
+  after(() => prisma.user.update({ where: { id: reader.id }, data: { dashboardSeenAt: new Date() } }).then(() => undefined));
 
-  const isPro = subscription?.plan === "PRO" || subscription?.plan === "PRO_PLUS";
+  const savedSet = new Set(desk.saved.map((s) => s.postSlug));
+  const picks = pickForYou(desk.posts, desk.history, savedSet, user.dashboardSeenAt).flatMap((p) => {
+    const post = bySlug.get(p.slug);
+    return post ? [{ ...p, post }] : [];
+  });
+  const continueItems = desk.inProgress.slice(0, 3).flatMap((h) => {
+    const post = bySlug.get(h.postSlug);
+    return post ? [{ h, post }] : [];
+  });
+  const recentSaved = desk.saved.slice(0, 4).flatMap((s) => {
+    const post = bySlug.get(s.postSlug);
+    return post ? [post] : [];
+  });
+  const fresh = desk.history.length === 0 && desk.saved.length === 0;
+  const left = Math.max(0, week.goal - week.thisWeek);
 
-  // Fetch recommendations and trending in parallel
-  const [recommended, trending] = await Promise.all([
-    getRecommendationsForUser(user.id, 4).catch(() => []),
-    getTrendingPosts(4).catch(() => []),
-  ]);
-  const streak = calculateStreak(readingHistory.map((r) => r.readAt));
-
-  // Split into continue reading (incomplete) and recently read (completed)
-  const continueReading = readingHistory.filter((r) => !r.completedAt && r.scrollPercent < 90);
-  const recentlyRead = readingHistory.filter((r) => r.completedAt || r.scrollPercent >= 90);
-
-  // Batch fetch post data from Sanity
-  const allSlugs = readingHistory.map((r) => r.postSlug);
-  const postData = allSlugs.length > 0 ? await getPostsBySlugList(allSlugs) : [];
-  const postMap = new Map(postData.map((p) => [p.slug.current, p]));
-
-  const interests = (user as unknown as { interests: string[] }).interests;
-  const hasInterests = Array.isArray(interests) && interests.length > 0;
-
-  const stats = [
-    {
-      label: "Saved Posts",
-      value: savedCount,
-      href: "/dashboard/saved",
-      icon: "M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z",
-      gradient: "from-teal-500/15 to-cyan-500/5",
-      iconBg: "bg-teal-500/10",
-      iconColor: "text-teal-400",
-    },
-    {
-      label: "Collections",
-      value: collectionsCount,
-      href: "/dashboard/collections",
-      icon: "M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10",
-      gradient: "from-cyan-500/15 to-blue-500/5",
-      iconBg: "bg-cyan-500/10",
-      iconColor: "text-cyan-400",
-    },
-    {
-      label: "Articles Read",
-      value: recentlyRead.length,
-      href: "/dashboard/history",
-      icon: "M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25",
-      gradient: "from-violet-500/15 to-purple-500/5",
-      iconBg: "bg-violet-500/10",
-      iconColor: "text-violet-400",
-    },
-  ];
+  const headline = !user.trackReading
+    ? "Reading tracking is off, so nothing new is counted. You can turn it on in Profile and settings."
+    : week.reached
+      ? `You reached this week’s goal${week.streak > 1 ? `: ${week.streak} weeks in a row` : ""}. Anything more is a bonus.`
+      : week.thisWeek === 0
+        ? `Your goal is ${plural(week.goal, "article")} a week. Start with one of the picks below.`
+        : `${plural(week.thisWeek, "article")} this week. ${left === 1 ? "One more" : `${left} more`} and you reach your goal.`;
 
   return (
     <div className="space-y-8">
-      {/* Welcome header */}
-      <div className="relative overflow-hidden rounded-2xl border border-border bg-surface p-8">
-        <div className="pointer-events-none absolute -right-20 -top-20 h-60 w-60 rounded-full bg-accent/5 blur-3xl" />
-        <div className="pointer-events-none absolute -left-10 -bottom-10 h-40 w-40 rounded-full bg-accent-2/5 blur-3xl" />
-
-        <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <div className="flex items-center gap-3">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10">
-                <span className="text-xl font-bold text-accent">
-                  {(user.name || "U").charAt(0).toUpperCase()}
-                </span>
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-foreground">
-                  Welcome back, {user.name || "there"}
-                </h1>
-                <p className="text-sm text-muted-foreground">
-                  Here&apos;s an overview of your account
-                </p>
-              </div>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            {streak > 0 && (
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-orange-500/10 px-3 py-1.5 text-xs font-bold text-orange-400 ring-1 ring-orange-500/20">
-                🔥 {streak} day streak
-              </span>
-            )}
-            <span
-              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-bold ${
-                isPro
-                  ? "bg-accent/10 text-accent ring-1 ring-accent/20"
-                  : "bg-surface-2 text-muted-foreground ring-1 ring-border"
-              }`}
-            >
-              {isPro && (
-                <span className="relative flex h-2 w-2">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent opacity-75" />
-                  <span className="relative inline-flex h-2 w-2 rounded-full bg-accent" />
-                </span>
-              )}
-              {subscription?.plan || "FREE"} Plan
-            </span>
-          </div>
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <Greeting firstName={reader.name?.split(" ")[0] ?? null} />
+          <p className="mt-2 text-base text-muted">{headline}</p>
         </div>
+        <Link href="/blog" className="inline-flex min-h-11 items-center rounded-xl bg-accent px-5 text-sm font-bold text-accent-foreground transition hover:opacity-90">
+          Find something to read
+        </Link>
       </div>
 
-      {/* Personalize CTA */}
-      {!hasInterests && (
-        <Link
-          href="/onboarding"
-          className="group flex items-center gap-4 rounded-2xl border border-accent/20 bg-accent/5 p-5 transition hover:bg-accent/10"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
-            <svg className="h-5 w-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
+      <section aria-label="This week" className="grid gap-4 md:grid-cols-3 lg:grid-cols-2 xl:grid-cols-3">
+        <div className="flex items-center gap-5 rounded-2xl border border-border bg-surface p-5">
+          <GoalRing done={week.thisWeek} goal={week.goal} />
+          <div>
+            <Eyebrow>Weekly goal</Eyebrow>
+            <p className="mt-1.5 text-lg font-bold text-foreground">
+              {week.thisWeek} of {plural(week.goal, "article")}
+            </p>
+            <p className="mt-1 text-sm text-muted">
+              Resets on Monday ·{" "}
+              <Link href="/dashboard/account#goal" className="text-accent hover:underline">
+                Change goal
+              </Link>
+            </p>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-border bg-surface p-5">
+          <Eyebrow>Streak</Eyebrow>
+          <p className="mt-1.5 flex items-center gap-2 text-lg font-bold text-foreground">
+            <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-amber-400">
+              <path d="M12 3c1 3.5 5 5.5 5 10a5 5 0 0 1-10 0c0-2 1-3.5 2-4.5 0 2 1 3 2 3 0-3-1-5.5 1-8.5z" />
             </svg>
+            {week.streak > 0 ? `${plural(week.streak, "week")} in a row` : "No streak yet"}
+          </p>
+          <div className="mt-4 flex gap-1.5" role="img" aria-label={`Last 8 weeks: goal reached in ${week.recent.filter((w) => w.reached).length}`}>
+            {week.recent.map((w, i) => (
+              <span key={i} className={`h-2 flex-1 rounded-full ${w.reached ? "bg-accent" : w.current ? "bg-accent/25" : "bg-surface-2"}`} />
+            ))}
           </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">Personalize your experience</p>
-            <p className="text-xs text-muted-foreground">Pick your topics to get tailored recommendations</p>
-          </div>
-          <svg className="h-4 w-4 text-accent transition group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-          </svg>
-        </Link>
+          <p className="mt-3 text-sm text-muted">A week counts when you reach your goal.</p>
+        </div>
+        <div className="rounded-2xl border border-border bg-surface p-5 lg:col-span-2 xl:col-span-1">
+          <Eyebrow>Whole site</Eyebrow>
+          <p className="mt-1.5 text-lg font-bold text-foreground">
+            {stats.read} of {stats.total} articles · {stats.percentOfSite}%
+          </p>
+          <Bar percent={stats.percentOfSite} label="Share of the site read" className="mt-4 h-2" />
+          <p className="mt-3 text-sm text-muted">{stats.seconds > 0 ? `${formatDuration(stats.seconds)} of reading so far` : "Your reading time adds up here"}</p>
+        </div>
+      </section>
+
+      {fresh && (
+        <SectionCard className="border-accent/40">
+          <h2 className="text-lg font-extrabold text-foreground">Start here</h2>
+          <p className="mt-1 max-w-2xl text-sm leading-relaxed text-muted">
+            Open any article while logged in and it appears here with how far you got. Press Save on an article to keep it in your library, and sort it into folders
+            later.
+          </p>
+        </SectionCard>
       )}
 
-      {/* Continue Reading */}
-      {continueReading.length > 0 && (
-        <section>
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            Continue Reading
-          </h2>
-          <div className="space-y-3">
-            {continueReading.slice(0, 3).map((item) => {
-              const post = postMap.get(item.postSlug);
-              if (!post) return null;
+      {continueItems.length > 0 && (
+        <section aria-labelledby="continue-h">
+          <div className="mb-3 flex items-baseline justify-between gap-4">
+            <h2 id="continue-h" className="text-xl font-extrabold text-foreground">
+              Continue reading
+            </h2>
+            {desk.inProgress.length > 3 && (
+              <Link href="/dashboard/reading" className="text-sm text-accent hover:underline">
+                All {desk.inProgress.length} in progress
+              </Link>
+            )}
+          </div>
+          <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            {continueItems.map(({ h, post }) => {
+              const mins = minutesLeft(post.readingTime, h.lastPercent);
               return (
-                <Link
-                  key={item.id}
-                  href={`/blog/${item.postSlug}`}
-                  className="group flex gap-4 rounded-xl border border-border bg-surface p-4 transition hover:border-accent/20"
-                >
-                  {post.featuredImage?.asset && (
-                    <div className="hidden h-16 w-24 shrink-0 overflow-hidden rounded-lg sm:block">
-                      <Image
-                        src={urlFor(post.featuredImage).width(96).height(64).quality(75).url()}
-                        alt={post.title}
-                        width={96}
-                        height={64}
-                        className="h-full w-full object-cover"
-                      />
+                <li key={h.postSlug}>
+                  <Link href={`/blog/${h.postSlug}`} className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition hover:border-accent/50">
+                    <Cover post={post} sizes="(min-width: 1280px) 20rem, (min-width: 640px) 45vw, 100vw" className="aspect-[1200/630] w-full border-b border-border" />
+                    <div className="flex flex-1 flex-col gap-3 p-4">
+                      <p className="font-bold leading-snug text-foreground line-clamp-2 group-hover:text-accent">{post.title}</p>
+                      <Bar percent={h.lastPercent} label={`Where you stopped: ${h.lastPercent}%`} className="mt-auto" />
+                      <p className="flex items-center justify-between text-sm text-muted">
+                        <span>
+                          {h.lastPercent}%{mins ? ` · ${mins} min left` : ""}
+                        </span>
+                        <span className="font-bold text-accent">Resume</span>
+                      </p>
                     </div>
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold text-foreground group-hover:text-accent transition">
-                      {post.title}
-                    </p>
-                    <div className="mt-2 flex items-center gap-3">
-                      <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-2">
-                        <div
-                          className="h-full rounded-full bg-gradient-to-r from-accent to-accent-2 transition-all"
-                          style={{ width: `${item.scrollPercent}%` }}
-                        />
-                      </div>
-                      <span className="shrink-0 text-xs text-muted-foreground">
-                        {item.scrollPercent}%
-                      </span>
-                    </div>
-                  </div>
-                </Link>
+                  </Link>
+                </li>
               );
             })}
-          </div>
+          </ul>
         </section>
       )}
 
-      {/* Stats grid */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        {stats.map((stat) => (
-          <Link
-            key={stat.label}
-            href={stat.href}
-            className="group relative overflow-hidden rounded-2xl border border-border bg-surface p-6 transition-all duration-300 hover:border-accent/20 hover:shadow-[0_0_40px_rgba(45,212,191,0.06)]"
-          >
-            <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 transition-opacity duration-300 group-hover:opacity-100`} />
-            <div className="relative">
-              <div className="flex items-center justify-between">
-                <div className={`flex h-11 w-11 items-center justify-center rounded-xl ${stat.iconBg}`}>
-                  <svg className={`h-5 w-5 ${stat.iconColor}`} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d={stat.icon} />
-                  </svg>
-                </div>
-                <div className="flex h-8 w-8 items-center justify-center rounded-full border border-border transition group-hover:border-accent/30 group-hover:bg-accent/5">
-                  <svg className="h-4 w-4 text-muted-foreground transition-transform duration-300 group-hover:translate-x-0.5 group-hover:text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                  </svg>
-                </div>
-              </div>
-              <p className="mt-5 text-3xl font-extrabold text-foreground">{stat.value}</p>
-              <p className="mt-1 text-sm font-medium text-muted-foreground">{stat.label}</p>
-            </div>
-          </Link>
-        ))}
-      </div>
+      <div className="grid gap-4 xl:grid-cols-2">
+        <SectionCard>
+          <h2 className="text-lg font-extrabold text-foreground">Picked for you</h2>
+          <p className="mt-1 text-sm text-muted">From the topics you finish most. Articles published since your last visit are marked.</p>
+          {picks.length === 0 ? (
+            <p className="mt-4 text-sm text-muted">You have opened or saved every article on the site. New ones will show up here.</p>
+          ) : (
+            <ul className="mt-3">
+              {picks.map((p) => (
+                <li key={p.slug} className="border-t border-border first:border-t-0">
+                  <Link href={`/blog/${p.slug}`} className="group flex items-center gap-4 py-3">
+                    <Cover post={p.post} sizes="5rem" className="hidden aspect-square w-16 shrink-0 rounded-lg sm:flex" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block font-bold leading-snug text-foreground group-hover:text-accent">{p.post.title}</span>
+                      <span className="mt-1 block text-xs text-muted">
+                        {p.reason}
+                        {p.post.readingTime ? ` · ${p.post.readingTime} min` : ""}
+                      </span>
+                    </span>
+                    {p.isNew && <span className="rounded-md bg-accent/15 px-2 py-0.5 font-mono text-[10px] uppercase tracking-wider text-accent">New</span>}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+        </SectionCard>
 
-      {/* Recommended for You */}
-      {recommended.length > 0 && (
-        <section>
-          <div className="mb-4 flex items-center justify-between">
-            <h2 className="text-sm font-bold uppercase tracking-wider text-muted-foreground">
-              Recommended for You
-            </h2>
-            <Link href="/blog" className="text-xs font-medium text-accent hover:text-accent-2 transition">
-              See all →
+        <SectionCard>
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="text-lg font-extrabold text-foreground">Your topics</h2>
+            <Link href="/dashboard/reading" className="text-sm text-accent hover:underline">
+              Progress
             </Link>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {recommended.map((post) => (
-              <Link
-                key={post._id}
-                href={`/blog/${post.slug.current}`}
-                className="group flex gap-3 rounded-xl border border-border bg-surface p-3 transition hover:border-accent/20"
-              >
-                {post.featuredImage?.asset && (
-                  <div className="hidden h-14 w-20 shrink-0 overflow-hidden rounded-lg sm:block">
-                    <Image
-                      src={urlFor(post.featuredImage).width(80).height(56).quality(75).url()}
-                      alt={post.title}
-                      width={80}
-                      height={56}
-                      className="h-full w-full object-cover"
-                    />
-                  </div>
-                )}
-                <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 text-sm font-semibold text-foreground group-hover:text-accent transition">
-                    {post.title}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {post.categories?.[0]?.title}{post.readingTime ? ` · ${post.readingTime} min` : ""}
-                  </p>
+          <p className="mt-1 text-sm text-muted">Finish every article in a topic to tick it off.</p>
+          <ul className="mt-4 space-y-3.5">
+            {desk.topics.slice(0, 6).map((t) => (
+              <li key={t.name}>
+                <div className="mb-1.5 flex justify-between gap-4 text-sm">
+                  <span className="text-foreground">{t.name}</span>
+                  <span className={`font-mono text-xs ${t.read === t.total ? "text-accent" : "text-muted-foreground"}`}>{t.read === t.total ? "Done" : `${t.read} of ${t.total}`}</span>
                 </div>
-              </Link>
+                <Bar percent={(t.read / t.total) * 100} label={`${t.name}: ${t.read} of ${t.total} read`} />
+              </li>
             ))}
-          </div>
-        </section>
-      )}
-
-      {/* Trending This Week */}
-      {trending.length > 0 && recommended.length === 0 && (
-        <section>
-          <h2 className="mb-4 text-sm font-bold uppercase tracking-wider text-muted-foreground">
-            Trending This Week
-          </h2>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {trending.map((post) => (
-              <Link
-                key={post._id}
-                href={`/blog/${post.slug.current}`}
-                className="group flex gap-3 rounded-xl border border-border bg-surface p-3 transition hover:border-accent/20"
-              >
-                <div className="min-w-0 flex-1">
-                  <p className="line-clamp-2 text-sm font-semibold text-foreground group-hover:text-accent transition">
-                    {post.title}
-                  </p>
-                  <p className="mt-1 text-xs text-muted-foreground">
-                    {post.categories?.[0]?.title}{post.readingTime ? ` · ${post.readingTime} min` : ""}
-                  </p>
-                </div>
-              </Link>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Quick actions */}
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Link
-          href="/blog"
-          className="group flex items-center gap-4 rounded-2xl border border-border bg-surface p-5 transition hover:border-accent/20"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
-            <svg className="h-5 w-5 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M12 7.5h1.5m-1.5 3h1.5m-7.5 3h7.5m-7.5 3h7.5m3-9h3.375c.621 0 1.125.504 1.125 1.125V18a2.25 2.25 0 01-2.25 2.25M16.5 7.5V18a2.25 2.25 0 002.25 2.25M16.5 7.5V4.875c0-.621-.504-1.125-1.125-1.125H4.125C3.504 3.75 3 4.254 3 4.875V18a2.25 2.25 0 002.25 2.25h13.5M6 7.5h3v3H6v-3z" />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">Browse Articles</p>
-            <p className="text-xs text-muted-foreground">Discover new tutorials and guides</p>
-          </div>
-          <svg className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-          </svg>
-        </Link>
-        <Link
-          href="/dashboard/profile"
-          className="group flex items-center gap-4 rounded-2xl border border-border bg-surface p-5 transition hover:border-accent/20"
-        >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10">
-            <svg className="h-5 w-5 text-violet-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-              <path strokeLinecap="round" strokeLinejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-            </svg>
-          </div>
-          <div className="flex-1">
-            <p className="text-sm font-semibold text-foreground">Edit Profile</p>
-            <p className="text-xs text-muted-foreground">Update your name and settings</p>
-          </div>
-          <svg className="h-4 w-4 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-            <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-          </svg>
-        </Link>
+          </ul>
+        </SectionCard>
       </div>
 
-      {/* Upgrade CTA */}
-      {!isPro && (
-        <div className="relative overflow-hidden rounded-2xl border border-accent/20 bg-surface p-8">
-          <div className="pointer-events-none absolute -right-10 -top-10 h-48 w-48 rounded-full bg-accent/8 blur-3xl" />
-          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10">
-                <svg className="h-6 w-6 text-accent" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z" />
-                </svg>
-              </div>
-              <div>
-                <h2 className="text-lg font-bold text-foreground">Upgrade to Pro</h2>
-                <p className="text-sm text-muted-foreground">
-                  Unlock premium articles, free ebooks, and exclusive content.
-                </p>
-              </div>
-            </div>
-            <Link href="/pricing" className="cta-glow shrink-0 rounded-xl px-6 py-3 text-sm font-bold">
-              View Plans
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
+        <SectionCard>
+          <h2 className="text-lg font-extrabold text-foreground">Your reading, last 12 weeks</h2>
+          <p className="mb-4 mt-1 text-sm text-muted">Each square is a day; brighter means more minutes. Days count in UTC.</p>
+          <ActivityCalendar cells={desk.activity} activeDays={desk.activeDays} />
+        </SectionCard>
+
+        <SectionCard>
+          <div className="flex items-baseline justify-between gap-4">
+            <h2 className="text-lg font-extrabold text-foreground">Recently saved</h2>
+            <Link href="/dashboard/saved" className="text-sm text-accent hover:underline">
+              Open library
             </Link>
           </div>
-        </div>
-      )}
+          {recentSaved.length === 0 ? (
+            <p className="mt-3 text-sm text-muted">Nothing saved yet. Use the Save button on any article.</p>
+          ) : (
+            <ul className="mt-2">
+              {recentSaved.map((post) => (
+                <li key={post.slug} className="border-t border-border first:border-t-0">
+                  <Link href={`/blog/${post.slug}`} className="block py-3 text-sm font-bold leading-snug text-foreground hover:text-accent">
+                    {post.title}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          <h3 className="mt-5 text-sm font-extrabold text-foreground">Milestones</h3>
+          <ul className="mt-3 space-y-2.5">
+            {desk.milestones.map((m) => (
+              <li key={m.label} className={`flex items-center gap-3 text-sm ${m.done ? "text-foreground" : "text-muted"}`}>
+                <span aria-hidden="true" className={`inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2 text-xs font-extrabold ${m.done ? "border-accent text-accent" : "border-border"}`}>
+                  {m.mark}
+                </span>
+                {m.label}
+              </li>
+            ))}
+          </ul>
+        </SectionCard>
+      </div>
     </div>
   );
 }

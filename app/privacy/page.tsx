@@ -16,7 +16,7 @@ export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-extrabold text-foreground">Privacy Policy</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Last updated: 30 October 2026</p>
+      <p className="mt-2 text-sm text-muted-foreground">Last updated: 3 November 2026</p>
 
       <div className="mt-10 space-y-8 text-sm leading-relaxed text-muted">
         <section>
@@ -26,7 +26,8 @@ export default function PrivacyPage() {
             <a href="mailto:office@codefromscratch.org" className={LINK}>office@codefromscratch.org</a>.
           </p>
           <p className="mt-2">
-            The site has no user accounts, no payments and no advertising. It sets no cookies.
+            Reading the site needs no account. You can create one to comment under the articles (section 2). The
+            site has no payments and no advertising.
           </p>
         </section>
 
@@ -37,6 +38,14 @@ export default function PrivacyPage() {
               <strong>Visiting the site.</strong> Our hosting provider (Vercel) processes technical request data, such
               as your IP address and the page you request, to deliver the site and keep it secure. Legal basis: our
               legitimate interest in running a secure website (Art. 6(1)(f) GDPR).
+            </li>
+            <li>
+              <strong>Error reports.</strong> When a page or the server runs into a programming error, a technical
+              report goes to Sentry: the error message and where in the code it happened, the page address, the
+              browser and operating system, and the country, which Sentry derives from the connection. It is set up not
+              to include names, email addresses, IP addresses, form contents or recordings of the page, and it is
+              stored in Sentry&rsquo;s EU region (Frankfurt). We use it to find and
+              fix faults. Legal basis: our legitimate interest in a site that works (Art. 6(1)(f) GDPR).
             </li>
             <li>
               <strong>Anonymous statistics.</strong> We use Vercel Web Analytics and Vercel Speed Insights to see which
@@ -86,16 +95,49 @@ export default function PrivacyPage() {
               so we can answer you. Legal basis: our legitimate interest in answering enquiries (Art. 6(1)(f) GDPR), or
               taking steps at your request. We keep the message only as long as it is needed to handle your request.
             </li>
+            <li id="accounts">
+              <strong>Reader account and comments.</strong> You can sign in with Google or GitHub, or with a one-time link
+              we email to you; there is no password on this site. We store your name, email address and profile picture
+              (from Google or GitHub, if you use them, or one you upload in your profile, which we shrink to 256 pixels and
+              strip of camera and location data) and a technical link to your account with them. A sign-in link is
+              stored in hashed form until it is used or expires after 30 minutes. If you comment, we store the text, the article and the time.
+              Your name and picture appear next to your comments; your email address is never shown. A reader&rsquo;s
+              first comment is checked by a person before it appears. We use the data to run your account and show your
+              comments. Legal basis: providing the account you asked for (Art. 6(1)(b) GDPR). You can see everything we
+              store and delete your account, with all your comments, at any time on your account page (Dashboard, then
+              Account, once you are logged in); we then delete it from our database at once.
+              Google or GitHub process your sign-in under their own privacy policies.
+            </li>
+            <li id="reading">
+              <strong>Your library and reading history.</strong> While you are logged in, we store the articles you save
+              and the folders you sort them into, and, for each article you open, how far you got, where you stopped and
+              how long it was open on your screen, plus the minutes you read on each day and the weekly goal you set. This
+              powers your dashboard (&ldquo;continue reading&rdquo;, your weekly goal and streak, the reading calendar, how
+              much of the site you have read) and is visible only to you. Legal basis: providing the account features you use
+              (Art. 6(1)(b) GDPR). You can switch reading tracking off, delete your reading history, or remove saved
+              articles at any time in the dashboard; deleting your account deletes all of it. Visitors who are not logged
+              in are never tracked this way.
+            </li>
+            <li id="reader-emails">
+              <strong>Reply emails and the Sunday reminder.</strong> Both are off until you turn them on in your profile.
+              With reply emails on, we email you when a reply to one of your comments is published, with the reply and a
+              link to it. With the Sunday reminder on, we email you on Sunday evenings the articles you left unfinished or
+              saved and your progress toward your weekly goal; when there is nothing to list, no email is sent. Legal basis:
+              your consent (Art. 6(1)(a) GDPR), which you can withdraw at any time with the link in every such email or the
+              switch in your profile. They are sent through the same email provider as the newsletter.
+            </li>
           </ul>
         </section>
 
         <section id="cookies">
           <h2 className="text-lg font-bold text-foreground">3. Cookies and local storage</h2>
           <p className="mt-2">
-            The public pages of this site set no cookies. Your browser stores your theme (light or dark) and text-size
-            choice in its local storage; this stays on your device and is never sent to us. Only the site
-            administrator has a login cookie, in a separate area that visitors do not use, and a local-storage marker
-            that keeps their own visits out of the counts.
+            Reading the site sets no cookies. If you sign in, the site sets one cookie that keeps you signed in, plus
+            short-lived ones that protect the sign-in itself; they are needed for the account to work and are deleted
+            when you sign out or after 30 days. Your browser stores your theme (light or dark) and text-size choice in
+            its local storage; this stays on your device and is never sent to us. The site administrator has a login
+            cookie, in a separate area that visitors do not use, and a local-storage marker that keeps their own
+            visits out of the counts.
           </p>
         </section>
 
@@ -103,9 +145,11 @@ export default function PrivacyPage() {
           <h2 className="text-lg font-bold text-foreground">4. Service providers who process data for us</h2>
           <ul className="mt-2 list-disc space-y-1 pl-5">
             <li><strong>Vercel</strong>: hosting, anonymous analytics and performance measurement</li>
-            <li><strong>Supabase</strong>: database for newsletter subscribers, contact messages and the daily visit totals</li>
-            <li><strong>Resend</strong>: sending the confirmation and newsletter emails</li>
+            <li><strong>Supabase</strong>: database for reader accounts and comments, newsletter subscribers, contact messages and the daily visit totals</li>
+            <li><strong>Google</strong> and <strong>GitHub</strong>: sign-in, if you choose them</li>
+            <li><strong>Resend</strong>: sending the confirmation, sign-in and newsletter emails</li>
             <li><strong>Sanity</strong>: content management for the articles (it holds our articles, not visitor data)</li>
+            <li><strong>Sentry</strong> (Functional Software, Inc.): error reports, stored in the EU region</li>
           </ul>
           <p className="mt-2">
             Some of these providers are based in, or process data in, the United States. They describe how they protect

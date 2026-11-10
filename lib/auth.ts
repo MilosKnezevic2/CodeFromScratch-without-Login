@@ -1,84 +1,70 @@
 import NextAuth from "next-auth";
 import { PrismaAdapter } from "@auth/prisma-adapter";
-import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
 import GitHub from "next-auth/providers/github";
+import Resend from "next-auth/providers/resend";
+import { LINK_MAX_AGE_S, linkAllowed, normalizeEmail, sendSignInLink } from "@/lib/email-sign-in";
 import { prisma } from "@/lib/prisma";
-import { verifyPassword } from "@/lib/credentials";
-import { consumeBackupCode, verifyTotpCode } from "@/lib/services/mfa";
+import { getSettings } from "@/lib/settings/store";
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  session: { strategy: "jwt" },
+  // 30 days, the length the privacy policy names for the sign-in cookie.
+  session: { strategy: "jwt", maxAge: 30 * 24 * 60 * 60 },
   pages: {
     signIn: "/login",
     error: "/login",
+    verifyRequest: "/login/check-email",
   },
+  // Google, GitHub, or a one-time link sent to any email address (GMX, Yahoo,
+  // Outlook, a private domain). No passwords: password sign-in was removed
+  // because its reset flow could take over any account whose inbox was
+  // reachable. One person is one account whichever way they sign in: the
+  // providers below return addresses they have verified, so linking by email
+  // is safe, and the email link proves the inbox itself.
   providers: [
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? [Google({
           clientId: process.env.GOOGLE_CLIENT_ID,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+          allowDangerousEmailAccountLinking: true,
         })]
       : []),
     ...(process.env.GITHUB_ID && process.env.GITHUB_SECRET
       ? [GitHub({
           clientId: process.env.GITHUB_ID,
           clientSecret: process.env.GITHUB_SECRET,
+          allowDangerousEmailAccountLinking: true,
         })]
       : []),
-    Credentials({
-      name: "credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" },
-        mfaCode: { label: "MFA code", type: "text" },
-        mfaType: { label: "MFA type", type: "text" },
-      },
-      async authorize(credentials) {
-        const email = credentials?.email as string | undefined;
-        const password = credentials?.password as string | undefined;
-        if (!email || !password) return null;
-
-        const user = await verifyPassword(email, password);
-        if (!user) return null;
-
-        if (user.mfaEnabled) {
-          const mfaCode =
-            typeof credentials?.mfaCode === "string"
-              ? credentials.mfaCode.trim()
-              : "";
-          const mfaType =
-            credentials?.mfaType === "backup" ? "backup" : "totp";
-
-          if (!mfaCode || !user.mfaSecret) return null;
-
-          if (mfaType === "backup") {
-            const remaining = await consumeBackupCode(
-              mfaCode,
-              user.mfaBackupCodes,
-            );
-            if (!remaining) return null;
-            await prisma.user.update({
-              where: { id: user.id },
-              data: { mfaBackupCodes: remaining },
-            });
-          } else {
-            const ok = verifyTotpCode(user.mfaSecret, mfaCode);
-            if (!ok) return null;
-          }
-        }
-
-        return {
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          image: user.image,
-        };
-      },
-    }),
+    ...(process.env.RESEND_API_KEY && process.env.EMAIL_FROM
+      ? [Resend({
+          from: process.env.EMAIL_FROM,
+          apiKey: process.env.RESEND_API_KEY,
+          maxAge: LINK_MAX_AGE_S,
+          normalizeIdentifier: normalizeEmail,
+          sendVerificationRequest: sendSignInLink,
+        })]
+      : []),
   ],
   callbacks: {
+    /**
+     * The Settings switch closes sign-in itself, not only the /login page:
+     * the provider routes under /api/auth stay reachable whatever the page
+     * does. A banned reader cannot start a new session either.
+     */
+    async signIn({ user, email }) {
+      if (!(await getSettings()).features.registrationOpen) return false;
+      // Asking for a sign-in link: cap how many go out (see lib/email-sign-in.ts).
+      if (email?.verificationRequest && user.email && !(await linkAllowed(user.email))) {
+        return "/login?error=TooManyLinks";
+      }
+      if (user.email) {
+        const existing = await prisma.user.findUnique({ where: { email: user.email }, select: { banned: true } });
+        if (existing?.banned) return false;
+      }
+      return true;
+    },
     async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
@@ -94,11 +80,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           where: { id: token.id as string },
           include: { subscription: true },
         });
-        if (dbUser) {
-          token.role = dbUser.role;
-          token.plan = dbUser.subscription?.plan ?? "FREE";
-          token.banned = dbUser.banned;
-        }
+        // A deleted or banned reader is signed out on their next request.
+        if (!dbUser || dbUser.banned) return null;
+        token.role = dbUser.role;
+        // An uploaded or removed profile picture shows in the header on the next request.
+        token.picture = dbUser.image;
+        token.plan = dbUser.subscription?.plan ?? "FREE";
+        token.banned = dbUser.banned;
       }
 
       return token;

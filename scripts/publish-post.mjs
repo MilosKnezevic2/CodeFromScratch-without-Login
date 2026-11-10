@@ -110,20 +110,36 @@ async function pingIndexNow(urls) {
   }
 }
 
+/**
+ * Asks the site to rebuild the article page and checks it answers 200. A
+ * rebuild that runs before the Sanity CDN lists the article caches a 404 for
+ * up to an hour (2026-11-10), so a 404 is retried: revalidate again, then
+ * look again, for up to a minute.
+ */
 async function verifyLive(slug) {
-  await fetch(`${SITE}/api/revalidate`, {
-    method: "POST",
-    headers: {
-      "content-type": "application/json",
-      ...(process.env.SANITY_REVALIDATE_SECRET
-        ? { "x-revalidate-secret": process.env.SANITY_REVALIDATE_SECRET }
-        : {}),
-    },
-    body: JSON.stringify({ _type: "post", slug: { current: slug } }),
-  });
-  const res = await fetch(`${SITE}/blog/${slug}`, { redirect: "follow" });
-  console.log(`live check: GET /blog/${slug} -> ${res.status}`);
-  if (!res.ok) process.exitCode = 1;
+  let status = 0;
+  for (let attempt = 0; attempt < 12; attempt++) {
+    await fetch(`${SITE}/api/revalidate`, {
+      method: "POST",
+      headers: {
+        "content-type": "application/json",
+        ...(process.env.SANITY_REVALIDATE_SECRET
+          ? { "x-revalidate-secret": process.env.SANITY_REVALIDATE_SECRET }
+          : {}),
+      },
+      body: JSON.stringify({ _type: "post", slug: { current: slug } }),
+    });
+    // Two reads: the first may still be served the stale page while the rebuild runs.
+    for (let read = 0; read < 2 && status !== 200; read++) {
+      if (read > 0) await new Promise((r) => setTimeout(r, 2000));
+      status = (await fetch(`${SITE}/blog/${slug}`, { redirect: "follow" })).status;
+    }
+    if (status === 200) break;
+    await new Promise((r) => setTimeout(r, 5000));
+  }
+  console.log(`live check: GET /blog/${slug} -> ${status}`);
+  if (status !== 200) process.exitCode = 1;
+  return status === 200;
 }
 
 async function prepare(slug) {
@@ -225,7 +241,12 @@ async function main() {
     }
   }
   if (APPLY) {
-    for (const j of todo) await verifyLive(j.slug);
+    // The site and the letter read through the Sanity CDN: wait until it
+    // lists the article before rebuilding the page or building the letter.
+    for (const j of todo) {
+      if (!(await waitUntilListed(j.slug))) console.error(`${j.slug}: the Sanity CDN does not list it after 2 minutes`);
+      j.live = await verifyLive(j.slug);
+    }
     if (todo.length > 0) await pingIndexNow(todo.map((j) => `${SITE}/blog/${j.slug}`));
   }
   // Every published article is announced to subscribers the same session
@@ -233,14 +254,43 @@ async function main() {
   // content-drafts/letter-<slug>.json, written by the weekly cycle and approved
   // with the article; --no-letter skips it (a re-flip, a rewrite).
   if (!args.includes("--no-letter")) {
-    for (const j of todo) sendLetter(j.slug);
+    for (const j of todo) {
+      if (APPLY && !j.live) {
+        console.error(`newsletter for ${j.slug} not sent: the page does not answer 200 yet. Send it once it does: npx tsx scripts/send-letter.mts --post ${j.slug} --letter-file content-drafts/letter-${j.slug}.json --apply --confirm auto`);
+        continue;
+      }
+      await sendLetter(j.slug);
+    }
   }
 }
 
 /** The brand mailbox gets a copy before the list does. */
 const LETTER_TEST_ADDRESS = "office@codefromscratch.org";
 
-function sendLetter(slug) {
+/**
+ * The site and the letter look the article up through the Sanity CDN,
+ * published and dated no later than Sanity's own now(). Straight after
+ * publishing, that can still miss: publishedAt comes from this computer's
+ * clock and the CDN briefly keeps the empty answer. Wait until this lookup
+ * finds the article (up to 2 minutes). The CDN caches per query, so the
+ * letter itself is also retried (in sendLetter).
+ */
+async function waitUntilListed(slug) {
+  const cdn = createClient({
+    projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
+    dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
+    apiVersion: "2024-01-01",
+    useCdn: true,
+  });
+  const query = `count(*[_type == "post" && slug.current == $slug && status == "published" && (!defined(publishedAt) || publishedAt <= now())])`;
+  for (let attempt = 0; attempt < 24; attempt++) {
+    if ((await cdn.fetch(query, { slug }).catch(() => 0)) > 0) return true;
+    await new Promise((r) => setTimeout(r, 5000));
+  }
+  return false;
+}
+
+async function sendLetter(slug) {
   const file = `content-drafts/letter-${slug}.json`;
   if (!existsSync(file)) {
     console.log(
@@ -260,6 +310,23 @@ function sendLetter(slug) {
     console.log(`
 newsletter for ${slug} (dry run):`);
     run([]);
+    return;
+  }
+  // The dry run before --apply asked the CDN for this exact letter query and
+  // got "does not exist"; the CDN keeps that answer for a while even after
+  // the article is listed (2026-11-10: page 200, letter still refused). So
+  // repeat the letter's own dry run, quietly, until it finds the article.
+  let ready = false;
+  for (let attempt = 0; attempt < 24 && !ready; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 5000));
+    ready =
+      spawnSync(process.execPath, [tsx, "scripts/send-letter.mts", "--post", slug, "--letter-file", file], {
+        stdio: "ignore",
+        env: { ...process.env, NEXT_PUBLIC_SITE_URL: SITE },
+      }).status === 0;
+  }
+  if (!ready) {
+    console.error(`newsletter: the letter still cannot find ${slug} after 2 minutes, so nothing was mailed. Send it later with: npx tsx scripts/send-letter.mts --post ${slug} --letter-file ${file} --apply --confirm auto`);
     return;
   }
   if (!run(["--test", LETTER_TEST_ADDRESS])) {

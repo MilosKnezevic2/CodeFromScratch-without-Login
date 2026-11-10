@@ -54,6 +54,7 @@ export interface NewsletterSettings {
 
 export interface FeatureSettings {
   commentsEnabled: boolean;
+  holdFirstComment: boolean;
   articleNewsletterCard: boolean;
   courseWaitlistOpen: boolean;
   registrationOpen: boolean;
@@ -124,6 +125,7 @@ export const DEFAULTS: Settings = {
   },
   features: {
     commentsEnabled: false,
+    holdFirstComment: true,
     articleNewsletterCard: true,
     courseWaitlistOpen: true,
     registrationOpen: false,
@@ -312,7 +314,13 @@ export const SECTION_INFO: Record<Section, SectionInfo> = {
         name: "commentsEnabled",
         label: "Comments under articles",
         type: "toggle",
-        help: "Uses Giscus (GitHub Discussions). It only appears once the Giscus keys are set on Vercel.",
+        help: "Readers who signed in with Google or GitHub can comment; everyone can read. Needs reader accounts (below) on as well. A reader's first comment waits for your approval in Comments.",
+      },
+      {
+        name: "holdFirstComment",
+        label: "Hold a reader's first comment for approval",
+        type: "toggle",
+        help: "Only a reader's first comment waits; after you approve one, their next comments go live at once. Comments with more than two links always wait. Turn off to publish everything at once and rely on reports and blocking.",
       },
       {
         name: "courseWaitlistOpen",
@@ -323,9 +331,9 @@ export const SECTION_INFO: Record<Section, SectionInfo> = {
       { name: "showSocialLinks", label: "Show social links in the footer and on the contact page", type: "toggle" },
       {
         name: "registrationOpen",
-        label: "Allow visitors to create user accounts",
+        label: "Reader accounts (sign in with Google or GitHub)",
         type: "toggle",
-        help: "Keep off. The privacy policy says the site has no user accounts; it must be rewritten before this goes on.",
+        help: "Opens /login and /account. No passwords: the privacy policy covers what the sign-in stores. Switching it off closes sign-in at once; existing accounts stay until deleted.",
       },
     ],
   },

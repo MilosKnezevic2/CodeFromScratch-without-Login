@@ -361,3 +361,62 @@ export async function getPostsBySlugList(slugs: string[]): Promise<PostSummary[]
     { slugs }
   );
 }
+
+export interface PostCard {
+  slug: string;
+  title: string;
+  readingTime?: number;
+  featuredImage?: { asset: { _ref: string }; alt?: string };
+  category?: string;
+}
+
+/** Title, cover and reading time for a set of articles, for a reader's dashboard. Unpublished ones drop out. */
+export async function getPostCards(slugs: string[]): Promise<Map<string, PostCard>> {
+  if (!isSanityConfigured || slugs.length === 0) return new Map();
+  const rows = await client.fetch<PostCard[]>(
+    `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now()) && slug.current in $slugs] {
+      "slug": slug.current, title, readingTime, featuredImage, "category": categories[0]->title
+    }`,
+    { slugs },
+  );
+  return new Map(rows.map((r) => [r.slug, r]));
+}
+
+export interface DeskPostCard extends PostCard {
+  publishedAt?: string;
+}
+
+/**
+ * Every published article as a card, for a reader's dashboard: the share of
+ * the site read, topics, picks. About one card per article, so one query.
+ */
+export async function getDeskPosts(): Promise<DeskPostCard[]> {
+  if (!isSanityConfigured) return [];
+  return client.fetch<DeskPostCard[]>(
+    `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] | order(publishedAt desc) {
+      "slug": slug.current, title, readingTime, featuredImage, publishedAt, "category": categories[0]->title
+    }`,
+  );
+}
+
+export interface FrontPostCard {
+  _id: string;
+  slug: string;
+  title: string;
+  excerpt?: string;
+  readingTime?: number;
+  publishedAt?: string;
+  featuredImage?: { asset: { _ref: string }; alt?: string };
+  category?: { title: string; slug: string };
+}
+
+/** Every published article, newest first, with what a front-page card shows. One query for the whole journal. */
+export async function getFrontPosts(): Promise<FrontPostCard[]> {
+  if (!isSanityConfigured) return [];
+  return client.fetch<FrontPostCard[]>(
+    `*[_type == "post" && status == "published" && (!defined(publishedAt) || publishedAt <= now())] | order(publishedAt desc) {
+      _id, "slug": slug.current, title, excerpt, readingTime, publishedAt, featuredImage,
+      "category": categories[0]->{ title, "slug": slug.current }
+    }`,
+  );
+}

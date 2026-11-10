@@ -20,7 +20,7 @@ const plans = [
     ],
     highlighted: false,
     cta: "Get Started",
-    ctaHref: "/register",
+    ctaHref: "/login",
   },
   {
     name: "Pro",
@@ -37,7 +37,7 @@ const plans = [
     ],
     highlighted: true,
     cta: "Upgrade to Pro",
-    ctaHref: "/register",
+    ctaHref: "/login",
   },
   {
     name: "Pro+",
@@ -53,7 +53,7 @@ const plans = [
     ],
     highlighted: false,
     cta: "Go Pro+",
-    ctaHref: "/register",
+    ctaHref: "/login",
   },
 ];
 
