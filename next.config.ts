@@ -11,6 +11,17 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "avatars.githubusercontent.com" },
     ],
   },
+  // A renamed article keeps its old address alive with a permanent redirect
+  // (the slug lives in Sanity; the redirect has to live here).
+  async redirects() {
+    return [
+      {
+        source: "/blog/react-state-management-in-2025-zustand-vs-redux-vs-context",
+        destination: "/blog/react-state-management-zustand-vs-redux-vs-context",
+        permanent: true,
+      },
+    ];
+  },
   async headers() {
     return [
       {

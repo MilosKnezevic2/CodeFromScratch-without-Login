@@ -11,6 +11,8 @@ export interface Area {
   name: string;
   /** One line under the section heading: why the group exists. */
   why: string;
+  /** Search title of the area page; falls back to "<name> tutorials". */
+  searchTitle?: string;
   categories: string[];
 }
 
@@ -19,6 +21,7 @@ export const AREAS: Area[] = [
     slug: "frontend",
     name: "Frontend",
     why: "HTML, CSS, layouts and React",
+    searchTitle: "Frontend Tutorials: HTML, CSS and React",
     categories: ["web-fundamentals", "javascript-frameworks", "css-ecosystem", "testing", "design-and-ui-ux"],
   },
   {
@@ -39,6 +42,7 @@ export const AREAS: Area[] = [
     slug: "production",
     name: "Production",
     why: "Deploys, logging, security and rollbacks",
+    searchTitle: "Production Tutorials: Deploys, Logging, Security",
     categories: ["cloud-and-hosting", "devops-and-infrastructure", "security", "performance", "build-tools-and-tooling"],
   },
   {
