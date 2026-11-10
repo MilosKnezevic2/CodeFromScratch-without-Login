@@ -1,4 +1,5 @@
 import type { Metadata, ResolvingMetadata } from "next";
+import Link from "next/link";
 import { withPageUrl } from "@/lib/seo";
 
 const METADATA: Metadata = {
@@ -16,7 +17,7 @@ export default function PrivacyPage() {
   return (
     <div className="mx-auto max-w-3xl px-4 py-20 sm:px-6 lg:px-8">
       <h1 className="text-3xl font-extrabold text-foreground">Privacy Policy</h1>
-      <p className="mt-2 text-sm text-muted-foreground">Last updated: 3 November 2026</p>
+      <p className="mt-2 text-sm text-muted-foreground">Last updated: 10 November 2026</p>
 
       <div className="mt-10 space-y-8 text-sm leading-relaxed text-muted">
         <section>
@@ -91,9 +92,13 @@ export default function PrivacyPage() {
               The same service providers as for the newsletter (Supabase, Resend) process this data.
             </li>
             <li>
-              <strong>Contact form.</strong> If you write to us, we store your name, email address, subject and message
-              so we can answer you. Legal basis: our legitimate interest in answering enquiries (Art. 6(1)(f) GDPR), or
-              taking steps at your request. We keep the message only as long as it is needed to handle your request.
+              <strong>Contact form and article pitches.</strong> If you write to us, we store your name, email address,
+              subject and message so we can answer you. If you pitch an article on the{" "}
+              <Link href="/write-for-us" className={LINK}>write for us</Link> page, we store your
+              name, email address, the experience level you pick, your working title, your pitch and the links you add,
+              so we can discuss the article with you. Legal basis: our legitimate interest in answering enquiries (Art.
+              6(1)(f) GDPR), or taking steps at your request. We keep the message only as long as it is needed to handle
+              your request.
             </li>
             <li id="accounts">
               <strong>Reader account and comments.</strong> You can sign in with Google or GitHub, or with a one-time link

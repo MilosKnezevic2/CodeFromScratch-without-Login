@@ -63,6 +63,11 @@ export default function Footer({
                 </Link>
               </li>
               <li>
+                <Link href="/write-for-us" className="text-muted transition hover:text-accent">
+                  Write for us
+                </Link>
+              </li>
+              <li>
                 <Link href="/blog/rss.xml" className="text-muted transition hover:text-accent">
                   RSS feed
                 </Link>

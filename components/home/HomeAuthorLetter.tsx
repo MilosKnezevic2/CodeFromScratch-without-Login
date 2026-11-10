@@ -1,4 +1,7 @@
+import Image from "next/image";
 import Link from "next/link";
+import { urlFor } from "@/lib/sanity/image";
+import type { AuthorWithPostCount } from "@/lib/sanity/queries";
 
 /**
  * Personal note from the operator. Humanises the journal — readers
@@ -6,7 +9,7 @@ import Link from "next/link";
  * Copy is hard-coded for now; if the operator wants to edit
  * frequently it can move into the SiteConfig table later.
  */
-export default function HomeAuthorLetter() {
+export default function HomeAuthorLetter({ editor }: { editor: Pick<AuthorWithPostCount, "name" | "image"> | null }) {
   return (
     <section
       aria-label="From the editor"
@@ -20,8 +23,17 @@ export default function HomeAuthorLetter() {
       </header>
 
       <div className="max-w-3xl">
+        {editor?.image?.asset && (
+          <Image
+            src={urlFor(editor.image).width(128).height(128).url()}
+            alt={editor.name}
+            width={64}
+            height={64}
+            className="mb-6 h-16 w-16 rounded-full object-cover"
+          />
+        )}
         <p className="post-standfirst">
-          Hi — I&rsquo;m Miloš. I&rsquo;ve spent the last few years building
+          Hi — I&rsquo;m Milos. I&rsquo;ve spent the last few years building
           production web apps from scratch and writing about everything I learn
           along the way. No editorial calendar, no listicles, no SEO churn —
           just carefully researched pieces on whatever I&rsquo;m actually
@@ -38,6 +50,12 @@ export default function HomeAuthorLetter() {
             className="text-xs font-bold uppercase tracking-[0.2em] text-foreground transition-colors hover:text-accent"
           >
             Get the letter →
+          </Link>
+          <Link
+            href="/write-for-us"
+            className="text-xs font-bold uppercase tracking-[0.2em] text-muted transition-colors hover:text-accent"
+          >
+            Write an article with me →
           </Link>
         </div>
       </div>
