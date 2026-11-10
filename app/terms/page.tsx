@@ -1,12 +1,14 @@
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
+import { withPageUrl } from "@/lib/seo";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
-
-export const metadata: Metadata = {
+const METADATA: Metadata = {
   title: "Terms of Use",
   description: "The rules for using the CodeFromScratch website and its content.",
-  alternates: { canonical: `${SITE_URL}/terms` },
 };
+
+export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
+  return withPageUrl("/terms", METADATA, parent);
+}
 
 export default function TermsPage() {
   return (

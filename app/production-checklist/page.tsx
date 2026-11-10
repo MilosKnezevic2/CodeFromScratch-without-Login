@@ -1,17 +1,19 @@
-import type { Metadata } from "next";
+import type { Metadata, ResolvingMetadata } from "next";
 import Link from "next/link";
+import { withPageUrl } from "@/lib/seo";
 
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
-
-export const metadata: Metadata = {
+const METADATA: Metadata = {
   title: "The Production Checklist: 24 Checks Before You Ship",
   description:
     "A free, printable checklist for web apps: input validation, errors, rate limits, logging, tests, secrets and deploys. Tick it off before anything goes live.",
-  alternates: { canonical: `${SITE_URL}/production-checklist` },
   // A subscriber's copy: linked from the confirmation page and the welcome
   // letter, kept out of search so the sign-up is what leads here.
   robots: { index: false, follow: true },
 };
+
+export async function generateMetadata(_props: unknown, parent: ResolvingMetadata): Promise<Metadata> {
+  return withPageUrl("/production-checklist", METADATA, parent);
+}
 
 interface Item {
   text: string;
