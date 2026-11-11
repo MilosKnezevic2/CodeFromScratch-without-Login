@@ -309,7 +309,23 @@ async function sendLetter(slug) {
   if (!APPLY) {
     console.log(`
 newsletter for ${slug} (dry run):`);
-    run([]);
+    // The letter's dry run asks the Sanity CDN the same query the article page
+    // uses. Asked before the article exists, the CDN keeps "not found" for a
+    // while after publishing, and the page and the letter both stay at 404
+    // (2026-11-10 and 2026-11-11). Before publishing, show the letter file
+    // instead; the full letter preview runs only for an already-live article.
+    const live = await client.fetch(`count(*[_type == "post" && slug.current == $slug && status == "published"])`, { slug });
+    if (live > 0) {
+      run([]);
+    } else {
+      const letter = JSON.parse(readFileSync(file, "utf8"));
+      console.log(`subject:   ${letter.subject}
+preheader: ${letter.preheader}
+
+${letter.note}
+
+(the article card is added when it is sent)`);
+    }
     return;
   }
   // The dry run before --apply asked the CDN for this exact letter query and
