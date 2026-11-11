@@ -64,6 +64,14 @@ export default function WriteForUsPage() {
             </li>
           ))}
         </ol>
+        <div className="mt-4 rounded-2xl border border-accent/30 bg-accent/5 p-5">
+          <p className="font-bold text-foreground">Is it paid?</p>
+          <p className="mt-1.5 text-sm leading-relaxed text-muted">
+            Not for now: writing here is unpaid. What you get is your name on the article, an author profile with your
+            photo and links, careful editing of your piece, and the readers of the journal and its newsletter. If that
+            changes, this page will say so first.
+          </p>
+        </div>
       </section>
 
       <section aria-labelledby="fit-h" className="mt-14 grid gap-8 sm:grid-cols-2">
