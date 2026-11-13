@@ -101,59 +101,57 @@ if (test) {
     });
   }
   console.log(`test sent to ${test} (from ${from})`);
-  await prisma.$disconnect();
-  process.exit(0);
-}
-
-if (!APPLY) {
+} else if (!APPLY) {
   console.log(`DRY RUN — from: ${from} — reply-to: ${replyTo} — ${recipients.length} confirmed recipient(s)\n`);
   console.log(letter.renderLetterText(content, `${letter.SITE_URL()}/newsletter/unsubscribe?token=...`, identity));
-  await prisma.$disconnect();
-  process.exit(0);
-}
+} else {
+  const confirmFlag = flag("--confirm");
+  const confirm = confirmFlag === "auto" ? recipients.length : Number(confirmFlag);
+  if (confirmFlag === "auto") console.log(`--confirm auto: ${recipients.length} confirmed subscriber(s)`);
+  if (recipients.length === 0) {
+    console.error("There are no confirmed subscribers.");
+    process.exit(1);
+  }
+  if (confirm !== recipients.length) {
+    console.error(`The list has ${recipients.length} confirmed subscribers, not ${String(flag("--confirm"))}.`);
+    process.exit(1);
+  }
+  const now = Date.now();
+  if (await prisma.newsletterCampaign.findFirst({ where: { status: "SENDING", createdAt: { gt: new Date(now - SEND_LOCK_MS) } }, select: { id: true } })) {
+    console.error("Another letter is being sent right now.");
+    process.exit(1);
+  }
+  if (
+    await prisma.newsletterCampaign.findFirst({
+      where: { subject: content.subject, status: { in: ["SENT", "PARTIAL"] }, createdAt: { gt: new Date(now - DUPLICATE_WINDOW_MS) } },
+      select: { id: true },
+    })
+  ) {
+    console.error("A letter with this subject already went out in the last 24 hours.");
+    process.exit(1);
+  }
 
-const confirmFlag = flag("--confirm");
-const confirm = confirmFlag === "auto" ? recipients.length : Number(confirmFlag);
-if (confirmFlag === "auto") console.log(`--confirm auto: ${recipients.length} confirmed subscriber(s)`);
-if (recipients.length === 0) {
-  console.error("There are no confirmed subscribers.");
-  process.exit(1);
+  const campaign = await prisma.newsletterCampaign.create({
+    data: {
+      subject: content.subject,
+      preheader: content.preheader ?? null,
+      note: content.note ?? null,
+      postSlug: parsed.value.postSlug || null,
+      htmlBody: letter.renderLetter(content, `${letter.SITE_URL()}/newsletter`, identity),
+      status: "SENDING",
+      recipientCount: recipients.length,
+    },
+  });
+  const { sent, failed } = await service.sendLetterToRecipients(content, recipients, campaign.id);
+  const status = failed === 0 ? "SENT" : sent === 0 ? "FAILED" : "PARTIAL";
+  await prisma.newsletterCampaign.update({
+    where: { id: campaign.id },
+    data: { status, sentCount: sent, failedCount: failed, sentAt: new Date() },
+  });
+  console.log(`${status}: sent ${sent}, failed ${failed} (campaign ${campaign.id})`);
 }
-if (confirm !== recipients.length) {
-  console.error(`The list has ${recipients.length} confirmed subscribers, not ${String(flag("--confirm"))}.`);
-  process.exit(1);
-}
-const now = Date.now();
-if (await prisma.newsletterCampaign.findFirst({ where: { status: "SENDING", createdAt: { gt: new Date(now - SEND_LOCK_MS) } }, select: { id: true } })) {
-  console.error("Another letter is being sent right now.");
-  process.exit(1);
-}
-if (
-  await prisma.newsletterCampaign.findFirst({
-    where: { subject: content.subject, status: { in: ["SENT", "PARTIAL"] }, createdAt: { gt: new Date(now - DUPLICATE_WINDOW_MS) } },
-    select: { id: true },
-  })
-) {
-  console.error("A letter with this subject already went out in the last 24 hours.");
-  process.exit(1);
-}
-
-const campaign = await prisma.newsletterCampaign.create({
-  data: {
-    subject: content.subject,
-    preheader: content.preheader ?? null,
-    note: content.note ?? null,
-    postSlug: parsed.value.postSlug || null,
-    htmlBody: letter.renderLetter(content, `${letter.SITE_URL()}/newsletter`, identity),
-    status: "SENDING",
-    recipientCount: recipients.length,
-  },
-});
-const { sent, failed } = await service.sendLetterToRecipients(content, recipients, campaign.id);
-const status = failed === 0 ? "SENT" : sent === 0 ? "FAILED" : "PARTIAL";
-await prisma.newsletterCampaign.update({
-  where: { id: campaign.id },
-  data: { status, sentCount: sent, failedCount: failed, sentAt: new Date() },
-});
-console.log(`${status}: sent ${sent}, failed ${failed} (campaign ${campaign.id})`);
+// No process.exit() after an email went out: on Windows, exiting while the
+// mail client's connections close aborts Node ("UV_HANDLE_CLOSING"), which
+// made a delivered test copy look failed and stopped the list send
+// (2026-11-13). Every branch now ends here and the process exits by itself.
 await prisma.$disconnect();
