@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { urlFor } from "@/lib/sanity/image";
 import FadeUp from "@/components/animations/FadeUp";
 import { articleCount, shareImageUrl } from "@/lib/share-image";
+import { isIndexableList } from "@/lib/blog/front";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.org";
 
@@ -53,7 +54,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: { url: canonical, images: [{ url: ogImage, width: 1200, height: 630 }] },
     twitter: { card: "summary_large_image", images: [ogImage] },
     // One or two articles is a thin page; let Google follow the links, not index it.
-    ...(posts.length <= 2 && { robots: { index: false, follow: true } }),
+    ...(!isIndexableList(posts.length) && { robots: { index: false, follow: true } }),
   };
 }
 

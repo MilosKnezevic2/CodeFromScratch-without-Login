@@ -83,6 +83,15 @@ export interface FrontLayout<P> {
 }
 
 /** Articles per area section on the front page. */
+// A list page (area, category, tag) with fewer articles than this is thin:
+// it carries noindex, follow and stays out of the sitemap. One number for both
+// places, so the sitemap never advertises a page that tells Google not to index it.
+export const MIN_POSTS_TO_INDEX = 3;
+
+export function isIndexableList(postCount: number): boolean {
+  return postCount >= MIN_POSTS_TO_INDEX;
+}
+
 export const SECTION_SIZE = 3;
 export const POPULAR_SIZE = 5;
 
