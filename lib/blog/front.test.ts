@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { AREAS, areaCounts, areaOfCategory, buildFront } from "./front";
+import { AREAS, areaCounts, areaOfCategory, buildFront, isIndexableList, MIN_POSTS_TO_INDEX } from "./front";
 
 const post = (slug: string, category: string) => ({ slug, title: slug, category: { title: category, slug: category } });
 
@@ -52,5 +52,17 @@ describe("buildFront", () => {
 
   it("copes with an empty journal", () => {
     expect(buildFront([], [])).toEqual({ lead: null, second: [], sections: [], popular: [] });
+  });
+});
+
+describe("isIndexableList", () => {
+  // Regression: on 2026-11-13 two categories with 1-2 posts carried noindex
+  // but the sitemap still listed them (it only dropped empty ones).
+  it("treats one or two articles as thin and three as indexable", () => {
+    expect(isIndexableList(0)).toBe(false);
+    expect(isIndexableList(1)).toBe(false);
+    expect(isIndexableList(2)).toBe(false);
+    expect(isIndexableList(MIN_POSTS_TO_INDEX)).toBe(true);
+    expect(MIN_POSTS_TO_INDEX).toBe(3);
   });
 });

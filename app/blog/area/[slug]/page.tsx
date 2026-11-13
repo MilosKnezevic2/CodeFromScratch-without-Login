@@ -5,7 +5,7 @@ import BackToTop from "@/components/blog/BackToTop";
 import { FrontCard } from "@/components/blog/front/FrontCards";
 import { JournalMasthead } from "@/components/blog/front/BlogFront";
 import JsonLd from "@/components/seo/JsonLd";
-import { AREAS, areaBySlug, areaOfCategory } from "@/lib/blog/front";
+import { AREAS, areaBySlug, areaOfCategory, isIndexableList } from "@/lib/blog/front";
 import { buildSafe } from "@/lib/sanity/build-safe";
 import { getFrontPosts } from "@/lib/sanity/queries";
 import { breadcrumbJsonLd, itemListJsonLd } from "@/lib/seo";
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     openGraph: { url: canonical, images: [{ url: ogImage, width: 1200, height: 630 }] },
     twitter: { card: "summary_large_image", images: [ogImage] },
     // A one- or two-article area is a thin page: follow its links, do not index it.
-    ...(posts.length <= 2 && { robots: { index: false, follow: true } }),
+    ...(!isIndexableList(posts.length) && { robots: { index: false, follow: true } }),
   };
 }
 

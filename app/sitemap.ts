@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { AREAS, areaOfCategory } from "@/lib/blog/front";
+import { AREAS, areaOfCategory, isIndexableList } from "@/lib/blog/front";
 import { getAllPostSlugs, getCategoriesWithCounts, getFrontPosts } from "@/lib/sanity/queries";
 
 // Re-generated every five minutes, so a new post reaches crawlers without a
@@ -48,7 +48,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   try {
     const categories = await getCategoriesWithCounts();
     categoryPages = categories
-      .filter((c) => c.postCount > 0)
+      .filter((c) => isIndexableList(c.postCount))
       .map((c) => ({
         url: `${baseUrl}/blog/category/${c.slug.current}`,
         changeFrequency: "weekly" as const,
@@ -65,7 +65,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let areaPages: MetadataRoute.Sitemap = [];
   try {
     const posts = await getFrontPosts();
-    areaPages = AREAS.filter((a) => posts.filter((p) => areaOfCategory(p.category?.slug) === a).length > 2).map((a) => ({
+    areaPages = AREAS.filter((a) => isIndexableList(posts.filter((p) => areaOfCategory(p.category?.slug) === a).length)).map((a) => ({
       url: `${baseUrl}/blog/area/${a.slug}`,
       changeFrequency: "weekly" as const,
       priority: 0.7,
