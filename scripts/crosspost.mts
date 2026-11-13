@@ -7,6 +7,9 @@
  *   npx tsx scripts/crosspost.mts <slug> --devto --publish
  *                                                     (makes it public; refused in the first 48 hours after our
  *                                                      publish so Google indexes the original first)
+ *   npx tsx scripts/crosspost.mts <slug> --devto --publish --at 2026-11-17T09:00:00Z
+ *                                                     (schedules it: dev.to keeps it hidden until that moment;
+ *                                                      the moment must also be 48 hours after our publish)
  *
  * Needs DEVTO_API_KEY in .env.local for --devto (dev.to > Settings > Extensions > API keys).
  * The dev.to article id is kept in brand-brain/promo/crosspost.json, so a re-run
@@ -35,16 +38,23 @@ const LEDGER = join("brand-brain", "promo", "crosspost.json");
 const HOLD_MS = 48 * 60 * 60 * 1000;
 
 const args = process.argv.slice(2);
-const slug = args.find((a) => !a.startsWith("--"));
+const slug = args.find((a, i) => !a.startsWith("--") && args[i - 1] !== "--at");
 const toDevto = args.includes("--devto");
 const publish = args.includes("--publish");
+const atIndex = args.indexOf("--at");
+const atValue = atIndex >= 0 ? args[atIndex + 1] : undefined;
+const publishAt = atValue ? new Date(atValue) : undefined;
 
 if (!slug) {
-  console.error("usage: npx tsx scripts/crosspost.mts <slug> [--devto [--publish]]");
+  console.error("usage: npx tsx scripts/crosspost.mts <slug> [--devto [--publish [--at <ISO date>]]]");
   process.exit(2);
 }
 if (publish && !toDevto) {
   console.error("--publish only makes sense together with --devto");
+  process.exit(2);
+}
+if (atIndex >= 0 && (!publish || !publishAt || Number.isNaN(publishAt.getTime()) || publishAt.getTime() <= Date.now())) {
+  console.error("--at needs --publish and a future ISO date, e.g. --at 2026-11-17T09:00:00Z");
   process.exit(2);
 }
 
@@ -130,14 +140,18 @@ if (!apiKey) {
   process.exit(2);
 }
 
-const age = Date.now() - Date.parse(post.publishedAt);
+// A scheduled post counts its age at the moment it goes public.
+const age = (publishAt?.getTime() ?? Date.now()) - Date.parse(post.publishedAt);
 if (publish && age < HOLD_MS) {
   const hours = Math.ceil((HOLD_MS - age) / 3_600_000);
   console.error(`Too early to publish on dev.to: wait ${hours} more hour(s) so Google indexes the original first. A draft is fine now.`);
   process.exit(1);
 }
 
-type Ledger = Record<string, { devto?: { id: number; url: string; published: boolean; updatedAt: string } }>;
+type Ledger = Record<
+  string,
+  { devto?: { id: number; url: string; published: boolean; publishAt?: string; updatedAt: string } }
+>;
 let ledger: Ledger = {};
 try {
   ledger = JSON.parse(readFileSync(LEDGER, "utf8")) as Ledger;
@@ -145,11 +159,17 @@ try {
   if ((err as NodeJS.ErrnoException).code !== "ENOENT") throw err;
 }
 const existing = ledger[post.slug]?.devto;
+// Re-running on a still-scheduled article must keep its date; without it
+// dev.to would treat `published: true` as "public now".
+const pendingAt =
+  existing?.publishAt && Date.parse(existing.publishAt) > Date.now() ? new Date(existing.publishAt) : undefined;
+const goLiveAt = publishAt ?? pendingAt;
 
 const article = {
   title: post.title,
   body_markdown: markdown,
   published: publish || Boolean(existing?.published),
+  ...(goLiveAt ? { published_at: goLiveAt.toISOString() } : {}),
   tags,
   canonical_url: articleUrl,
   description,
@@ -187,9 +207,16 @@ const { id, url } = data as { id: number; url: string };
 
 ledger[post.slug] = {
   ...ledger[post.slug],
-  devto: { id, url, published: article.published, updatedAt: new Date().toISOString() },
+  devto: {
+    id,
+    url,
+    published: article.published,
+    ...(goLiveAt ? { publishAt: goLiveAt.toISOString() } : {}),
+    updatedAt: new Date().toISOString(),
+  },
 };
 writeFileSync(LEDGER, `${JSON.stringify(ledger, null, 2)}\n`);
 
-console.log(`${existing ? "Updated" : "Created"} on dev.to (${article.published ? "PUBLIC" : "draft"}): ${url}`);
+const state = goLiveAt ? `scheduled for ${goLiveAt.toISOString()}` : article.published ? "PUBLIC" : "draft";
+console.log(`${existing ? "Updated" : "Created"} on dev.to (${state}): ${url}`);
 if (!article.published) console.log("Drafts are visible only to the account owner: dev.to > Dashboard.");

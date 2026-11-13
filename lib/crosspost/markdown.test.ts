@@ -110,3 +110,13 @@ describe("devtoTags", () => {
     expect(devtoTags(["css"], "beginner")).toEqual(["webdev", "css", "beginners"]);
   });
 });
+
+describe("dev.to mentions", () => {
+  // Regression: dev.to refused the Tailwind article with HTTP 422
+  // "You cannot mention more than 10 users" because of @theme, @source, ...
+  it("turns @words in prose into inline code on dev.to only", () => {
+    const blocks = [p("Use @theme and @tailwindcss/vite. Mail demo@example.com.")];
+    expect(toMarkdown(blocks, opts)).toContain("Use `@theme` and `@tailwindcss/vite`. Mail demo@example.com.");
+    expect(toMarkdown(blocks, { ...opts, target: "plain" })).toContain("Use @theme and @tailwindcss/vite. Mail demo@example.com.");
+  });
+});
