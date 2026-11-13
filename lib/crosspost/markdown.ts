@@ -118,6 +118,25 @@ export function escapeText(text: string): string {
   return text.replace(/[\\`*_[\]<]/g, (c) => (c === "<" ? "&lt;" : `\\${c}`));
 }
 
+// dev.to turns "@word" in prose into a user mention and refuses an article with
+// more than ten (HTTP 422). In our articles such words are code (CSS at-rules like
+// @theme, npm scopes like @tailwindcss/vite), so on dev.to they become inline code.
+// An e-mail address is preceded by a word character and is left alone.
+const AT_WORD = /(?<![\w@./])@[A-Za-z0-9_][\w./-]*/g;
+
+/** Prose text for the target: escaped, with @words as inline code on dev.to. */
+function prose(text: string, opts: MarkdownOptions): string {
+  if (opts.target !== "devto") return escapeText(text);
+  let out = "";
+  let last = 0;
+  for (const m of text.matchAll(AT_WORD)) {
+    const word = m[0].replace(/[./-]+$/, "");
+    out += escapeText(text.slice(last, m.index)) + inlineCode(word);
+    last = m.index + word.length;
+  }
+  return out + escapeText(text.slice(last));
+}
+
 /** Escapes a line start that Markdown would read as a heading, quote or list. */
 function escapeLineStart(line: string): string {
   return line.replace(/^(\s*)(#{1,6}\s|>|[-+]\s|\d+\.\s)/, (_m, ws: string, tok: string) => `${ws}\\${tok}`);
@@ -142,7 +161,7 @@ function renderSpans(block: TextBlock, opts: MarkdownOptions): string {
   return block.children
     .map((span) => {
       const marks = span.marks ?? [];
-      let out = marks.includes("code") ? inlineCode(span.text) : escapeText(span.text);
+      let out = marks.includes("code") ? inlineCode(span.text) : prose(span.text, opts);
       if (marks.includes("strong")) out = wrap(out, "**");
       if (marks.includes("em")) out = wrap(out, "_");
       if (marks.includes("strike-through")) out = wrap(out, "~~");
@@ -182,15 +201,15 @@ function renderCode(block: CodeBlock, opts: MarkdownOptions): string {
   return `${label}${protectLiquid(`${fence}${lang}\n${code}\n${fence}`, opts)}`;
 }
 
-function renderTable(block: TableBlock): string {
-  const rows = (block.rows ?? []).map((r) => (r.cells ?? []).map((c) => escapeText(c).replace(/\|/g, "\\|").replace(/\n/g, " ")));
+function renderTable(block: TableBlock, opts: MarkdownOptions): string {
+  const rows = (block.rows ?? []).map((r) => (r.cells ?? []).map((c) => prose(c, opts).replace(/\|/g, "\\|").replace(/\n/g, " ")));
   if (rows.length === 0) return "";
   const width = Math.max(...rows.map((r) => r.length));
   const pad = (r: string[]) => [...r, ...Array<string>(width - r.length).fill("")];
   const line = (r: string[]) => `| ${pad(r).join(" | ")} |`;
   const [head, ...body] = block.hasHeader === false ? [Array<string>(width).fill(" "), ...rows] : rows;
   const table = [line(head), `| ${Array<string>(width).fill("---").join(" | ")} |`, ...body.map(line)].join("\n");
-  return block.caption ? `${table}\n\n_${escapeText(block.caption)}_` : table;
+  return block.caption ? `${table}\n\n_${prose(block.caption, opts)}_` : table;
 }
 
 function renderTextBlock(block: TextBlock, opts: MarkdownOptions): string {
@@ -217,12 +236,12 @@ function renderBlock(block: ContentBlock, opts: MarkdownOptions): string {
     case "block":
       return protectLiquid(renderTextBlock(block, opts), opts);
     case "lead":
-      return protectLiquid(escapeLineStart(escapeText(block.text ?? "")), opts);
+      return protectLiquid(escapeLineStart(prose(block.text ?? "", opts)), opts);
     case "code":
       return renderCode(block, opts);
     case "callout": {
       const label = CALLOUT_LABEL[block.type ?? "info"] ?? "Note";
-      return protectLiquid(quote(`**${label}:** ${escapeText(block.text ?? "")}`), opts);
+      return protectLiquid(quote(`**${label}:** ${prose(block.text ?? "", opts)}`), opts);
     }
     case "livePreview": {
       const title = block.title ? `${escapeText(block.title)}. ` : "";
@@ -242,7 +261,7 @@ function renderBlock(block: ContentBlock, opts: MarkdownOptions): string {
       return `[${escapeText(block.caption ?? block.url)}](${block.url})`;
     }
     case "table":
-      return renderTable(block);
+      return renderTable(block, opts);
     case "divider":
       return "---";
     default: {
