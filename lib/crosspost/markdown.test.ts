@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { devtoTags, escapeText, toMarkdown, type ContentBlock, type MarkdownOptions } from "./markdown";
+import { devtoTags, escapeText, toMarkdown, trackedUrl, type ContentBlock, type MarkdownOptions } from "./markdown";
 
 const opts: MarkdownOptions = {
   siteUrl: "https://codefromscratch.org",
@@ -35,7 +35,7 @@ describe("toMarkdown", () => {
       opts,
     );
     expect(md).toBe(
-      "## Grid\n\nUse `display: grid` and read [**the guide**](https://codefromscratch.org/blog/css-grid) \n",
+      "## Grid\n\nUse `display: grid` and read [**the guide**](https://codefromscratch.org/blog/css-grid?utm_source=dev.to&utm_medium=crosspost) \n",
     );
   });
 
@@ -67,7 +67,7 @@ describe("toMarkdown", () => {
   it("turns live previews into a link back to the article", () => {
     const md = toMarkdown([{ _type: "livePreview", title: "The finished table" }], opts);
     expect(md).toContain("**Live demo:** The finished table.");
-    expect(md).toContain("(https://codefromscratch.org/blog/demo)");
+    expect(md).toContain("(https://codefromscratch.org/blog/demo?utm_source=dev.to&utm_medium=crosspost)");
     expect(md.startsWith("> ")).toBe(true);
   });
 
@@ -120,3 +120,16 @@ describe("dev.to mentions", () => {
     expect(toMarkdown(blocks, { ...opts, target: "plain" })).toContain("Use @theme and @tailwindcss/vite. Mail demo@example.com.");
   });
 });
+
+describe("trackedUrl", () => {
+  it("tags links to our own site on dev.to and leaves everything else alone", () => {
+    const o = { ...opts, campaign: "demo" };
+    expect(trackedUrl("https://codefromscratch.org/blog/x#part", o)).toBe(
+      "https://codefromscratch.org/blog/x?utm_source=dev.to&utm_medium=crosspost&utm_campaign=demo#part",
+    );
+    expect(trackedUrl("https://developer.mozilla.org/", o)).toBe("https://developer.mozilla.org/");
+    expect(trackedUrl("https://codefromscratch.org.evil.com/", o)).toBe("https://codefromscratch.org.evil.com/");
+    expect(trackedUrl("https://codefromscratch.org/blog/x", { ...o, target: "plain" })).toBe("https://codefromscratch.org/blog/x");
+  });
+});
+

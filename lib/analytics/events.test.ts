@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import {
   classifyPath,
+  campaignSource,
   cleanHost,
   countersFor,
   countryFrom,
@@ -213,5 +214,15 @@ describe("request signals", () => {
     expect(dayKey(new Date("2026-10-30T23:30:00Z"))).toBe("2026-10-31");
     expect(dayKey(new Date("2026-07-01T21:59:00Z"))).toBe("2026-07-01");
     expect(dayKey(new Date("2026-07-01T22:01:00Z"))).toBe("2026-07-02");
+  });
+});
+
+describe("campaignSource", () => {
+  it("reads utm_source as a host and ignores anything that is not one", () => {
+    expect(campaignSource("?utm_source=dev.to&utm_medium=crosspost&utm_campaign=x")).toBe("dev.to");
+    expect(campaignSource("?utm_source=DEV.to")).toBe("dev.to");
+    expect(campaignSource("?utm_source=newsletter")).toBeNull();
+    expect(campaignSource("?utm_source=<script>.com")).toBeNull();
+    expect(campaignSource("")).toBeNull();
   });
 });

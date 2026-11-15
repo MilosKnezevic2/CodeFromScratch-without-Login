@@ -18,7 +18,7 @@
 import { createClient } from "@sanity/client";
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join } from "node:path";
-import { devtoTags, toMarkdown, type ContentBlock } from "@/lib/crosspost/markdown";
+import { devtoTags, toMarkdown, trackedUrl, type ContentBlock, type MarkdownOptions } from "@/lib/crosspost/markdown";
 
 for (const file of [".env.local", ".env"]) {
   let text = "";
@@ -100,11 +100,16 @@ if (post.status !== "published" || !post.publishedAt || Date.parse(post.publishe
 }
 
 const articleUrl = `${SITE}/blog/${post.slug}`;
-const body = toMarkdown(post.content ?? [], { siteUrl: SITE, articleUrl, target: "devto" });
+const mdOpts: MarkdownOptions = { siteUrl: SITE, articleUrl, target: "devto", campaign: post.slug };
+const body = toMarkdown(post.content ?? [], mdOpts);
+// The offer is the one the site makes (components/newsletter/NewsletterCTA.tsx,
+// app/newsletter/page.tsx): the checklist arrives in the welcome email.
 const footer = [
   "---",
   "",
-  `_This article first appeared on [CodeFromScratch](${articleUrl}), where the live demos run right in the page. If you want the next one in your inbox, [join the newsletter](${SITE}/newsletter)._`,
+  `_This article first appeared on [CodeFromScratch](${trackedUrl(articleUrl, mdOpts)}), where the live demos run right in the page._`,
+  "",
+  `**Free: The Production Checklist.** 24 checks to run before a web app meets real users, each linked to the article that explains it. [Get it with the newsletter](${trackedUrl(`${SITE}/newsletter`, mdOpts)}): one short email when a new article goes live, unsubscribe in one click.`,
   "",
 ].join("\n");
 const markdown = `${body}\n${footer}`;
