@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import { flushAnalytics, queueAnalytics, sendAnalytics } from "@/lib/analytics/client";
+import { campaignSource } from "@/lib/analytics/events";
 
 const ENGAGED_AFTER_MS = 30_000;
 const ARTICLE_PATH = /^\/blog\/[^/]+$/;
@@ -20,6 +21,22 @@ function externalReferrer(): string | null {
   } catch {
     return null;
   }
+}
+
+const CAMPAIGN_PARAMS = ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"];
+
+/**
+ * Reads the campaign source of the landing URL, then removes the utm_ tags
+ * from the address bar so a reader who copies the link shares a clean one.
+ */
+function takeCampaignSource(): string | null {
+  const source = campaignSource(window.location.search);
+  const url = new URL(window.location.href);
+  if (CAMPAIGN_PARAMS.some((p) => url.searchParams.has(p))) {
+    for (const p of CAMPAIGN_PARAMS) url.searchParams.delete(p);
+    window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
+  }
+  return source;
 }
 
 function cameFromOwnSite(): boolean {
@@ -58,12 +75,13 @@ export default function SiteTracker() {
     if (!isTracked(pathname)) return;
 
     const path = pathname;
+    const campaign = first ? takeCampaignSource() : null;
     if (!(first && isRepeatLoad())) {
       sendAnalytics({
         type: "view",
         path,
-        entry: first && !cameFromOwnSite(),
-        referrer: first ? externalReferrer() : null,
+        entry: first && (campaign !== null || !cameFromOwnSite()),
+        referrer: first ? (campaign ?? externalReferrer()) : null,
       });
     }
 

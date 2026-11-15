@@ -95,6 +95,8 @@ export interface MarkdownOptions {
   articleUrl: string;
   /** dev.to parses Liquid tags, even inside code; protect them and use its embeds. */
   target: "devto" | "plain";
+  /** On dev.to, links to our site carry utm_source=dev.to and this campaign (the slug). */
+  campaign?: string;
 }
 
 const CALLOUT_LABEL: Record<string, string> = {
@@ -106,6 +108,19 @@ const CALLOUT_LABEL: Record<string, string> = {
 
 /** Providers dev.to can embed with {% embed url %}. */
 const DEVTO_EMBEDS = new Set(["youtube", "vimeo", "twitter", "codepen", "codesandbox"]);
+
+/**
+ * Adds campaign tags to a link that points at our own site, on dev.to only.
+ * dev.to sends no referrer, so without them a visit from there counts as direct.
+ */
+export function trackedUrl(url: string, opts: MarkdownOptions): string {
+  if (opts.target !== "devto" || !(url === opts.siteUrl || url.startsWith(`${opts.siteUrl}/`))) return url;
+  const u = new URL(url);
+  u.searchParams.set("utm_source", "dev.to");
+  u.searchParams.set("utm_medium", "crosspost");
+  if (opts.campaign) u.searchParams.set("utm_campaign", opts.campaign);
+  return u.toString();
+}
 
 export function absoluteUrl(href: string, siteUrl: string): string {
   if (href.startsWith("/")) return `${siteUrl}${href}`;
@@ -168,7 +183,7 @@ function renderSpans(block: TextBlock, opts: MarkdownOptions): string {
       for (const mark of marks) {
         const def = defs.get(mark);
         if (def?._type === "link" && def.href) {
-          out = wrap(out, "[", `](${absoluteUrl(def.href, opts.siteUrl)})`);
+          out = wrap(out, "[", `](${trackedUrl(absoluteUrl(def.href, opts.siteUrl), opts)})`);
         }
       }
       return out;
@@ -245,7 +260,7 @@ function renderBlock(block: ContentBlock, opts: MarkdownOptions): string {
     }
     case "livePreview": {
       const title = block.title ? `${escapeText(block.title)}. ` : "";
-      return quote(`**Live demo:** ${title}It runs right in the page, so [try it in the original article](${opts.articleUrl}).`);
+      return quote(`**Live demo:** ${title}It runs right in the page, so [try it in the original article](${trackedUrl(opts.articleUrl, opts)}).`);
     }
     case "image": {
       if (!block.url) return "";

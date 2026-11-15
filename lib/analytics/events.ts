@@ -171,6 +171,15 @@ export function cleanHost(referrer: string | null): string | null {
   return host;
 }
 
+/**
+ * The source a campaign link names (`?utm_source=dev.to`), as a clean host, or
+ * null. Needed because dev.to and many social sites send no referrer at all
+ * (rel="noreferrer"), so those visits would otherwise count as "direct".
+ */
+export function campaignSource(search: string): string | null {
+  return cleanHost(new URLSearchParams(search).get("utm_source"));
+}
+
 export function countersFor(event: CollectEvent, context: CountContext): Counter[] {
   const target = classifyPath(event.path, context.slugs);
   if (target.kind === "ignored") return [];
