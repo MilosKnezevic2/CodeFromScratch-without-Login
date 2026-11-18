@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import {
   cancelMfaEnrolment,
   changePassword,
@@ -12,6 +12,8 @@ import {
   type Enrolment,
 } from "@/lib/admin-auth";
 import { isAdminRequest } from "@/lib/admin-guard";
+import { ADMIN_COOKIE, adminCookieOptions, createAdminSession } from "@/lib/admin-session";
+import { revokeAdminSessions, type RevokeReason } from "@/lib/admin-session-store";
 import { clientIp, recordAudit } from "@/lib/audit";
 import { isValidEmail } from "@/lib/newsletter/input";
 import { emailReference, erasePersonData, exportPersonData, findPersonData, type ErasureCounts, type PersonSummary } from "@/lib/privacy/person-data";
@@ -32,6 +34,25 @@ const FORBIDDEN: ActionResult<never> = { ok: false, message: "Your session has e
 async function ip(): Promise<string | null> {
   return clientIp(await headers());
 }
+
+/**
+ * After a password or two-step change, every other session ends. With
+ * `keepThisOne` this browser gets a fresh cookie so the operator stays in;
+ * without it, this browser is signed out too. A failure to record the
+ * revocation leaves the current cookie alone and is reported in the message.
+ */
+async function endOtherSessions(reason: RevokeReason, keepThisOne: boolean): Promise<boolean> {
+  try {
+    await revokeAdminSessions(reason, await ip());
+  } catch (error) {
+    console.error(`Admin sessions could not be revoked (${reason}):`, error);
+    return false;
+  }
+  if (keepThisOne) (await cookies()).set(ADMIN_COOKIE, await createAdminSession(), adminCookieOptions());
+  return true;
+}
+
+const NOT_REVOKED = " Other signed-in devices could not be signed out; sign out and back in to end them.";
 
 /** Reads a form into plain strings; repeated names keep the last value. */
 function entries(formData: FormData): Record<string, string> {
@@ -72,8 +93,9 @@ export async function changePasswordAction(_previous: ActionResult, formData: Fo
   if (form.next !== form.confirm) return { ok: false, message: "The two new passwords do not match." };
   const result = await changePassword({ current: form.current ?? "", next: form.next ?? "", ip: await ip() });
   if (!result.ok) return { ok: false, message: result.error };
+  const revoked = await endOtherSessions("password-changed", true);
   revalidatePath("/portal-cfs-admin/settings");
-  return { ok: true, message: "Password changed. Use it from your next sign-in." };
+  return { ok: true, message: `Password changed. Use it from your next sign-in.${revoked ? " Every other device was signed out." : NOT_REVOKED}` };
 }
 
 export async function changeUsernameAction(_previous: ActionResult, formData: FormData): Promise<ActionResult> {
@@ -102,17 +124,25 @@ export async function confirmMfaAction(_previous: ActionResult<string[]>, formDa
   if (!(await isAdminRequest())) return FORBIDDEN;
   const result = await confirmMfaEnrolment(entries(formData).code ?? "", await ip());
   if ("error" in result) return { ok: false, message: result.error };
-  // No revalidation here: the panel must keep showing the backup codes until
-  // the operator confirms they are saved, then it refreshes itself.
-  return { ok: true, message: "Two-step login is on. Save these backup codes somewhere safe; they are shown once.", data: result.backupCodes };
+  // No revalidation and no new cookie here: either would re-render the panel
+  // and hide the backup codes before they are saved. Every session, this one
+  // included, ends now; the refresh after "I have saved them" leads to the
+  // sign-in, which also proves the new code works.
+  const revoked = await endOtherSessions("mfa-enabled", false);
+  return {
+    ok: true,
+    message: `Two-step login is on. Save these backup codes somewhere safe; they are shown once.${revoked ? " Then sign in again with a code from the app." : NOT_REVOKED}`,
+    data: result.backupCodes,
+  };
 }
 
 export async function disableMfaAction(_previous: ActionResult, formData: FormData): Promise<ActionResult> {
   if (!(await isAdminRequest())) return FORBIDDEN;
   const result = await disableMfa(entries(formData).code ?? "", await ip());
   if (!result.ok) return { ok: false, message: result.error };
+  const revoked = await endOtherSessions("mfa-disabled", true);
   revalidatePath("/portal-cfs-admin/settings");
-  return { ok: true, message: "Two-step login is off." };
+  return { ok: true, message: `Two-step login is off.${revoked ? " Every other device was signed out." : NOT_REVOKED}` };
 }
 
 export async function refreshCacheAction(): Promise<ActionResult> {

@@ -6,6 +6,16 @@ Project versioning: semver (applied once first production release ships).
 
 ## [Unreleased]
 
+### Fixed (2026-11-18 security review)
+- Admin sessions can now be revoked: logout, a password change and switching
+  two-step login on or off end every admin session, so a copied cookie stops
+  working instead of living out its 24 hours. Checked on every admin page,
+  API route and server action (`lib/admin-session-store.ts`, with tests).
+- Content-Security-Policy: no `'unsafe-eval'` on the public site and the
+  portal in production; Sanity Studio keeps it on its own path and may now
+  load Sanity's dashboard bridge script. Added `object-src 'none'`.
+- Dependencies: zod 4.6.7 (memory-exhaustion advisory) and Next.js 16.4.6.
+
 ### Added (2026-11-10 distribution)
 - `scripts/crosspost.mts`: turns a published article into Markdown for dev.to
   (canonical URL to our site, live demos become links back, Liquid in code is

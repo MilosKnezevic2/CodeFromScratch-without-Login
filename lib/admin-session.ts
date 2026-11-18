@@ -1,5 +1,18 @@
 const DEFAULT_TTL_MS = 60 * 60 * 24 * 1000;
 
+export const ADMIN_COOKIE = "cfs-admin-token";
+
+/** How the portal cookie is set everywhere it is issued or cleared. */
+export function adminCookieOptions(maxAgeSeconds: number = DEFAULT_TTL_MS / 1000) {
+  return {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax" as const,
+    path: "/",
+    maxAge: maxAgeSeconds,
+  };
+}
+
 type Payload = {
   sub: "admin";
   iat: number;

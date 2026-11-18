@@ -49,6 +49,7 @@ const ACTION_LABELS: Record<string, string> = {
   "login.success": "Signed in",
   "login.failed": "Failed sign-in",
   logout: "Signed out",
+  "sessions.revoked": "All devices signed out",
   "settings.saved": "Settings saved",
   "password.changed": "Password changed",
   "password.change-failed": "Password change refused",

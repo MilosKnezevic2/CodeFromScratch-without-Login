@@ -1,20 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
-import { verifyAdminSession } from "@/lib/admin-session";
+import { ADMIN_COOKIE, adminCookieOptions, verifyAdminSession } from "@/lib/admin-session";
+import { revokeAdminSessions } from "@/lib/admin-session-store";
 import { clientIp, recordAudit } from "@/lib/audit";
 
-/** Ends the admin session. The cookie is cleared whether or not it was valid. */
+/**
+ * Ends the admin session on every device: a copied cookie stops working too.
+ * The cookie is cleared whether or not it was valid.
+ */
 export async function POST(request: NextRequest) {
-  const token = request.cookies.get("cfs-admin-token")?.value;
+  const token = request.cookies.get(ADMIN_COOKIE)?.value;
   if (await verifyAdminSession(token)) {
-    await recordAudit("logout", {}, clientIp(request.headers));
+    const ip = clientIp(request.headers);
+    await recordAudit("logout", {}, ip);
+    try {
+      await revokeAdminSessions("logout", ip);
+    } catch (error) {
+      // This browser is still signed out below; other copies of the cookie
+      // live on until they expire, which the log line makes visible.
+      console.error("Logout could not end other admin sessions:", error);
+    }
   }
   const response = NextResponse.json({ success: true });
-  response.cookies.set("cfs-admin-token", "", {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 0,
-  });
+  response.cookies.set(ADMIN_COOKIE, "", adminCookieOptions(0));
   return response;
 }
