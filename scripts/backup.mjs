@@ -41,12 +41,20 @@ const client = createClient({
   useCdn: false,
 });
 
-const docs = await client.fetch(`*[!(_id in path("_.**"))] | order(_type asc, _id asc)`);
-writeFileSync(join(backup, `sanity-${day}.json`), JSON.stringify(docs, null, 2));
-console.log(`sanity: ${docs.length} documents exported`);
+// The scheduled GitHub run sets BACKUP_SKIP_SANITY: when it and this computer
+// both wrote sanity-<day>.json on the same day, the pull before the commit
+// collided on that file and the backup stopped (2026-11-18). This computer
+// keeps taking the export; the scheduled run only adds drafts and notes.
+if (process.env.BACKUP_SKIP_SANITY) {
+  console.log("sanity: skipped (BACKUP_SKIP_SANITY)");
+} else {
+  const docs = await client.fetch(`*[!(_id in path("_.**"))] | order(_type asc, _id asc)`);
+  writeFileSync(join(backup, `sanity-${day}.json`), JSON.stringify(docs, null, 2));
+  console.log(`sanity: ${docs.length} documents exported`);
 
-const exports = readdirSync(backup).filter((f) => /^sanity-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort();
-for (const old of exports.slice(0, Math.max(0, exports.length - KEEP))) rmSync(join(backup, old));
+  const exports = readdirSync(backup).filter((f) => /^sanity-\d{4}-\d{2}-\d{2}\.json$/.test(f)).sort();
+  for (const old of exports.slice(0, Math.max(0, exports.length - KEEP))) rmSync(join(backup, old));
+}
 
 // Drafts are written both here and by the scheduled GitHub run: take the
 // other side's commits first, then sync both ways instead of mirroring.
