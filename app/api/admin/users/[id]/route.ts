@@ -6,7 +6,7 @@ type RouteContext = { params: Promise<{ id: string }> };
 
 const forbidden = () => NextResponse.json({ error: "Forbidden" }, { status: 403 });
 
-const ROLES = ["USER", "ADMIN"] as const;
+const ROLES = ["USER", "ADMIN", "AUTHOR"] as const;
 const PLANS = ["FREE", "PRO", "PRO_PLUS"] as const;
 
 const userInclude = {

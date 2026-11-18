@@ -14,6 +14,7 @@ const ICONS = {
   home: <path d="M3 10.5 12 3l9 7.5V21H3zM9 21v-7h6v7" />,
   library: <path d="M6 3h12v18l-6-4-6 4z" />,
   progress: <path d="M4 20V10M10 20V4M16 20v-7M22 20H2" />,
+  write: <path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />,
   profile: (
     <>
       <circle cx="12" cy="8" r="4" />
@@ -22,14 +23,18 @@ const ICONS = {
   ),
 };
 
-const LINKS = [
+const WRITE_LINK = { href: "/dashboard/write", label: "Your articles", short: "Articles", icon: ICONS.write } as const;
+
+const BASE_LINKS = [
   { href: "/dashboard", label: "Home", icon: ICONS.home },
   { href: "/dashboard/saved", label: "Library", icon: ICONS.library },
   { href: "/dashboard/reading", label: "Progress", icon: ICONS.progress },
   { href: "/dashboard/account", label: "Profile and settings", short: "Profile", icon: ICONS.profile },
 ] as const;
 
-export default function DashboardSidebar({ folders, savedCount }: { folders: DeskFolder[]; savedCount: number }) {
+export default function DashboardSidebar({ folders, savedCount, isAuthor = false }: { folders: DeskFolder[]; savedCount: number; isAuthor?: boolean }) {
+  // Authors also get their writing desk; everyone else never sees the link.
+  const LINKS = isAuthor ? [...BASE_LINKS.slice(0, 3), WRITE_LINK, BASE_LINKS[3]] : BASE_LINKS;
   const pathname = usePathname();
   const router = useRouter();
   const activeFolder = useSearchParams().get("folder");

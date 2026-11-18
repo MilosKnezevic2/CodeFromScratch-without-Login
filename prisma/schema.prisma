@@ -10,6 +10,16 @@ datasource db {
 enum Role {
   USER
   ADMIN
+  /// May write article drafts in the Writer desk and send them for review; never publish.
+  AUTHOR
+}
+
+/// Where a Writer desk draft is: the author edits WRITING and CHANGES_REQUESTED, the editor decides the rest.
+enum DraftStatus {
+  WRITING
+  IN_REVIEW
+  CHANGES_REQUESTED
+  APPROVED
 }
 
 enum Plan {
@@ -74,6 +84,7 @@ model User {
   savedPosts    SavedPost[]
   collections   Collection[]
   ebookPurchases EbookPurchase[]
+  articleDrafts  ArticleDraft[]
   newsletterSubscriber NewsletterSubscriber?
   contactSubmissions   ContactSubmission[]
   readingHistory ReadingHistory[]
@@ -435,4 +446,25 @@ model PostComment {
   @@index([postSlug, status, createdAt])
   @@index([userId, createdAt])
   @@index([status, createdAt])
+}
+
+/// A guest author's article in the Writer desk. Lives here, not in Sanity:
+/// authors never touch the CMS. Only the editor (admin) moves it on.
+model ArticleDraft {
+  id          String      @id @default(cuid())
+  authorId    String
+  title       String      @default("")
+  excerpt     String      @default("")
+  markdown    String      @default("") @db.Text
+  status      DraftStatus @default(WRITING)
+  reviewNote  String?     @db.Text
+  submittedAt DateTime?
+  reviewedAt  DateTime?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  author User @relation(fields: [authorId], references: [id], onDelete: Cascade)
+
+  @@index([authorId, updatedAt])
+  @@index([status, submittedAt])
 }

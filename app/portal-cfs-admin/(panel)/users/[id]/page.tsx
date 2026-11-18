@@ -205,6 +205,13 @@ export default function AdminUserDetailPage() {
                   {user.role === "ADMIN" ? "Remove Admin" : "Make Admin"}
                 </button>
                 <button
+                  onClick={() => updateUser({ role: user.role === "AUTHOR" ? "USER" : "AUTHOR" })}
+                  disabled={loading || user.role === "ADMIN"}
+                  className="rounded-lg border border-violet-400/30 px-4 py-2 text-sm font-medium text-violet-400 transition hover:bg-violet-400/10 disabled:opacity-50"
+                >
+                  {user.role === "AUTHOR" ? "Remove author" : "Make author"}
+                </button>
+                <button
                   onClick={() => updateUser({ banned: !user.banned })}
                   disabled={loading}
                   className={`rounded-lg px-4 py-2 text-sm font-medium transition disabled:opacity-50 ${

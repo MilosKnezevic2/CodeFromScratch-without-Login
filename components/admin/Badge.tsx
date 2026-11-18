@@ -3,6 +3,7 @@ const variants: Record<string, string> = {
   pro: "bg-accent/10 text-accent",
   "pro-plus": "bg-violet-500/10 text-violet-400",
   admin: "bg-red-500/10 text-red-400",
+  author: "bg-violet-500/10 text-violet-400",
   user: "bg-surface-2 text-muted-foreground",
   active: "bg-green-500/10 text-green-400",
   canceled: "bg-red-500/10 text-red-400",

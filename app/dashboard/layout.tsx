@@ -13,11 +13,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const reader = await currentReader();
   // The edge hook only sees that a cookie exists; an expired or deleted account lands here.
   if (!reader) redirect("/login?callbackUrl=/dashboard");
-  const [folders, savedCount] = await Promise.all([deskFolders(reader.id), prisma.savedPost.count({ where: { userId: reader.id } })]);
+  const [folders, savedCount, user] = await Promise.all([
+    deskFolders(reader.id),
+    prisma.savedPost.count({ where: { userId: reader.id } }),
+    prisma.user.findUnique({ where: { id: reader.id }, select: { role: true } }),
+  ]);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 pb-16 pt-6 sm:px-6 lg:flex lg:gap-10 lg:px-8 lg:pt-10">
-      <DashboardSidebar folders={folders} savedCount={savedCount} />
+      <DashboardSidebar folders={folders} savedCount={savedCount} isAuthor={user?.role === "AUTHOR"} />
       <div className="mt-6 min-w-0 flex-1 lg:mt-0">
         {children}
       </div>
