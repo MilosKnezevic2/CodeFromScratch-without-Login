@@ -20,6 +20,14 @@ const STEPS = [
   { title: "It goes out under your name", text: "Published with your name, photo, a short bio and your links, and announced to the newsletter like every article." },
 ];
 
+const RULES = [
+  { title: "AI help", text: "Fine for research and code. You run every code sample yourself, check every claim and write the text in your own words. You are responsible for its accuracy." },
+  { title: "Rights", text: "You keep the copyright. The article appears here first, and we may host and edit it permanently. After 30 days you may republish it elsewhere with a link back to the original." },
+  { title: "Figures", text: "Welcome if they are your own: source files at least 1200 px wide, each with a one-line description." },
+  { title: "Your author box", text: "Your name, photo, a two-line bio and one link to your site or profile." },
+  { title: "Drafts only", text: "You write the article as a draft. Only I publish it, after my review and our edits. Writers have no access to anything else on the site: no database, no reader data, no settings." },
+];
+
 const FITS = [
   "One concept explained from scratch: why it exists, how it works, how to use it",
   "Code you have run yourself, explained line by line",
@@ -103,6 +111,20 @@ export default function WriteForUsPage() {
             ))}
           </ul>
         </div>
+      </section>
+
+      <section aria-labelledby="rules-h" className="mt-14">
+        <h2 id="rules-h" className="text-2xl font-extrabold tracking-tight text-foreground">
+          The rules
+        </h2>
+        <dl className="mt-6 divide-y divide-border rounded-2xl border border-border bg-surface">
+          {RULES.map((rule) => (
+            <div key={rule.title} className="grid gap-1 p-5 sm:grid-cols-[10rem_1fr] sm:gap-6">
+              <dt className="font-bold text-foreground">{rule.title}</dt>
+              <dd className="text-sm leading-relaxed text-muted">{rule.text}</dd>
+            </div>
+          ))}
+        </dl>
       </section>
 
       <p className="mt-10 text-sm leading-relaxed text-muted">
