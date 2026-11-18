@@ -1,26 +1,9 @@
-import AdminSidebar from "@/components/admin/AdminSidebar";
-import AdminMobileNav from "@/components/admin/AdminMobileNav";
-
 // Admin pages read live operational data per request; they must never be
-// prerendered at build time (the build environment has no database).
+// prerendered at build time (the build environment has no database). The
+// panel (sidebar, navigation) is the (panel) route group's layout; the
+// Studio has its own full-screen layout.
 export const dynamic = "force-dynamic";
 
-export default function AdminLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  return (
-    <div className="flex h-screen overflow-hidden bg-background">
-      <AdminSidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <AdminMobileNav />
-        <main className="flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-7xl">
-            {children}
-          </div>
-        </main>
-      </div>
-    </div>
-  );
+export default function AdminRootLayout({ children }: { children: React.ReactNode }) {
+  return children;
 }

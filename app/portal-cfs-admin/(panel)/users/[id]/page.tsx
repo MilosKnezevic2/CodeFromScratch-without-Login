@@ -82,6 +82,7 @@ export default function AdminUserDetailPage() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="flex items-center gap-4">
           {user.image ? (
+            // eslint-disable-next-line @next/next/no-img-element -- a 56 px avatar from Google, GitHub or our /api/avatar; the optimizer adds nothing
             <img src={user.image} alt={user.name || "User"} className="h-14 w-14 rounded-2xl object-cover" />
           ) : (
             <span className="flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10 text-xl font-bold text-accent">

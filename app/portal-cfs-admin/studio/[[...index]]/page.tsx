@@ -3,10 +3,7 @@
 import { NextStudio } from "next-sanity/studio";
 import config from "@/sanity.config";
 
+/** Sanity Studio across the whole screen, as it is designed to run. */
 export default function StudioPage() {
-  return (
-    <div className="mx-auto w-[90vw]">
-      <NextStudio config={config} />
-    </div>
-  );
+  return <NextStudio config={config} />;
 }

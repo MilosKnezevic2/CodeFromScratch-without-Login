@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
-import type { ActionResult } from "@/app/portal-cfs-admin/settings/actions";
+import type { ActionResult } from "@/app/portal-cfs-admin/(panel)/settings/actions";
 import type { ClientField, FlatValues } from "@/lib/settings/schema";
 
 const INPUT =
