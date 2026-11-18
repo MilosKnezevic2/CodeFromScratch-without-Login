@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { refreshCacheAction } from "@/app/portal-cfs-admin/settings/actions";
+import { refreshCacheAction } from "@/app/portal-cfs-admin/(panel)/settings/actions";
 
 /** Rebuilds every public page on its next visit, for when something looks stale. */
 export default function RefreshCacheButton() {

@@ -6,6 +6,7 @@ import { assist } from "@sanity/assist";
 import { schemas } from "./sanity/schemas";
 import SeoScoreBadge from "./sanity/badges/SeoScoreBadge";
 import ReadingTimeBadge from "./sanity/badges/ReadingTimeBadge";
+import StudioNavbar from "./sanity/components/StudioNavbar";
 
 const siteUrl =
   process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "") ||
@@ -36,5 +37,6 @@ export default defineConfig({
         ? [...prev, SeoScoreBadge, ReadingTimeBadge]
         : prev,
   },
+  studio: { components: { navbar: StudioNavbar } },
   basePath: "/portal-cfs-admin/studio",
 });

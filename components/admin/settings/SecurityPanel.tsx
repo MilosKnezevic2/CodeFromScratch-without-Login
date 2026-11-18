@@ -10,7 +10,7 @@ import {
   disableMfaAction,
   startMfaAction,
   type ActionResult,
-} from "@/app/portal-cfs-admin/settings/actions";
+} from "@/app/portal-cfs-admin/(panel)/settings/actions";
 import type { AdminState, Enrolment } from "@/lib/admin-auth";
 import SignOutButton from "@/components/admin/SignOutButton";
 

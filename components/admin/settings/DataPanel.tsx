@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useState, useTransition } from "react";
-import { erasePersonAction, exportPersonAction, lookupPersonAction, type ActionResult } from "@/app/portal-cfs-admin/settings/actions";
+import { erasePersonAction, exportPersonAction, lookupPersonAction, type ActionResult } from "@/app/portal-cfs-admin/(panel)/settings/actions";
 import type { ErasureCounts, PersonSummary } from "@/lib/privacy/person-data";
 
 const INPUT =

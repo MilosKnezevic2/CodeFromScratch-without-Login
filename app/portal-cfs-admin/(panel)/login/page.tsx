@@ -56,6 +56,9 @@ export default function AdminLoginPage() {
         setError(errData?.error || "Invalid credentials");
         return;
       }
+      // A full page load, not router.push: the router keeps the redirect to this
+      // login page that it prefetched while signed out, and would land here again.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- see above
       window.location.href = "/portal-cfs-admin";
     } catch {
       setError("Something went wrong");
@@ -80,6 +83,9 @@ export default function AdminLoginPage() {
         setError(errData?.error || "Invalid code");
         return;
       }
+      // A full page load, not router.push: the router keeps the redirect to this
+      // login page that it prefetched while signed out, and would land here again.
+      // eslint-disable-next-line @next/next/no-location-assign-relative-destination -- see above
       window.location.href = "/portal-cfs-admin";
     } catch {
       setError("Something went wrong");
