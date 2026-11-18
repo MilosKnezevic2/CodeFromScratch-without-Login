@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { login } from "@/lib/admin-auth";
-import { createAdminSession } from "@/lib/admin-session";
+import { ADMIN_COOKIE, adminCookieOptions, createAdminSession } from "@/lib/admin-session";
 import { rateLimit } from "@/lib/rate-limit";
 import { lockedMessage } from "../check/route";
-
-export const ADMIN_COOKIE = "cfs-admin-token";
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? null;
@@ -42,12 +40,6 @@ export async function POST(request: NextRequest) {
 
   const token = await createAdminSession();
   const response = NextResponse.json({ success: true });
-  response.cookies.set(ADMIN_COOKIE, token, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24,
-  });
+  response.cookies.set(ADMIN_COOKIE, token, adminCookieOptions());
   return response;
 }

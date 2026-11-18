@@ -1,11 +1,13 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
-import { verifyAdminSession } from "@/lib/admin-session";
+import { ADMIN_COOKIE } from "@/lib/admin-session";
+import { isAdminSessionActive } from "@/lib/admin-session-store";
 import { isTrustedOrigin } from "@/lib/csrf";
 import { legacyBlogRedirect, listingHref, queryFromParams } from "@/lib/blog-url";
 
-// Next 16 name for the edge request hook (the `middleware` file convention
-// is deprecated). Runs on Edge — Web Crypto only, no node:crypto.
+// Next 16 name for the request hook (the `middleware` file convention is
+// deprecated). Proxy runs on the Node.js runtime in Next 16, so the admin
+// check can ask the database whether a session was revoked.
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -57,10 +59,11 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Protect portal-cfs-admin routes with a cryptographically signed session token.
+  // Protect portal-cfs-admin pages with the signed session token, checked
+  // against revocations too: the pages read the database directly, so a
+  // signed-out or replaced cookie must not open them.
   if (pathname.startsWith("/portal-cfs-admin")) {
-    const adminToken = request.cookies.get("cfs-admin-token")?.value;
-    if (!(await verifyAdminSession(adminToken))) {
+    if (!(await isAdminSessionActive(request.cookies.get(ADMIN_COOKIE)?.value))) {
       return NextResponse.redirect(
         new URL("/portal-cfs-admin/login", request.nextUrl.origin)
       );
