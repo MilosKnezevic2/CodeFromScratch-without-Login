@@ -455,7 +455,8 @@ model ArticleDraft {
   authorId    String
   title       String      @default("")
   excerpt     String      @default("")
-  markdown    String      @default("") @db.Text
+  /// Portable Text, checked by lib/writer/body.ts before every save.
+  body        Json        @default("[]")
   status      DraftStatus @default(WRITING)
   reviewNote  String?     @db.Text
   submittedAt DateTime?

@@ -10,7 +10,7 @@ vi.mock("@/lib/comments-store", () => ({ currentReader: reader }));
 
 import { currentAuthor, deleteOwnDraft, getOwnDraft, parseDraftInput, readyForReview, saveOwnDraft, submitOwnDraft } from "./drafts";
 
-const LONG = "word ".repeat(400);
+const LONG = [{ _type: "block", _key: "b1", style: "normal", markDefs: [], children: [{ _type: "span", _key: "s1", text: "word ".repeat(400), marks: [] }] }];
 
 beforeEach(() => {
   for (const group of Object.values(db)) for (const fn of Object.values(group)) fn.mockReset();
@@ -43,7 +43,7 @@ describe("every query is scoped to the author", () => {
 
   it("saves only own drafts that are still editable", async () => {
     db.articleDraft.updateMany.mockResolvedValue({ count: 0 });
-    expect(await saveOwnDraft("u1", "d1", { title: "t", excerpt: "", markdown: "" })).toBe(false);
+    expect(await saveOwnDraft("u1", "d1", { title: "t", excerpt: "", body: [] })).toBe(false);
     expect(db.articleDraft.updateMany.mock.calls[0][0].where).toEqual({ id: "d1", authorId: "u1", status: { in: ["WRITING", "CHANGES_REQUESTED"] } });
   });
 
@@ -62,12 +62,12 @@ describe("submitOwnDraft", () => {
   });
 
   it("refuses a draft that is not ready, and says what is missing", async () => {
-    db.articleDraft.findFirst.mockResolvedValue({ title: "Short", excerpt: "", markdown: "" });
+    db.articleDraft.findFirst.mockResolvedValue({ title: "Short", excerpt: "", body: [] });
     expect(await submitOwnDraft("u1", "d1")).toEqual({ error: expect.stringContaining("title") });
   });
 
   it("moves a ready draft to IN_REVIEW, and only that", async () => {
-    db.articleDraft.findFirst.mockResolvedValue({ title: "Out-of-order search results", excerpt: "Why older answers overwrite newer ones and how to stop it.", markdown: LONG });
+    db.articleDraft.findFirst.mockResolvedValue({ title: "Out-of-order search results", excerpt: "Why older answers overwrite newer ones and how to stop it.", body: LONG });
     db.articleDraft.updateMany.mockResolvedValue({ count: 1 });
     expect(await submitOwnDraft("u1", "d1")).toEqual({ ok: true, title: "Out-of-order search results" });
     const call = db.articleDraft.updateMany.mock.calls[0][0];
@@ -80,11 +80,15 @@ describe("submitOwnDraft", () => {
 describe("parseDraftInput and readyForReview", () => {
   it("limits field lengths and ignores unknown fields such as status", () => {
     expect(parseDraftInput({ title: "x".repeat(121) })).toMatchObject({ ok: false });
-    const parsed = parseDraftInput({ title: "  T  ", excerpt: "E", markdown: "M", status: "APPROVED", authorId: "someone-else" });
-    expect(parsed).toEqual({ ok: true, value: { title: "T", excerpt: "E", markdown: "M" } });
+    const parsed = parseDraftInput({ title: "  T  ", excerpt: "E", body: [], status: "APPROVED", authorId: "someone-else" });
+    expect(parsed).toEqual({ ok: true, value: { title: "T", excerpt: "E", body: [] } });
+  });
+
+  it("refuses a body the editor could not have produced", () => {
+    expect(parseDraftInput({ title: "T", body: [{ _type: "script", _key: "x" }] })).toMatchObject({ ok: false });
   });
 
   it("accepts a complete draft", () => {
-    expect(readyForReview({ title: "A proper title here", excerpt: "A summary that is long enough to pass the check.", markdown: LONG })).toBeNull();
+    expect(readyForReview({ title: "A proper title here", excerpt: "A summary that is long enough to pass the check.", body: LONG })).toBeNull();
   });
 });

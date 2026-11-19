@@ -1,5 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { currentReader } from "@/lib/comments-store";
+import { sanitizeBody, toBody, wordCount, type BodyBlock } from "@/lib/writer/body";
 
 /**
  * The Writer desk's rules, in one place:
@@ -11,7 +12,7 @@ import { currentReader } from "@/lib/comments-store";
  *  - nothing here can publish: publishing is the editor's, from the admin.
  */
 
-export const LIMITS = { title: 120, excerpt: 300, markdown: 100_000, openDrafts: 20 } as const;
+export const LIMITS = { title: 120, excerpt: 300, openDrafts: 20, reviewWords: 300 } as const;
 export const EDITABLE = ["WRITING", "CHANGES_REQUESTED"] as const;
 
 export type Author = { id: string; name: string | null };
@@ -24,7 +25,7 @@ export async function currentAuthor(): Promise<Author | null> {
   return user?.role === "AUTHOR" ? { id: reader.id, name: reader.name } : null;
 }
 
-export type DraftInput = { title: string; excerpt: string; markdown: string };
+export type DraftInput = { title: string; excerpt: string; body: BodyBlock[] };
 
 /** Checks what the editor sends; trims and limits every field. */
 export function parseDraftInput(raw: unknown): { ok: true; value: DraftInput } | { ok: false; error: string } {
@@ -33,18 +34,18 @@ export function parseDraftInput(raw: unknown): { ok: true; value: DraftInput } |
   const str = (v: unknown) => (typeof v === "string" ? v : "");
   const title = str(r.title).trim();
   const excerpt = str(r.excerpt).trim();
-  const markdown = str(r.markdown);
   if (title.length > LIMITS.title) return { ok: false, error: `The title can be at most ${LIMITS.title} characters.` };
   if (excerpt.length > LIMITS.excerpt) return { ok: false, error: `The summary can be at most ${LIMITS.excerpt} characters.` };
-  if (markdown.length > LIMITS.markdown) return { ok: false, error: "The article is too long to save in one draft." };
-  return { ok: true, value: { title, excerpt, markdown } };
+  const body = sanitizeBody(r.body);
+  if (!body.ok) return body;
+  return { ok: true, value: { title, excerpt, body: body.value } };
 }
 
 /** What a draft needs before the editor sees it. */
-export function readyForReview(d: DraftInput): string | null {
+export function readyForReview(d: { title: string; excerpt: string; body: unknown }): string | null {
   if (d.title.length < 10) return "Give the article a title of at least 10 characters.";
   if (d.excerpt.length < 40) return "Write a one- or two-sentence summary (at least 40 characters).";
-  if (d.markdown.trim().length < 1500) return "The article is still very short; write a bit more before sending it.";
+  if (wordCount(toBody(d.body)) < LIMITS.reviewWords) return "The article is still very short; write a bit more before sending it.";
   return null;
 }
 
@@ -70,7 +71,7 @@ export async function createOwnDraft(authorId: string): Promise<{ id: string } |
 export async function saveOwnDraft(authorId: string, id: string, input: DraftInput): Promise<boolean> {
   const { count } = await prisma.articleDraft.updateMany({
     where: { id, authorId, status: { in: [...EDITABLE] } },
-    data: input,
+    data: { title: input.title, excerpt: input.excerpt, body: input.body },
   });
   return count === 1;
 }

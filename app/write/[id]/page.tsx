@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { notFound, redirect } from "next/navigation";
 import WriterEditor from "@/components/writer/WriterEditor";
+import { toBody } from "@/lib/writer/body";
 import { currentAuthor, getOwnDraft } from "@/lib/writer/drafts";
 
 export const metadata: Metadata = {
@@ -19,7 +20,7 @@ export default async function WriteDraftPage({ params }: Props) {
   return (
     <WriterEditor
       id={draft.id}
-      initial={{ title: draft.title, excerpt: draft.excerpt, markdown: draft.markdown }}
+      initial={{ title: draft.title, excerpt: draft.excerpt, body: toBody(draft.body) }}
       status={draft.status}
       reviewNote={draft.reviewNote}
       authorName={author.name ?? "You"}
