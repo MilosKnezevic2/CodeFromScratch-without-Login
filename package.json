@@ -30,7 +30,7 @@
     "@sanity/vision": "^5.31.2",
     "@sanity/visual-editing": "^5.3.4",
     "@sentry/nextjs": "^10.50.0",
-    "@stripe/stripe-js": "^8.9.0",
+    "@stripe/stripe-js": "^10.1.0",
     "@types/pg": "^8.23.1",
     "@types/qrcode": "^1.5.6",
     "@vercel/analytics": "^2.0.1",
