@@ -60,6 +60,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/bcryptjs": "^3.0.0",
+    "@types/markdown-it": "14.1.2",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
@@ -69,10 +70,12 @@
     "eslint-config-next": "16.4.6",
     "husky": "^9.1.7",
     "lint-staged": "^16.4.0",
+    "markdown-it": "14.3.3",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",
-    "vitest": "^5.0.5"
+    "vitest": "^5.0.5",
+    "yaml": "2.9.0"
   },
   "lint-staged": {
     "*.{ts,tsx,mjs,js,jsx}": [

@@ -26,6 +26,7 @@ import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import { randomUUID } from "crypto";
 import { toPortableText } from "./lib/portable-text.mjs";
+import { uploadCover } from "./lib/cover.mjs";
 import { existsSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
@@ -41,7 +42,6 @@ const flag = (name) => {
 };
 const APPLY = args.includes("--apply");
 const SITE = "https://codefromscratch.org";
-const OG_BASE = "https://codefromscratch-ten.vercel.app/api/og";
 const MILOS_AUTHOR_ID = "47455f55-daea-449c-b813-f1d8d3c4b08b";
 
 if (slugs.length === 0) {
@@ -71,18 +71,6 @@ function internalLinks(content) {
     }
   }
   return [...found];
-}
-
-async function uploadCover(slug, title, categoryName) {
-  const url = `${OG_BASE}?title=${encodeURIComponent(title)}&category=${encodeURIComponent(categoryName)}`;
-  const res = await fetch(url);
-  if (!res.ok) throw new Error(`OG fetch ${res.status} for "${title}"`);
-  const buf = Buffer.from(await res.arrayBuffer());
-  const asset = await client.assets.upload("image", buf, {
-    filename: `cover-${slug}.png`,
-    contentType: "image/png",
-  });
-  return asset._id;
 }
 
 const INDEXNOW_KEY = "dd671c2ccc673598cd70b9f8b2a9ff2c";
@@ -216,7 +204,7 @@ async function main() {
     } else {
       console.log(`create "${j.draft.title}" in [${categoryName}], published at ${publishedAt}`);
       if (!APPLY) continue;
-      const coverAssetId = await uploadCover(j.slug, j.draft.title, categoryName);
+      const coverAssetId = await uploadCover(client, j.slug, j.draft.title, categoryName);
       await client.create({
         _type: "post",
         title: j.draft.title,
