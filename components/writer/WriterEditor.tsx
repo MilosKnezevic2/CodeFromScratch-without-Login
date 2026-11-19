@@ -123,6 +123,9 @@ export default function WriterEditor({ id, initial, status, reviewNote, authorNa
         </span>
         <span className="text-xs text-muted-foreground">{words.toLocaleString("en-GB")} words</span>
         <div className="ml-auto flex items-center gap-2">
+          <Link href="/write/guide" target="_blank" className="min-h-10 content-center rounded-full px-3 text-sm font-semibold text-muted hover:text-foreground">
+            Guide<span className="sr-only"> (opens in a new tab)</span>
+          </Link>
           {status === "WRITING" && (
             <button type="button" onClick={remove} className="min-h-10 rounded-full px-4 text-sm font-semibold text-muted hover:text-red-600">
               Delete
@@ -229,7 +232,7 @@ export default function WriterEditor({ id, initial, status, reviewNote, authorNa
           className="mt-1.5 w-full resize-none rounded-xl border border-border bg-surface px-3 py-2 text-base text-foreground [field-sizing:content] focus:border-accent focus:outline-none"
         />
         <div className="mt-6">
-          <RichEditor initialValue={initial.body as PortableTextBlock[]} readOnly={!editable} onChange={changeBody} />
+          <RichEditor draftId={id} initialValue={initial.body as PortableTextBlock[]} readOnly={!editable} onChange={changeBody} />
         </div>
         {editable && (
           <p className="mt-3 text-xs text-muted-foreground">

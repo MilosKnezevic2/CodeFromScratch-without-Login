@@ -13,11 +13,12 @@ import {
   type RenderStyleFunction,
 } from "@portabletext/editor";
 import { EventListenerPlugin } from "@portabletext/editor/plugins";
-import { CalloutCard, CodeCard, DemoCard, DividerCard, type ObjectValue } from "./ObjectCards";
+import { CalloutCard, CodeCard, DemoCard, DividerCard, ImageCard, type ObjectValue } from "./ObjectCards";
 import { schemaDefinition } from "./schema";
 import Toolbar from "./Toolbar";
 
 type Props = {
+  draftId: string;
   initialValue: PortableTextBlock[];
   readOnly: boolean;
   onChange: (value: PortableTextBlock[]) => void;
@@ -105,6 +106,8 @@ function makeRenderBlock(readOnly: boolean): RenderBlockFunction {
         return <DemoCard {...card} />;
       case "divider":
         return <DividerCard {...card} />;
+      case "image":
+        return <ImageCard {...card} />;
       default:
         return <div>{props.children}</div>;
     }
@@ -119,7 +122,7 @@ const renderBlockReadOnly = makeRenderBlock(true);
  * site's article styles. What the author sees while writing is what the
  * article page shows; the value is the same Portable Text the Studio stores.
  */
-export default function RichEditor({ initialValue, readOnly, onChange }: Props) {
+export default function RichEditor({ draftId, initialValue, readOnly, onChange }: Props) {
   return (
     <EditorProvider initialConfig={{ schemaDefinition, initialValue, readOnly }}>
       <EventListenerPlugin
@@ -130,7 +133,7 @@ export default function RichEditor({ initialValue, readOnly, onChange }: Props) 
       <div className="rounded-2xl border border-border bg-surface">
         {!readOnly && (
           <div className="sticky top-[7.25rem] z-10 rounded-t-2xl border-b border-border bg-surface/95 p-1.5 backdrop-blur">
-            <Toolbar />
+            <Toolbar draftId={draftId} />
           </div>
         )}
         <PortableTextEditable

@@ -1,6 +1,6 @@
 import { prisma } from "@/lib/prisma";
 import { currentReader } from "@/lib/comments-store";
-import { sanitizeBody, toBody, wordCount, type BodyBlock } from "@/lib/writer/body";
+import { imagesWithoutAlt, sanitizeBody, toBody, wordCount, type BodyBlock } from "@/lib/writer/body";
 
 /**
  * The Writer desk's rules, in one place:
@@ -45,7 +45,9 @@ export function parseDraftInput(raw: unknown): { ok: true; value: DraftInput } |
 export function readyForReview(d: { title: string; excerpt: string; body: unknown }): string | null {
   if (d.title.length < 10) return "Give the article a title of at least 10 characters.";
   if (d.excerpt.length < 40) return "Write a one- or two-sentence summary (at least 40 characters).";
-  if (wordCount(toBody(d.body)) < LIMITS.reviewWords) return "The article is still very short; write a bit more before sending it.";
+  const body = toBody(d.body);
+  if (wordCount(body) < LIMITS.reviewWords) return "The article is still very short; write a bit more before sending it.";
+  if (imagesWithoutAlt(body) > 0) return "Every image needs a short description (alt text) before the article can be sent.";
   return null;
 }
 

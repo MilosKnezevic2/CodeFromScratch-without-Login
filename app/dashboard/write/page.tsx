@@ -28,6 +28,9 @@ export default async function WriterDeskPage({ searchParams }: { searchParams: P
             Write here and send the article for review when it is ready. Milos reads it, and publishing is his step:
             nothing you write goes live without his review.
           </p>
+          <Link href="/write/guide" className="mt-2 inline-block text-sm font-semibold text-accent underline decoration-accent/30 underline-offset-2 hover:decoration-accent">
+            How to use the editor
+          </Link>
         </div>
         <form action={newDraftAction}>
           <button className="inline-flex min-h-11 items-center gap-2 rounded-full bg-accent px-5 text-sm font-bold text-accent-foreground transition hover:opacity-90 active:scale-[0.98]">

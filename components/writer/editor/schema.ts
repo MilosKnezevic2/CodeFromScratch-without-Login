@@ -21,6 +21,16 @@ export const schemaDefinition = defineSchema({
       ],
     },
     { name: "divider", fields: [{ name: "style", type: "string" }] },
+    {
+      name: "image",
+      fields: [
+        { name: "asset", type: "object" },
+        { name: "alt", type: "string" },
+        { name: "caption", type: "string" },
+        { name: "size", type: "string" },
+        { name: "alignment", type: "string" },
+      ],
+    },
   ],
   inlineObjects: [],
 });

@@ -32,6 +32,11 @@ export const CODE_LANGUAGES = [
 export const CALLOUT_TYPES = ["tip", "info", "warning", "error"] as const;
 export const DIVIDER_STYLES = ["plain", "decorative", "dotted"] as const;
 export const DEMO_HEIGHT = { min: 120, max: 900, initial: 320 } as const;
+export const IMAGE_SIZES = ["small", "medium", "full"] as const;
+export const IMAGE_ALIGNMENTS = ["left", "center", "right"] as const;
+export const ALT_LIMITS = { min: 3, max: 125 } as const;
+/** A Sanity image asset id: image-<sha1>-<width>x<height>-<format>. Only raster formats; never SVG. */
+export const IMAGE_REF = /^image-[a-f0-9]{40}-\d{1,5}x\d{1,5}-(png|jpg|webp|gif)$/;
 
 export const BODY_LIMITS = { blocks: 2000, text: 20_000, code: 50_000, bytes: 600_000, maxLevel: 3 } as const;
 
@@ -50,7 +55,16 @@ export type CodeBlock = { _type: "code"; _key: string; language: (typeof CODE_LA
 export type CalloutBlock = { _type: "callout"; _key: string; type: (typeof CALLOUT_TYPES)[number]; text: string };
 export type DemoBlock = { _type: "livePreview"; _key: string; title?: string; html?: string; css?: string; js?: string; height: number };
 export type DividerBlock = { _type: "divider"; _key: string; style: (typeof DIVIDER_STYLES)[number] };
-export type BodyBlock = TextBlock | CodeBlock | CalloutBlock | DemoBlock | DividerBlock;
+export type ImageBlock = {
+  _type: "image";
+  _key: string;
+  asset: { _type: "reference"; _ref: string };
+  alt?: string;
+  caption?: string;
+  size: (typeof IMAGE_SIZES)[number];
+  alignment: (typeof IMAGE_ALIGNMENTS)[number];
+};
+export type BodyBlock = TextBlock | CodeBlock | CalloutBlock | DemoBlock | DividerBlock | ImageBlock;
 
 type Result = { ok: true; value: BodyBlock[] } | { ok: false; error: string };
 
@@ -145,6 +159,24 @@ function objectBlock(b: Record<string, unknown>): BodyBlock | string {
     }
     case "divider":
       return { _type: "divider", _key, style: oneOf(DIVIDER_STYLES, b.style, "plain") };
+    case "image": {
+      const ref = (b.asset as { _ref?: unknown } | undefined)?._ref;
+      if (typeof ref !== "string" || !IMAGE_REF.test(ref)) return "An image could not be read; upload it again.";
+      const alt = text(b.alt, ALT_LIMITS.max);
+      const caption = text(b.caption, 300);
+      if (alt === null) return `An image description can be at most ${ALT_LIMITS.max} characters.`;
+      if (caption === null) return "An image caption is too long.";
+      const image: ImageBlock = {
+        _type: "image",
+        _key,
+        asset: { _type: "reference", _ref: ref },
+        size: oneOf(IMAGE_SIZES, b.size, "full"),
+        alignment: oneOf(IMAGE_ALIGNMENTS, b.alignment, "center"),
+      };
+      if (alt.trim()) image.alt = alt.trim();
+      if (caption.trim()) image.caption = caption.trim();
+      return image;
+    }
     default:
       return "The article contains a part this editor does not support.";
   }
@@ -176,6 +208,11 @@ export function sanitizeBody(raw: unknown): Result {
 export function toBody(stored: unknown): BodyBlock[] {
   const result = sanitizeBody(stored);
   return result.ok ? result.value : [];
+}
+
+/** Images an author has not described yet; readers on screen readers would get nothing. */
+export function imagesWithoutAlt(body: BodyBlock[]): number {
+  return body.filter((b) => b._type === "image" && (b.alt ?? "").length < ALT_LIMITS.min).length;
 }
 
 /** The words a reader reads: paragraphs, headings, lists and highlighted boxes, not code. */

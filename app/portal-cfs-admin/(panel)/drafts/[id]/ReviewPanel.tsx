@@ -6,7 +6,7 @@ import type { DraftStatusName } from "@/lib/writer/status";
 import { approveAction, requestChangesAction, type ReviewResult } from "../actions";
 
 /** The editor's decision on a sent draft. */
-export default function ReviewPanel({ id, status, reviewNote }: { id: string; status: DraftStatusName; reviewNote: string | null }) {
+export default function ReviewPanel({ id, status, reviewNote, studioHref }: { id: string; status: DraftStatusName; reviewNote: string | null; studioHref: string }) {
   const router = useRouter();
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
@@ -26,8 +26,16 @@ export default function ReviewPanel({ id, status, reviewNote }: { id: string; st
       <aside className="h-fit rounded-xl border border-border bg-surface p-5 text-sm text-muted xl:sticky xl:top-6">
         {status === "APPROVED" ? (
           <>
-            <p className="font-semibold text-foreground">Approved</p>
-            <p className="mt-1">In the full version this creates the article in Sanity, unpublished, for the usual checks and the publish step.</p>
+            <p className="font-semibold text-foreground">Approved, now in Sanity</p>
+            <p className="mt-1">
+              The article waits in the Studio as an unpublished draft. Add the category and cover image there, then publish as usual.
+            </p>
+            <a
+              href={studioHref}
+              className="mt-4 inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-accent text-sm font-bold text-accent-foreground transition hover:opacity-90"
+            >
+              Open in the Studio
+            </a>
           </>
         ) : (
           <>
@@ -48,7 +56,7 @@ export default function ReviewPanel({ id, status, reviewNote }: { id: string; st
         onClick={() => run(() => approveAction(id))}
         className="min-h-11 w-full rounded-lg bg-accent text-sm font-bold text-accent-foreground transition hover:opacity-90 disabled:opacity-60"
       >
-        Approve
+        {busy ? "Working…" : "Approve and create in Sanity"}
       </button>
       <div className="border-t border-border pt-4">
         <label htmlFor="review-note" className="text-sm font-semibold text-foreground">

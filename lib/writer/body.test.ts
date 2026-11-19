@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { safeHref, sanitizeBody, toBody, wordCount } from "./body";
+import { imagesWithoutAlt, safeHref, sanitizeBody, toBody, wordCount } from "./body";
 
 const span = (text: string, marks: string[] = [], _key = "s1") => ({ _type: "span", _key, text, marks });
 const para = (children: unknown[], extra: Record<string, unknown> = {}) => ({ _type: "block", _key: "b1", style: "normal", markDefs: [], children, ...extra });
@@ -54,6 +54,15 @@ describe("sanitizeBody", () => {
     expect(sanitizeBody([{ _type: "image", _key: "i1", asset: { _ref: "x" } }])).toMatchObject({ ok: false });
   });
 
+  it("accepts an uploaded raster image and refuses an SVG asset", () => {
+    const ref = `image-${"a".repeat(40)}-1200x630-png`;
+    expect(sanitizeBody([{ _type: "image", _key: "i1", asset: { _ref: ref }, alt: " A chart ", size: "huge", hotspot: {} }])).toEqual({
+      ok: true,
+      value: [{ _type: "image", _key: "i1", asset: { _type: "reference", _ref: ref }, alt: "A chart", size: "full", alignment: "center" }],
+    });
+    expect(sanitizeBody([{ _type: "image", _key: "i1", asset: { _ref: `image-${"a".repeat(40)}-10x10-svg` } }])).toMatchObject({ ok: false });
+  });
+
   it("refuses duplicate or malformed keys", () => {
     expect(sanitizeBody([para([span("a")]), para([span("b")])])).toMatchObject({ ok: false });
     expect(sanitizeBody([{ ...para([span("a")]), _key: "has space" }])).toMatchObject({ ok: false });
@@ -93,6 +102,15 @@ describe("toBody and wordCount", () => {
       { _type: "callout", _key: "k1", type: "tip", text: "four five" },
     ]);
     expect(wordCount(body)).toBe(5);
+  });
+
+  it("finds images without a description", () => {
+    const ref = `image-${"b".repeat(40)}-800x600-jpg`;
+    const body = toBody([
+      { _type: "image", _key: "i1", asset: { _ref: ref } },
+      { _type: "image", _key: "i2", asset: { _ref: ref }, alt: "Login form" },
+    ]);
+    expect(imagesWithoutAlt(body)).toBe(1);
   });
 
   it("reads an unreadable stored body as empty", () => {

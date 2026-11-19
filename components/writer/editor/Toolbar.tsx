@@ -2,7 +2,7 @@
 
 import { useEditor, useEditorSelector, type EditorSelection } from "@portabletext/editor";
 import { getActiveAnnotations, getActiveStyle, isActiveDecorator, isActiveListItem, isSelectionExpanded } from "@portabletext/editor/selectors";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { safeHref, STYLES } from "@/lib/writer/body";
 import { STYLE_LABEL } from "./schema";
 
@@ -204,7 +204,7 @@ function Insert() {
           key={item.label}
           label={`Insert ${item.label.toLowerCase()}`}
           onClick={() => {
-            editor.send({ type: "insert.block", block: { ...item.block }, placement: "auto", select: "none" });
+            editor.send({ type: "insert.block", block: { ...item.block }, placement: "after", select: "none" });
           }}
         >
           + {item.label.replace(" block", "").replace(" box", "")}
@@ -214,8 +214,69 @@ function Insert() {
   );
 }
 
+/** Uploads a picture through the server and places it after the cursor. */
+function ImageTool({ draftId }: { draftId: string }) {
+  const editor = useEditor();
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function upload(file: File) {
+    setBusy(true);
+    setError(null);
+    const form = new FormData();
+    form.set("draftId", draftId);
+    form.set("file", file);
+    try {
+      const res = await fetch("/api/writer/images", { method: "POST", body: form });
+      const data: { ref?: string; error?: string } = await res.json().catch(() => ({}));
+      if (!res.ok || !data.ref) {
+        setError(data.error ?? "The image could not be uploaded.");
+        return;
+      }
+      editor.send({
+        type: "insert.block",
+        block: { _type: "image", asset: { _type: "reference", _ref: data.ref }, alt: "", size: "full", alignment: "center" },
+        placement: "after",
+        select: "none",
+      });
+    } catch {
+      // fetch throws only when the request never completed.
+      setError("No connection. Check your internet and try again.");
+    } finally {
+      setBusy(false);
+      if (input.current) input.current.value = "";
+    }
+  }
+
+  return (
+    <span className="inline-flex items-center">
+      <input
+        ref={input}
+        type="file"
+        accept="image/png,image/jpeg,image/webp,image/gif"
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          if (file) void upload(file);
+        }}
+      />
+      <Tool label="Insert image" disabled={busy} onClick={() => input.current?.click()}>
+        {busy ? "Uploading…" : "+ Image"}
+      </Tool>
+      {error && (
+        <span role="alert" className="ml-1 text-xs font-semibold text-red-600 dark:text-red-300">
+          {error}
+        </span>
+      )}
+    </span>
+  );
+}
+
 /** The formatting bar above the text, the same set of tools as the Studio's article field. */
-export default function Toolbar() {
+export default function Toolbar({ draftId }: { draftId: string }) {
   const editor = useEditor();
   return (
     <div role="toolbar" aria-label="Formatting" className="flex flex-wrap items-center gap-0.5">
@@ -245,6 +306,7 @@ export default function Toolbar() {
         1. List
       </List>
       <Divider />
+      <ImageTool draftId={draftId} />
       <Insert />
       <Divider />
       <Tool label="Undo (Ctrl+Z)" onClick={() => editor.send({ type: "history.undo" })}>

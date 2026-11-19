@@ -3,7 +3,8 @@
 import { useEditor, type BlockPath } from "@portabletext/editor";
 import { useState, type ReactNode, type SyntheticEvent } from "react";
 import LivePreview from "@/components/blog/LivePreview";
-import { CALLOUT_TYPES, CODE_LANGUAGES, DEMO_HEIGHT, DIVIDER_STYLES } from "@/lib/writer/body";
+import { urlFor } from "@/lib/sanity/image";
+import { ALT_LIMITS, CALLOUT_TYPES, CODE_LANGUAGES, DEMO_HEIGHT, DIVIDER_STYLES, IMAGE_ALIGNMENTS, IMAGE_REF, IMAGE_SIZES } from "@/lib/writer/body";
 
 /** A block object as the editor holds it: its key plus the fields from the schema. */
 export type ObjectValue = { _key: string; [field: string]: unknown };
@@ -299,6 +300,90 @@ export function DividerCard({ value, path, selected, readOnly }: CardProps) {
             </option>
           ))}
         </select>
+      </div>
+    </Card>
+  );
+}
+
+const SIZE_LABEL: Record<(typeof IMAGE_SIZES)[number], string> = { small: "Small", medium: "Medium", full: "Full width" };
+
+export function ImageCard({ value, path, selected, readOnly }: CardProps) {
+  const set = useSetField(path);
+  const [alt, setAlt] = useFieldText(value.alt);
+  const [caption, setCaption] = useFieldText(value.caption);
+  const ref = (value.asset as { _ref?: unknown } | undefined)?._ref;
+  const valid = typeof ref === "string" && IMAGE_REF.test(ref);
+  const missingAlt = alt.trim().length < ALT_LIMITS.min;
+  const id = `image-${value._key}`;
+  const size = (IMAGE_SIZES as readonly string[]).includes(value.size as string) ? (value.size as string) : "full";
+  const alignment = (IMAGE_ALIGNMENTS as readonly string[]).includes(value.alignment as string) ? (value.alignment as string) : "center";
+  return (
+    <Card label="Image" path={path} selected={selected} readOnly={readOnly}>
+      {valid ? (
+        // eslint-disable-next-line @next/next/no-img-element -- an editing preview of a just-uploaded asset; the article itself uses next/image
+        <img src={urlFor({ asset: { _ref: ref } }).width(1200).url()} alt={alt} className="mx-auto max-h-[28rem] w-auto rounded-lg" />
+      ) : (
+        <p className="text-sm text-muted">This image could not be shown; remove it and upload it again.</p>
+      )}
+      <div className="mt-3 grid gap-2">
+        <label htmlFor={`${id}-alt`} className="text-xs font-semibold text-foreground">
+          Description for screen readers (alt text) <span className="text-red-600 dark:text-red-300">*</span>
+        </label>
+        <input
+          id={`${id}-alt`}
+          value={alt}
+          readOnly={readOnly}
+          maxLength={ALT_LIMITS.max}
+          aria-required="true"
+          aria-invalid={missingAlt ? true : undefined}
+          aria-describedby={`${id}-alt-help`}
+          placeholder="What the image shows, e.g. Network tab with two overlapping requests"
+          onChange={(e) => {
+            setAlt(e.target.value);
+            set({ alt: e.target.value });
+          }}
+          className={field}
+        />
+        <p id={`${id}-alt-help`} className={`text-xs ${missingAlt ? "font-semibold text-yellow-700 dark:text-yellow-300" : "text-muted-foreground"}`}>
+          {missingAlt ? "Needed before you can send the article." : `${alt.length}/${ALT_LIMITS.max}`}
+        </p>
+        <label htmlFor={`${id}-caption`} className="sr-only">
+          Caption (optional)
+        </label>
+        <input
+          id={`${id}-caption`}
+          value={caption}
+          readOnly={readOnly}
+          maxLength={300}
+          placeholder="Caption under the image (optional)"
+          onChange={(e) => {
+            setCaption(e.target.value);
+            set({ caption: e.target.value });
+          }}
+          className={field}
+        />
+        <div className="flex flex-wrap gap-2">
+          <label htmlFor={`${id}-size`} className="sr-only">
+            Size
+          </label>
+          <select id={`${id}-size`} value={size} disabled={readOnly} onChange={(e) => set({ size: e.target.value })} className={`${field} w-auto`}>
+            {IMAGE_SIZES.map((s) => (
+              <option key={s} value={s}>
+                {SIZE_LABEL[s]}
+              </option>
+            ))}
+          </select>
+          <label htmlFor={`${id}-align`} className="sr-only">
+            Alignment
+          </label>
+          <select id={`${id}-align`} value={alignment} disabled={readOnly} onChange={(e) => set({ alignment: e.target.value })} className={`${field} w-auto capitalize`}>
+            {IMAGE_ALIGNMENTS.map((a) => (
+              <option key={a} value={a}>
+                {a}
+              </option>
+            ))}
+          </select>
+        </div>
       </div>
     </Card>
   );
