@@ -50,6 +50,13 @@ const nextConfig: NextConfig = {
         destination: "/blog/react-state-management-zustand-vs-redux-vs-context",
         permanent: true,
       },
+      // Merged article (scripts/merge-post.mjs): same topic as the stronger
+      // production playbook, which Google preferred; it was never indexed.
+      {
+        source: "/blog/deploying-full-stack-apps-to-vercel-the-definitive-guide",
+        destination: "/blog/ship-nextjs-production",
+        permanent: true,
+      },
     ];
   },
   async headers() {
