@@ -38,7 +38,7 @@ export default async function AdminPage() {
       where: { readAt: { gte: sevenDaysAgo } },
     }).then((r) => r.length),
     prisma.newsletterSubscriber.count({ where: { confirmed: true } }),
-    prisma.contactSubmission.count({ where: { read: false } }),
+    prisma.contactSubmission.count({ where: { read: false, archivedAt: null } }),
     topArticleViews(30, 5),
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },

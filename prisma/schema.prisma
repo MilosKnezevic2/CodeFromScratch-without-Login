@@ -286,6 +286,10 @@ model ContactSubmission {
   subject   String?
   message   String   @db.Text
   read      Boolean  @default(false)
+  /// Set when the operator marks the message answered (the reply goes from their own mailbox).
+  repliedAt  DateTime?
+  /// Set when the operator files the message under Done; it leaves the inbox but is kept.
+  archivedAt DateTime?
   userId    String?
   createdAt DateTime @default(now())
 
