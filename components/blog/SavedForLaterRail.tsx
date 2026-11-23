@@ -38,12 +38,11 @@ export default function SavedForLaterRail({
                 className="absolute inset-0 z-[1]"
               />
               <div className="grid grid-cols-[4rem_1fr_auto] items-start gap-4 py-5">
-                <div className="relative aspect-square overflow-hidden">
+                <div className="relative aspect-[1200/630] overflow-hidden">
                   {post.featuredImage?.asset ? (
                     <Image
                       src={urlFor(post.featuredImage)
-                        .width(128)
-                        .height(128)
+                        .width(256)
                         .quality(75)
                         .url()}
                       alt={post.featuredImage.alt || post.title}

@@ -11,7 +11,12 @@ export function metaLine(post: FrontPostCard): string {
   return [dateLabel(post.publishedAt), post.readingTime ? `${post.readingTime} min` : null].filter(Boolean).join(" · ");
 }
 
-/** The article cover; covers carry the title in type, so the image is decorative next to the real title. */
+/**
+ * The article cover; covers carry the title in type, so the image is
+ * decorative next to the real title. The frame always keeps the cover's own
+ * 1200:630 shape: the title on the cover runs close to its edges, so a frame
+ * stretched to the card's height cropped it with object-cover.
+ */
 export function FrontCover({ post, sizes, priority = false, className = "" }: { post: FrontPostCard; sizes: string; priority?: boolean; className?: string }) {
   return (
     <div className={`relative aspect-[1200/630] overflow-hidden bg-surface-2 ${className}`}>
@@ -71,8 +76,8 @@ export function LeadStory({ post }: { post: FrontPostCard }) {
           <CardFooter post={post} byline />
         </div>
       </div>
-      <div className="order-1 border-b border-border lg:order-2 lg:col-span-7 lg:border-b-0 lg:border-l">
-        <FrontCover post={post} sizes="(min-width: 1024px) 700px, 100vw" priority className="lg:aspect-auto lg:h-full lg:min-h-80" />
+      <div className="order-1 border-b border-border bg-surface-2 lg:order-2 lg:col-span-7 lg:flex lg:items-center lg:border-b-0 lg:border-l">
+        <FrontCover post={post} sizes="(min-width: 1024px) 700px, 100vw" priority className="w-full" />
       </div>
     </article>
   );
@@ -109,8 +114,8 @@ export function FrontCard({ post, showExcerpt = false }: { post: FrontPostCard; 
 export function SecondStory({ post }: { post: FrontPostCard }) {
   return (
     <article className={`${CARD} grid h-full grid-cols-[minmax(0,1fr)_7rem] sm:grid-cols-[minmax(0,2fr)_minmax(0,3fr)]`}>
-      <div className="col-start-2 row-start-1 m-4 ml-0 sm:col-start-1 sm:row-span-2 sm:m-0 sm:border-r sm:border-border">
-        <FrontCover post={post} sizes="(min-width: 1024px) 260px, (min-width: 640px) 40vw, 7rem" className="rounded-lg sm:aspect-auto sm:h-full sm:min-h-36 sm:rounded-none" />
+      <div className="col-start-2 row-start-1 m-4 ml-0 sm:col-start-1 sm:row-span-2 sm:m-0 sm:flex sm:items-center sm:border-r sm:border-border sm:bg-surface-2">
+        <FrontCover post={post} sizes="(min-width: 1024px) 260px, (min-width: 640px) 40vw, 7rem" className="w-full rounded-lg sm:rounded-none" />
       </div>
       <div className="col-start-1 row-start-1 flex flex-col gap-2 p-4 pr-0 sm:col-start-2 sm:p-5 sm:pb-2">
         <Eyebrow post={post} />

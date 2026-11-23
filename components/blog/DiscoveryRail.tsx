@@ -229,12 +229,11 @@ function RefreshedRail({ posts }: { posts: DiscoveryPost[] }) {
               className="absolute inset-0 z-[1]"
             />
             <div className="grid grid-cols-[5rem_1fr_auto] items-start gap-4">
-              <div className="relative aspect-square overflow-hidden">
+              <div className="relative aspect-[1200/630] overflow-hidden">
                 {post.featuredImage?.asset ? (
                   <Image
                     src={urlFor(post.featuredImage)
-                      .width(160)
-                      .height(160)
+                      .width(320)
                       .quality(75)
                       .url()}
                     alt={post.featuredImage.alt || post.title}
