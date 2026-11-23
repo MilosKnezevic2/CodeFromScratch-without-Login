@@ -22,7 +22,7 @@ export async function GET() {
     prisma.newsletterSubscriber.count({ where: { confirmed: true } }),
     prisma.ebookPurchase.count(),
     prisma.contactSubmission.count(),
-    prisma.contactSubmission.count({ where: { read: false, archivedAt: null } }),
+    prisma.contactSubmission.count({ where: { read: false } }),
   ]);
 
   return NextResponse.json({

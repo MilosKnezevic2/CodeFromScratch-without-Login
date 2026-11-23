@@ -286,14 +286,19 @@ model ContactSubmission {
   subject   String?
   message   String   @db.Text
   read      Boolean  @default(false)
-  /// Set when the operator marks the message answered (the reply goes from their own mailbox).
-  repliedAt  DateTime?
-  /// Set when the operator files the message under Done; it leaves the inbox but is kept.
-  archivedAt DateTime?
   userId    String?
   createdAt DateTime @default(now())
 
   user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
+}
+
+/// What the contacts inbox remembers about a conversation with one person.
+/// The mail itself stays in the office mailbox; key is a hash of their address.
+model MailConversation {
+  key        String    @id
+  /// Filed under Done at this time; a newer message brings the conversation back to the inbox.
+  archivedAt DateTime?
+  updatedAt  DateTime  @updatedAt
 }
 
 /// One JSON document per settings section, edited from the admin portal.

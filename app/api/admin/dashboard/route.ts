@@ -39,7 +39,7 @@ export async function GET() {
     }).then((r) => r.length),
     prisma.newsletterSubscriber.count({ where: { confirmed: true } }),
     prisma.newsletterSubscriber.count({ where: { confirmed: true, createdAt: { lt: thisMonth } } }),
-    prisma.contactSubmission.count({ where: { read: false, archivedAt: null } }),
+    prisma.contactSubmission.count({ where: { read: false } }),
     topArticleViews(30, 5),
     prisma.user.findMany({
       orderBy: { createdAt: "desc" },
