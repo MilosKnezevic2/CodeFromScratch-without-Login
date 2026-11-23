@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { age, formatWhen, inboxKind, inboxStatus, replyLink } from "@/lib/contact-inbox";
-import { prisma } from "@/lib/prisma";
+import { STATUS_LABEL, type Conversation } from "@/lib/mailbox/conversations";
+import { loadInbox } from "@/lib/mailbox/inbox";
+import { age, formatWhen } from "@/lib/mailbox/format";
 import { markAllReadAction } from "./actions";
-import ContactItem, { type ContactItemData } from "./ContactItem";
+import MailboxNotice from "./MailboxNotice";
+import { STATUS_STYLE } from "./styles";
 
 export const metadata: Metadata = {
   title: "Contacts",
@@ -12,103 +14,109 @@ export const metadata: Metadata = {
 
 type View = "inbox" | "done";
 
-const VIEWS: { key: View; label: string }[] = [
-  { key: "inbox", label: "Inbox" },
-  { key: "done", label: "Done" },
-];
-
-const LIMIT = 200;
+function Row({ c, now }: { c: Conversation; now: Date }) {
+  const unread = c.status === "new";
+  const last = c.items[c.items.length - 1];
+  const who = last.kind === "out" ? "You: " : "";
+  return (
+    <li>
+      <Link
+        href={`/portal-cfs-admin/contacts/${c.key}`}
+        prefetch={false}
+        className={`flex items-start gap-3 rounded-xl border bg-surface p-4 transition hover:border-accent/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent ${unread ? "border-accent/40" : "border-border"}`}
+      >
+        <span aria-hidden="true" className={`mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full ${unread ? "bg-accent" : "bg-transparent"}`} />
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className={`truncate text-sm text-foreground ${unread ? "font-bold" : "font-semibold"}`}>{c.name}</span>
+            <span className={`rounded px-2 py-0.5 text-[11px] font-semibold ${STATUS_STYLE[c.status]}`}>
+              {STATUS_LABEL[c.status]}
+              {c.unread > 1 ? ` · ${c.unread}` : ""}
+            </span>
+            {c.pitch && <span className="rounded bg-surface-2 px-2 py-0.5 text-[11px] font-semibold text-foreground">Write for us</span>}
+          </span>
+          <span className={`mt-1 block truncate text-sm ${unread ? "text-foreground" : "text-muted"}`}>{c.lastSubject}</span>
+          <span className="mt-0.5 block truncate text-xs text-muted-foreground">
+            {who}
+            {c.items.length} {c.items.length === 1 ? "message" : "messages"} · {c.address}
+          </span>
+        </span>
+        <span className="shrink-0 text-right text-xs text-muted-foreground">
+          <span className="block font-medium">{age(c.lastDate, now)}</span>
+          <span className="hidden sm:block">{formatWhen(c.lastDate)}</span>
+        </span>
+      </Link>
+    </li>
+  );
+}
 
 export default async function AdminContactsPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const view: View = (await searchParams).view === "done" ? "done" : "inbox";
-  const archived = view === "done" ? { not: null } : null;
-
-  const data = await Promise.all([
-    prisma.contactSubmission.findMany({
-      where: { archivedAt: archived },
-      // The inbox shows what still needs an answer first; Done shows the latest filed first.
-      orderBy: view === "done" ? { archivedAt: "desc" } : { createdAt: "desc" },
-      take: LIMIT,
-    }),
-    prisma.contactSubmission.count({ where: { archivedAt: null } }),
-    prisma.contactSubmission.count({ where: { archivedAt: null, read: false } }),
-    prisma.contactSubmission.count({ where: { archivedAt: { not: null } } }),
-  ]).catch((error: unknown) => {
+  const data = await loadInbox().catch((error: unknown) => {
     console.error("contacts: the database did not answer", error);
     return null;
   });
-
   if (!data) {
     return <p className="text-muted">The database did not answer. It may be waking up; reload in a minute.</p>;
   }
-  const [messages, inboxCount, unreadCount, doneCount] = data;
-  const counts: Record<View, number> = { inbox: inboxCount, done: doneCount };
 
+  const { conversations, mailbox } = data;
+  const open = conversations.filter((c) => c.status !== "done");
+  const done = conversations.filter((c) => c.status === "done");
+  const shown = view === "done" ? done : open;
+  const unread = open.filter((c) => c.status === "new").length;
   const now = new Date();
-  const items: ContactItemData[] = messages.map((m) => ({
-    id: m.id,
-    name: m.name,
-    email: m.email,
-    subject: m.subject,
-    message: m.message,
-    status: inboxStatus(m),
-    kind: inboxKind(m.subject),
-    when: formatWhen(m.createdAt),
-    age: age(m.createdAt, now),
-    repliedWhen: m.repliedAt ? formatWhen(m.repliedAt) : null,
-    replyHref: replyLink(m),
-    userId: m.userId,
-  }));
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Contacts</h1>
         <p className="mt-1 text-sm text-muted">
-          Messages from the contact form and pitches from Write for us. Open a message to read it; answer it by email, then file it under Done.
+          Every conversation with one person in one place: their messages from the site&rsquo;s forms, their emails to office@ and your answers.
         </p>
       </div>
 
+      <MailboxNotice state={mailbox} />
+
       <div className="flex flex-wrap items-center justify-between gap-3">
         <nav aria-label="Contact folders" className="inline-flex rounded-xl border border-border bg-surface p-1">
-          {VIEWS.map((v) => (
+          {(["inbox", "done"] as const).map((v) => (
             <Link
-              key={v.key}
-              href={v.key === "inbox" ? "/portal-cfs-admin/contacts" : "/portal-cfs-admin/contacts?view=done"}
-              aria-current={view === v.key ? "page" : undefined}
+              key={v}
+              href={v === "inbox" ? "/portal-cfs-admin/contacts" : "/portal-cfs-admin/contacts?view=done"}
+              aria-current={view === v ? "page" : undefined}
               className="inline-flex min-h-10 items-center gap-2 rounded-lg px-4 text-sm font-semibold text-muted transition hover:text-foreground aria-[current=page]:bg-accent/15 aria-[current=page]:text-accent"
             >
-              {v.label}
-              <span className="text-xs font-medium tabular-nums">{counts[v.key]}</span>
+              {v === "inbox" ? "Inbox" : "Done"}
+              <span className="text-xs font-medium tabular-nums">{v === "inbox" ? open.length : done.length}</span>
             </Link>
           ))}
         </nav>
-        {view === "inbox" && unreadCount > 0 && (
+        {view === "inbox" && unread > 0 && (
           <form action={markAllReadAction}>
             <button type="submit" className="min-h-10 rounded-lg border border-border px-3 text-xs font-semibold text-foreground transition hover:border-accent/50">
-              Mark all {unreadCount} as read
+              Mark all as read
             </button>
           </form>
         )}
       </div>
 
-      {view === "inbox" && <p className="text-sm text-muted">{unreadCount === 0 ? "No new messages." : `${unreadCount} new ${unreadCount === 1 ? "message" : "messages"}.`}</p>}
-
-      {items.length === 0 ? (
+      {shown.length === 0 ? (
         <div className="rounded-xl border border-dashed border-border p-8 text-center">
-          <p className="text-sm font-semibold text-foreground">{view === "inbox" ? "The inbox is empty." : "Nothing filed yet."}</p>
+          <p className="text-sm font-semibold text-foreground">{view === "inbox" ? "Nothing waiting." : "Nothing filed yet."}</p>
           <p className="mt-1 text-sm text-muted">
-            {view === "inbox" ? "New messages from the contact form and Write for us appear here." : "Messages you mark as Done move here, and can go back to the inbox."}
+            {view === "inbox"
+              ? "New messages from the forms and new emails to office@ appear here."
+              : "Conversations you mark as Done move here. A new message from the person brings one back to the inbox."}
           </p>
         </div>
       ) : (
         <ul className="space-y-3">
-          {items.map((item) => (
-            <ContactItem key={item.id} item={item} />
+          {shown.map((c) => (
+            <Row key={c.key} c={c} now={now} />
           ))}
         </ul>
       )}
-      {messages.length === LIMIT && <p className="text-xs text-muted-foreground">Showing the latest {LIMIT}.</p>}
     </div>
   );
 }
