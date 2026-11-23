@@ -52,7 +52,10 @@ type PageProps = {
   params: Promise<{ slug: string }>;
 };
 
-export const revalidate = 3600;
+// Rebuilt once a day at most; a publish refreshes it at once through
+// /api/revalidate (Sanity webhook). Every-minute timers kept Vercel functions
+// busy around the clock and got the Hobby plan paused on 2026-11-23.
+export const revalidate = 86400;
 
 export async function generateStaticParams() {
   try {

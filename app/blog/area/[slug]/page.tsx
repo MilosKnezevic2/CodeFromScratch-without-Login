@@ -15,8 +15,11 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.or
 
 type PageProps = { params: Promise<{ slug: string }> };
 
-// Prerendered and refreshed every minute, like the journal front.
-export const revalidate = 60;
+// Prerendered, like the journal front.
+// Rebuilt once a day at most; a publish refreshes it at once through
+// /api/revalidate (Sanity webhook). Every-minute timers kept Vercel functions
+// busy around the clock and got the Hobby plan paused on 2026-11-23.
+export const revalidate = 86400;
 export const dynamicParams = false;
 
 export function generateStaticParams() {

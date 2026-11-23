@@ -12,11 +12,14 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.or
 
 type PageProps = { params: Promise<{ slug: string }> };
 
-// Rendered on first visit, then cached and refreshed every minute. Outside
+// Rendered on first visit, then cached (see below). Outside
 // the (listing) group so an unknown tag answers a real 404. Nothing is
 // prerendered: 100+ tag pages are not worth the build time, but the empty
 // list is what lets Next cache them on demand.
-export const revalidate = 60;
+// Rebuilt once a day at most; a publish refreshes it at once through
+// /api/revalidate (Sanity webhook). Every-minute timers kept Vercel functions
+// busy around the clock and got the Hobby plan paused on 2026-11-23.
+export const revalidate = 86400;
 
 export function generateStaticParams() {
   return [];

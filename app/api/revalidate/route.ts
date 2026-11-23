@@ -62,6 +62,9 @@ export async function POST(request: Request) {
 
     // Revalidate based on content type
     if (_type === "post") {
+      // The front page and the areas list the latest posts too.
+      revalidatePath("/");
+      revalidatePath("/blog/area/[slug]", "page");
       revalidatePath("/blog");
       // A new post shifts every listing page and must reach the sitemap now,
       // not when its hourly refresh comes round.
@@ -83,6 +86,8 @@ export async function POST(request: Request) {
     }
 
     if (_type === "category") {
+      revalidatePath("/");
+      revalidatePath("/blog/area/[slug]", "page");
       revalidatePath("/blog");
       revalidatePath("/blog/category/[slug]", "page");
     }

@@ -13,7 +13,10 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.or
  * stream a shell before notFound() runs and turn a missing page into a soft
  * 404 (see app/blog/(listing)/README.md).
  */
-export const revalidate = 60;
+// Rebuilt once a day at most; a publish refreshes it at once through
+// /api/revalidate (Sanity webhook). Every-minute timers kept Vercel functions
+// busy around the clock and got the Hobby plan paused on 2026-11-23.
+export const revalidate = 86400;
 export const dynamicParams = true;
 
 type PageProps = { params: Promise<{ n: string }> };

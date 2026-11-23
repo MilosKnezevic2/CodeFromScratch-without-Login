@@ -12,10 +12,13 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.or
 
 type PageProps = { params: Promise<{ slug: string }> };
 
-// Prerendered and refreshed every minute, like the journal index. Lives
+// Prerendered, like the journal index. Lives
 // outside the (listing) group so an unknown slug answers a real 404 instead
 // of streaming the skeleton first (see app/blog/(listing)/README.md).
-export const revalidate = 60;
+// Rebuilt once a day at most; a publish refreshes it at once through
+// /api/revalidate (Sanity webhook). Every-minute timers kept Vercel functions
+// busy around the clock and got the Hobby plan paused on 2026-11-23.
+export const revalidate = 86400;
 
 /** Only categories that hold articles; an empty one is a 404, not a page. */
 export async function generateStaticParams() {

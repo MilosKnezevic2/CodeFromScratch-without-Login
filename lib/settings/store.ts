@@ -37,15 +37,15 @@ export async function loadSettings(): Promise<Settings> {
 }
 
 /**
- * The read for public pages and API routes: cached for a few minutes and
- * refreshed the moment something is saved, so a page never waits on Postgres
+ * The read for public pages and API routes: cached for a day and refreshed
+ * the moment something is saved, so a page never waits on Postgres
  * for a value that changes a few times a year. The cached function throws on
  * a failed read: caching the defaults instead once kept /login a 404 for every
  * visitor after a single database timeout (accounts default to off).
  */
 const cachedSettings = unstable_cache(readSettings, [SETTINGS_TAG, "strict"], {
   tags: [SETTINGS_TAG],
-  revalidate: 300,
+  revalidate: 86400,
 });
 
 export async function getSettings(): Promise<Settings> {
