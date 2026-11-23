@@ -33,6 +33,19 @@ if (!existsSync(join(brain, ".git"))) {
 }
 mkdirSync(backup, { recursive: true });
 
+const git = (...args) => execFileSync("git", args, { cwd: brain, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] }).trim();
+
+function stop(message) {
+  console.error(`backup stopped: ${message}`);
+  process.exit(1);
+}
+
+// A conflict left over from an earlier run blocks every git command with
+// "could not write index"; say what it is instead.
+const unmergedFiles = () => git("diff", "--name-only", "--diff-filter=U").split(/\r?\n/).filter(Boolean);
+const leftover = unmergedFiles();
+if (leftover.length) stop(`brand-brain has an unfinished merge in ${leftover.join(", ")}. Resolve it (keep both sides' lines), commit, then run the backup again.`);
+
 const client = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || "production",
@@ -56,13 +69,39 @@ if (process.env.BACKUP_SKIP_SANITY) {
   for (const old of exports.slice(0, Math.max(0, exports.length - KEEP))) rmSync(join(backup, old));
 }
 
-// Drafts are written both here and by the scheduled GitHub run: take the
-// other side's commits first, then sync both ways instead of mirroring.
-const git = (...args) => execFileSync("git", args, { cwd: brain, encoding: "utf8" }).trim();
-const dirty = git("status", "--porcelain") !== "";
-if (dirty) git("stash", "push", "--include-untracked", "-m", "backup: before pull");
-git("pull", "--rebase", "origin", "HEAD");
-if (dirty) git("stash", "pop");
+/** Commits everything in brand-brain, the notes other sessions left uncommitted included. */
+function commitAll() {
+  git("add", "-A");
+  if (git("status", "--porcelain") !== "") git("commit", "-m", `backup ${day}`);
+}
+
+/**
+ * Takes the commits the scheduled GitHub run pushed. STATE.md merges by
+ * keeping both sides' lines (.gitattributes in brand-brain), so notes added
+ * here and there at the same time no longer collide (2026-11-21). Any other
+ * conflict puts the repository back as it was and stops, rather than leaving
+ * a half-merged file behind.
+ */
+function pullOrStop() {
+  try {
+    git("pull", "--rebase", "origin", "HEAD");
+  } catch (error) {
+    const files = unmergedFiles();
+    try {
+      git("rebase", "--abort");
+    } catch {
+      // Nothing to abort: the pull failed before the rebase began (no network, for example).
+    }
+    stop(files.length ? `the private repository changed the same lines in ${files.join(", ")}; nothing was lost, the local commit is kept. Merge by hand, then run the backup again.` : `could not pull: ${String(error.stderr || error.message).trim()}`);
+  }
+}
+
+// Local notes are committed before the pull, so the pull never stashes them
+// (a stash that did not pop back cleanly stopped the backup on 2026-11-21).
+// Drafts are written both here and by the scheduled GitHub run: after the
+// pull they sync both ways instead of mirroring.
+commitAll();
+pullOrStop();
 const synced = syncDrafts(root);
 console.log(`drafts: ${synced.toBackup.length} backed up, ${synced.toLocal.length} brought here from the private repo`);
 
@@ -80,13 +119,14 @@ if (process.env.BACKUP_SKIP_DB) {
   }
 }
 
-git("add", "-A");
-if (git("status", "--porcelain") === "") {
+commitAll();
+// Commits not on the private repository yet; needs no upstream setting, so it works on the GitHub runner too.
+if (git("rev-list", "--count", "HEAD", "--not", "--remotes=origin") === "0") {
   console.log("nothing changed since the last backup");
 } else {
-  git("commit", "-m", `backup ${day}`);
   // This computer and the GitHub Actions cycle both push here: take the other side's commits first.
-  git("pull", "--rebase", "origin", "HEAD");
-  console.log(git("push", "origin", "HEAD"));
+  pullOrStop();
+  git("push", "origin", "HEAD");
+  console.log("pushed to the private repository");
 }
 console.log("backup done");
