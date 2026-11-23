@@ -10,7 +10,10 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "https://codefromscratch.or
  * /blog/search?... hold every other view. Old /blog?page=2 style addresses
  * are redirected by the proxy.
  */
-export const revalidate = 60;
+// Rebuilt once a day at most; a publish refreshes it at once through
+// /api/revalidate (Sanity webhook). Every-minute timers kept Vercel functions
+// busy around the clock and got the Hobby plan paused on 2026-11-23.
+export const revalidate = 86400;
 
 export const metadata: Metadata = {
   // Root layout template appends "| CodeFromScratch" — pass the bare name
