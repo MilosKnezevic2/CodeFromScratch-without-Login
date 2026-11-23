@@ -94,7 +94,11 @@ for (const b of blocks) {
 ${b.css ?? ""}
 ${b.js ?? ""}`;
     if (/https?:\/\//i.test(source)) warn("preview uses an external URL; the sandbox blocks network requests, so it will not load");
-    if (/<form/i.test(b.html ?? "") && !/preventDefault/.test(b.js ?? "")) warn("preview has a form but no preventDefault in the js; submitting would reload the frame");
+    // A method="dialog" form only closes its dialog; it never reloads the frame.
+    if (/<form(?![^>]*method=["']?dialog)/i.test(b.html ?? "") && !/preventDefault/.test(b.js ?? "")) warn("preview has a form but no preventDefault in the js; submitting would reload the frame");
+    // The frame is always a white page (lib/live-preview.ts), but prefers-color-scheme follows the reader's
+    // system: a dark-mode block turned the NextAuth demo's text near-white on white (2026-11-23).
+    if (/prefers-color-scheme\s*:\s*dark/i.test(b.css ?? "")) err("preview CSS has a prefers-color-scheme: dark block; the frame is always light, so readers in dark mode get light text on white. Remove it");
     continue;
   }
   if (b.t === "code") {
