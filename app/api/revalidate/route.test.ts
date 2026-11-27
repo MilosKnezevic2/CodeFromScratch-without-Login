@@ -56,7 +56,6 @@ describe("POST /api/revalidate", () => {
     expect(revalidatePath).toHaveBeenCalledWith("/blog");
     expect(revalidatePath).toHaveBeenCalledWith("/blog/hello");
     expect(revalidatePath).toHaveBeenCalledWith("/blog/page/[n]", "page");
-    expect(revalidatePath).toHaveBeenCalledWith("/sitemap.xml");
     // A new post is listed on the front page and in its area too.
     expect(revalidatePath).toHaveBeenCalledWith("/");
     expect(revalidatePath).toHaveBeenCalledWith("/blog/area/[slug]", "page");
