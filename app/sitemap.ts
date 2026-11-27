@@ -2,12 +2,14 @@ import type { MetadataRoute } from "next";
 import { AREAS, areaOfCategory, isIndexableList } from "@/lib/blog/front";
 import { getAllPostSlugs, getCategoriesWithCounts, getFrontPosts } from "@/lib/sanity/queries";
 
-// Refreshed by /api/revalidate the moment a post is published, and once a day
-// otherwise. On 2026-11-02 the purge regenerated this route with a post
-// missing: the pages read Sanity through its CDN, which still served the
-// version from before the publish. The pages now read the API directly
-// (lib/sanity/client.ts), so the purge sees the new post.
-export const revalidate = 86400;
+// Built on every request, never cached by the app. With `revalidate` set, the
+// build wrote sitemap.xml as a file and Vercel served that file for good:
+// neither the daily refresh nor revalidatePath("/sitemap.xml") ever replaced
+// it (2026-11-23 to 11-27: Age 341,000 s, still "HIT"; a revalidate call
+// refreshed /blog and left the sitemap untouched). Posts published after a
+// deploy reached the sitemap only with the next deploy. The route is three
+// small Sanity queries, and crawlers read it a few times a day.
+export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "https://codefromscratch.org";
@@ -39,8 +41,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "monthly" as const,
       priority: 0.8,
     }));
-  } catch {
-    // Sanity may not be configured yet
+  } catch (error) {
+    // Sanity unreachable: the sitemap still answers, without the posts.
+    console.error("sitemap: posts unavailable", error);
   }
 
   let categoryPages: MetadataRoute.Sitemap = [];
@@ -53,8 +56,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
         changeFrequency: "weekly" as const,
         priority: 0.6,
       }));
-  } catch {
-    // Sanity may not be configured yet
+  } catch (error) {
+    // Sanity unreachable: the sitemap still answers, without the categories.
+    console.error("sitemap: categories unavailable", error);
   }
 
   // Tag pages carry a noindex tag (thin lists), so advertising them here sent
@@ -69,8 +73,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       changeFrequency: "weekly" as const,
       priority: 0.7,
     }));
-  } catch {
-    // Sanity may not be configured yet
+  } catch (error) {
+    // Sanity unreachable: the sitemap still answers, without the areas.
+    console.error("sitemap: areas unavailable", error);
   }
 
   return [...staticPages, ...postPages, ...areaPages, ...categoryPages];

@@ -130,6 +130,27 @@ async function verifyLive(slug) {
   return status === 200;
 }
 
+/**
+ * Google finds new articles through sitemap.xml. From 2026-11-23 to 11-27 the
+ * live sitemap was a frozen build-time file and two published articles were
+ * missing from it without anyone noticing. Checks the live sitemap lists the
+ * article, retrying for about a minute. Only warns: the article and the
+ * newsletter do not wait on it.
+ */
+async function verifySitemap(slug) {
+  const loc = `<loc>${SITE}/blog/${slug}</loc>`;
+  for (let attempt = 0; attempt < 12; attempt++) {
+    if (attempt > 0) await new Promise((r) => setTimeout(r, 5000));
+    const res = await fetch(`${SITE}/sitemap.xml`, { cache: "no-store" }).catch(() => null);
+    if (res?.ok && (await res.text()).includes(loc)) {
+      console.log(`sitemap check: /blog/${slug} is listed`);
+      return true;
+    }
+  }
+  console.warn(`WARNING: sitemap.xml does not list /blog/${slug} after a minute. Google may not find the article; check ${SITE}/sitemap.xml`);
+  return false;
+}
+
 async function prepare(slug) {
   const existing = await client.fetch(
     `*[_type == "post" && slug.current == $slug][0]{_id, status, title, content}`,
@@ -234,6 +255,7 @@ async function main() {
     for (const j of todo) {
       if (!(await waitUntilListed(j.slug))) console.error(`${j.slug}: the Sanity CDN does not list it after 2 minutes`);
       j.live = await verifyLive(j.slug);
+      if (j.live) await verifySitemap(j.slug);
     }
     if (todo.length > 0) await pingIndexNow(todo.map((j) => `${SITE}/blog/${j.slug}`));
   }
